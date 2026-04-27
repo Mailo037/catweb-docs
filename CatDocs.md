@@ -70,6 +70,18 @@
 - Landscape mode only
 - No portrait support planned
 
+### Sharing Elements/pages
+
+**Export via JSON:**
+- You will get a JSON which you can share
+- Stuff can tag when importing
+
+**Export via Upload:**
+- You will get a unique 6 character code which you can share
+- Nothing will tag when importing
+- You can assign a name to your upload (max. 50 characters)
+- You can see how many times your upload code has been used
+
 ---
 
 ## UI Elements
