@@ -1,10 +1,65 @@
-# CatWeb Script JSON Format (v2.17.2.0)
+# CatWeb Script JSON Format (v2.17.3.0)
 
 ## Overview
 
 This document specifies the JSON structure for CatWeb scripts. For scripting logic and action details, see **CatDocs**. For UI element structure, see the UI JSON Spec.
 
-**Current Version:** v2.17.2.0
+**Current Version:** v2.17.3.0
+
+---
+
+**Important when setting `strings`:**
+- Roblox moderates each string you set, be it a `text`, `placeholder`, `aliases`, `variable` or generally any content visible to users including strings in scripts
+- This can not be avoid this. The only work around is using the `concatenate` in a script when the site loads and then settings the objects property to that value.
+
+Here is an example for that:
+```json
+[
+  {
+    "class": "script",
+    "globalid": "string-setter",
+    "content": [
+      {
+        "id": "0",
+        "globalid": "main-event",
+        "x": "0",
+        "y": "0",
+        "text": ["When website loaded..."],
+        "width": "350",
+        "actions": [
+          {
+            "id": "109",
+            "globalid": "concatenate1",
+            "text": [
+              "Concatenate",
+              { "t": "string", "value": "string 1" },
+              "with",
+              { "t": "string", "value": "string 2" },
+              "→",
+              { "t": "string", "l": "variable", "value": "end string" }
+            ]
+          },
+          {
+            "id": "31",
+            "globalid": "setting-property-of-object",
+            "text": [
+              "Set",
+              { "t": "string", "l": "property", "value": "property" },
+              "of",
+              { "t": "object", "value":"the-globalID-of-the-object-you-want-to-change-the-property-of", },
+              "to",
+              { "t": "any", "value": "{end string}" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+- You can also duplicate the concatenate to stitch multiple strings into one larger string, just make sure that `string 1` matches the previous `end string`
+- If you want to use this across multiple objects, do NOT create a separate script for each one that only adds unnecessary object count, just duplicate the event
 
 ---
 
@@ -300,6 +355,7 @@ Max 6 parameters per tuple.
 | 12 | When mouse up on `<button>`... |
 | 13 | When `<button>` right clicked... |
 | 14 | When cross-site message received... |
+| 15 | When donation completed... |
 
 ### Actions
 
@@ -426,16 +482,24 @@ Max 6 parameters per tuple.
 | 128 | Run function protected `<function>` `<tuple?>` → `<success_variable>` `<variable?>` |
 | 129 | Get `<info>` of asset `<id>` → `<variable>` |
 | 130 | Broadcast `<message>`cross-site to `<page>` |
- |
 
-**More information:** See CatDocs reference
+**More information:**
 - If you see some missing Ids, its most likely because some actions are deprecated
 - See CatDocs reference
+- The `event` with the id `7` (When `<donation>` bought...), is currently an event for the legacy donation object and will stop detecting purchases for passes and developer products on May 29th. It can be used for both the legacy Donation and Avatar Item elements and will later be repurposed for Avatar Item elements. For new Donations, use `event 15` (When donation completed... )
+
+- Info for `event 15` (When donation completed... ): "This event is for new Donation objects. For legacy Donations, use "When <donation> bought ... ".
+This event changes the following variables:
+- `{l!identifier}`
+- `{lrobuxAmount}`
+- `{l!purchasedNow}`
+
+Note that donations might not complete immediately and may be delayed for up to 7 days as the sender or receiver age-checks or gets parental consent. Make sure to inform the user that they might need to come back in a few days for their donation to complete.
+This event will only fire on the same page the donation was purchased on. {l!purchasedNow} will be true if the donation was processed within the same session."
 
 ### ID Collisions
 
 Events and actions have separate ID spaces. Use event IDs for events, action IDs for actions.
-
 Example collision: ID 0 = "When website loaded" (event) OR "Log `<any>`" (action)
 
 ---

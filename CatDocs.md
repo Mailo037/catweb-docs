@@ -1,4 +1,4 @@
-# CatDocs - CatWeb Complete Reference (v2.17.2.0)
+# CatDocs - CatWeb Complete Reference (v2.17.3.0)
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@
 
 **CatWeb** is a Roblox game where players can create 2D websites using JSON-based UI and a visual block-based scripting system. The user interface is claimed by the owner to visually represent Chrome.
 
-**Current Version:** v2.17.2.0 
+**Current Version:** v2.17.3.0 
 **TLD:** `.rbx` (CatWeb-specific, not real internet)
 
 ### Cross-References
@@ -94,13 +94,14 @@
 3. **Image** - Display images
 4. **Link** - Clickable URL button (also has a text property - 20k char render limit, 200k total for every object displaying text)
 5. **Button** - Interactive button (also has a text property - 20k char render limit, 200k total for every object displaying text)
-6. **Donation** - Purchase prompt button (also has a text property - 20k char render limit, 200k total for every object displaying text)
-7. **Input** - Text input field (also has a text property - 20k char render limit, 200k total for every object displaying text)
-8. **Scroller** - Scrollable container
+6. **Donation** - Prompt transfer button (also has a text property - 20k char render limit, 200k total for every object displaying text), this button does not support passes or developer products, only a amount of robux
+7. **Avatar Item** - Prompt purchase button (also has a text property - 20k char render limit, 200k total for every object displaying text), this button will only support avatar items, no passes or developer products
+8. **Input** - Text input field (also has a text property - 20k char render limit, 200k total for every object displaying text)
+9. **Scroller** - Scrollable container
 
 **Non-Visual Elements:**
-9. **Script** - Contains scripting logic
-10. **Folder** - Organizational container (not rendered)
+10. **Script** - Contains scripting logic
+11. **Folder** - Organizational container (not rendered)
 
 ### Styling Elements (9 total)
 
@@ -164,9 +165,12 @@ All visual elements share:
 - Automatic Color
 
 **Donation (additional):**
-- Item ID
-- Reference (post-purchase redirect)
-- Product Type (GamePass, Asset, Product)
+- Robux Amount (any amount of robux)
+- Transfer ID (post-purchase to identify what got bought)
+- Automatic Color
+
+**Avatar Item (additional):**
+- Item ID (Roblox asset, only from avatar items)
 - Automatic Color
 
 **Scroller (additional):**
@@ -289,6 +293,10 @@ All visual elements share:
 **💵 When `<donation>` bought**
 - Triggers on purchase completion
 - `<donation>` - Donation element
+
+**💵 When donation completed**
+- Triggers on purchase completion
+- The completion progress can take a while
 
 **⌨️ When `<input>` submitted**
 - Triggers on Enter key press
@@ -1016,6 +1024,7 @@ When generating scripts, use emoji formatting for clarity.
 | When mouse down on `<button>` | 🖱️ |
 | When mouse up on `<button>` | 🖱️ |
 | When `<donation>` bought | 💵 |
+| When donation completed | 💵 |
 | When `<input>` submitted | ⌨️ |
 | When `<object>` changed | 🔄 |
 | When message received | 🛜 |
@@ -1214,6 +1223,10 @@ When generating scripts, use emoji formatting for clarity.
 ---
 
 ## Version History
+
+**v2.17.3.0:** `<-- Newest`
+- Added Donation element as well as an Avatar Item element
+- Legacy Donation element got deprecated: Legacy Donation element. If you currently sell passes or developer products within your website, make sure to migrate to the Donation or Avatar Item element before May 29th.
 
 **v2.17.2.0:**
 - Object Scope Functions: `o!<functionName>`

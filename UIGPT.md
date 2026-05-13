@@ -1,11 +1,66 @@
-# CatWeb UI JSON Specification (v2.15.0.3)
+# CatWeb UI JSON Specification (v2.17.3.0)
 
 ## Overview
 
-CatWeb is a Roblox game where players create 2D websites using JSON-based UI definitions. This document covers the UI/visual structure specification. For scripting logic, see the CatDocs reference.
+CatWeb is a Roblox game where players can create 2D websites using JSON-based UI and a visual block-based scripting system. The user interface is claimed by the owner to visually represent Chrome.
 
-**Current Version:** v2.15.0.3  
+**Current Version:** v2.17.3.0  
 **TLD:** `.rbx` (CatWeb-specific, not real internet TLD)
+
+---
+
+**Important when setting `strings`:**
+- Roblox moderates each string you set, be it a `text`, `placeholder`, `aliases`, `variable` or generally any content visible to users including strings in scripts
+- This can not be avoid this. The only work around is using the `concatenate` in a script when the site loads and then settings the objects property to that value.
+
+Here is an example for that:
+```json
+[
+  {
+    "class": "script",
+    "globalid": "string-setter",
+    "content": [
+      {
+        "id": "0",
+        "globalid": "main-event",
+        "x": "0",
+        "y": "0",
+        "text": ["When website loaded..."],
+        "width": "350",
+        "actions": [
+          {
+            "id": "109",
+            "globalid": "concatenate1",
+            "text": [
+              "Concatenate",
+              { "t": "string", "value": "string 1" },
+              "with",
+              { "t": "string", "value": "string 2" },
+              "→",
+              { "t": "string", "l": "variable", "value": "end string" }
+            ]
+          },
+          {
+            "id": "31",
+            "globalid": "setting-property-of-object",
+            "text": [
+              "Set",
+              { "t": "string", "l": "property", "value": "property" },
+              "of",
+              { "t": "object", "value":"the-globalID-of-the-object-you-want-to-change-the-property-of", },
+              "to",
+              { "t": "any", "value": "{end string}" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+- You can also duplicate the concatenate to stitch multiple strings into one larger string, just make sure that `string 1` matches the previous `end string`
+- If you want to use this across multiple objects, do NOT create a separate script for each one that only adds unnecessary object count, just duplicate the event
 
 ---
 
@@ -51,6 +106,7 @@ CatWeb is a Roblox game where players create 2D websites using JSON-based UI def
 - Human-readable name shown in explorer
 - Safe to rename without breaking functionality
 - Not used by scripts
+
 
 ### UDim2 Format
 
@@ -210,7 +266,7 @@ Non-interactive text display.
 ---
 
 ### TextButton
-Clickable button with text. Same as TextLabel plus:
+Clickable button with text. Same as TextLabel plus.
 
 ```json
 {
@@ -222,7 +278,7 @@ Clickable button with text. Same as TextLabel plus:
 ---
 
 ### TextBox
-User input field. Same as TextLabel plus:
+User input field. Same as TextLabel plus.
 
 ```json
 {
@@ -287,6 +343,32 @@ Button prompting Roblox purchases.
   "product": "1506394485",
   "product_type": "GamePass",       // GamePass, Asset, Product
   "thanks_href": ""                 // optional redirect after purchase
+}
+```
+
+**Note:**
+- This element has been archived due to an roblox update, through which users can no longer sell their gamepass and Dev-Products anywhere except in their own game
+- This Element has been replaced by the new `TextButton?transfer` and `TextButton?avataritem` elements
+
+
+### TextButton?transfer
+Button prompting Roblox transfer.
+
+```json
+{
+  "class":"TextButton?transfer",
+  "robux_amount":"60",              // number value, any amount of robux
+  "transfer_id":"1"                 // Used to help differenciate transfers from different sources. Must be a number and is only useful if you handle donations through a script.
+}
+```
+
+### TextButton?avataritem
+Button prompting Roblox avatar item purchase.
+
+```json
+{
+  "class":"TextButton?avataritem",
+  "product":"0"                     // This can be the Item ID of a Shirt, T-Shirt, Pants, Accessory, Head, Emote, or any other type of avatar item.
 }
 ```
 
@@ -473,7 +555,7 @@ Limits text size scaling (text elements only).
 
 ## Limits & Constraints
 
-- **Element limit:** 100 (free) / 200 (premium)
+- **Element limit:** 100 (free) / 400 (premium)
 - **Root elements:** 1 per page
 - **Text rendering:** ~16k-32k visible, 200k total
 - **Runtime objects:** 1000 max (including script-created)
@@ -580,7 +662,7 @@ Limits text size scaling (text elements only).
 
 - **For scripting logic:** See CatDocs (main reference document)
 - **For script JSON structure:** See json-rulings.md (pairs with CatDocs)
-- **For CatWeb game info:** Premium costs 119 Robux, Cookies gamepass 35 Robux (regional pricing may apply)
+- **For CatWeb game info:** Premium costs 299 Robux, Cookies gamepass 80 Robux (regional pricing may apply)
 
 ---
 
