@@ -17,8 +17,13 @@ Everything you need to know about building in **CatWeb** (Roblox) — the Roblox
 ## Related Repos
 
 - [`catweb-additional-resources`](https://github.com/Mailo037/catweb-additional-resources) — community drop-box of ready-to-import JSONs and full sites (login pages, button packs, full portfolio sites, etc.). See its [`template/`](https://github.com/Mailo037/catweb-additional-resources/tree/main/template) folder if you want to submit your own.
+- [`catweb-mcp`](https://github.com/Mailo037/catweb-mcp) — MCP server that indexes these docs + `catweb-additional-resources` so AI agents (Claude, etc.) can search by section, tag, or author and pull just the relevant slice into chat. See its README for setup.
 
-If something isn't covered in these docs, that repo is the next place to look
+If something isn't covered in these docs, the additional-resources repo is the next place to look.
+
+## AI / agent usage
+
+If you're an AI assistant looking at this repo, you can either read the four `.md` files directly, or use the [`catweb-mcp`](https://github.com/Mailo037/catweb-mcp) MCP server — it exposes `get_doc(name)` (returns full content of `CatDocs`, `JSONScript`, `UIGPT`, etc.) and `search(query, kind="docs")` for targeted lookups, so you don't have to load all 75KB of docs every time.
 
 ---
 
