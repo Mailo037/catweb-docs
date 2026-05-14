@@ -1,0 +1,11 @@
+# Ignore everything by default
+*
+
+# Descend into directories so nested rules apply
+!*/
+
+# Track only markdown
+!*.md
+
+# Track this file itself
+!.gitignore
