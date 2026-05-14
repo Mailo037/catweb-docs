@@ -10,10 +10,10 @@ CatWeb is a Roblox game where players can create 2D websites using JSON-based UI
 ---
 
 **Important when setting `strings`:**
-- Roblox moderates each string you set, be it a `text`, `placeholder`, `aliases`, `variable` or generally any content visible to users including strings in scripts
-- This can not be avoid this. The only work around is using the `concatenate` in a script when the site loads and then settings the objects property to that value.
-
-Here is an example for that:
+- Roblox moderates each string you set, be it a `text`, `placeholder`, `aliases`, `variable` or generally any content visible to users including strings in scripts, when a string gets tagged it will be replaced with `#`'s.
+- This can not be avoid this. If this happens, consider using numbers for variable names.
+- There is one work around, which is using the `concatenate` in a script when the `site loads` and then `setting` the `object's property` to that `value`.
+Here is an example JSON for that:
 ```json
 [
   {
@@ -234,6 +234,9 @@ Scrollable container.
 }
 ```
 
+**Tip when using objects inside a scrolling frame:**
+- If you use the `pixel-based` sizing system, set the scrolling frame `canvas` to `auto_y` for it to `automaticly scale` to the right size. This will not work with `scale-based` sizing!
+
 ---
 
 ### TextLabel
@@ -244,8 +247,8 @@ Non-interactive text display.
   "class": "TextLabel",
   "globalid": "label",
   "text": "Hello World",
-  "font": "GothamBold",             // Gotham, GothamBold, SourceSans, Roboto
-  "font_size": "scaled",            // "scaled" or number ("24")
+  "font": "GothamBold",             // Gotham, GothamBold, SourceSans, Roboto or any font ID from the [Roblox Creator Store](https://create.roblox.com/store/fonts)
+  "font_size": "scaled",            // "scaled" or number between 0-100
   "font_color": "#ffffff",
   "font_weight": "Medium",          // Regular, Medium, Bold
   "font_style": "Normal",           // Normal, Italic
@@ -568,7 +571,7 @@ Limits text size scaling (text elements only).
 ## Best Practices for AI Generation
 
 ### DO ✓
-- **Use scale-based sizing** for responsiveness
+- **Use pixel-based sizing** for it to be consistent on all platforms
 - **Keep UI + scripts in ONE JSON** to prevent globalid regeneration breaking references
 - **Use meaningful aliases** for objects referenced in scripts
 - **Use `(parent)` references** in scripts instead of hardcoding globalids when possible
@@ -577,6 +580,7 @@ Limits text size scaling (text elements only).
 - **Use Folders** to organize (don't count toward render but do toward limit)
 - **Use `auto_x`/`auto_y`** for dynamic sizing
 - **Add UITextSizeConstraint** with `font_size: "scaled"`
+- **Add a padding** in e.g. an `TextButton`, to not make the button look that crammed
 
 ### DON'T ✗
 - **NEVER add comments to JSON** - they break parsing
@@ -633,7 +637,7 @@ Limits text size scaling (text elements only).
 - `GothamBold`
 - `SourceSans` (default)
 - `Roboto`
-- All standard Roblox fonts
+- All fonts ID from the [Roblox Creator Store](https://create.roblox.com/store/fonts)
 
 **Font Weights:** Regular, Medium, Bold  
 **Font Styles:** Normal, Italic

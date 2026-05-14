@@ -9,10 +9,10 @@ This document specifies the JSON structure for CatWeb scripts. For scripting log
 ---
 
 **Important when setting `strings`:**
-- Roblox moderates each string you set, be it a `text`, `placeholder`, `aliases`, `variable` or generally any content visible to users including strings in scripts
-- This can not be avoid this. The only work around is using the `concatenate` in a script when the site loads and then settings the objects property to that value.
-
-Here is an example for that:
+- Roblox moderates each string you set, be it a `text`, `placeholder`, `aliases`, `variable` or generally any content visible to users including strings in scripts, when a string gets tagged it will be replaced with `#`'s.
+- This can not be avoid this. If this happens, consider using numbers for variable names.
+- There is one work around, which is using the `concatenate` in a script when the `site loads` and then `setting` the `object's property` to that `value`.
+Here is an example JSON for that:
 ```json
 [
   {
