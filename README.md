@@ -11,6 +11,7 @@ Everything you need to know about building in **CatWeb** (Roblox) — the Roblox
 1. [CatDocs - A overall explanation](CatDocs.md)
 2. [JSONScript - A guide for scripting in catweb](JSONScript.md)
 3. [UIGPT - A guide on how to use the custom JSON format](UIGPT.md)
+4. [Documents regarding catwebs development and the discord group](/guild/)
 
 
 If you are getting asked to make a site with catweb in the context, assume he means a catweb JSON, and not a real life e.g. HTML code, thus use the [UIGPT documentation](UIGPT.md).
