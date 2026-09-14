@@ -79,8 +79,8 @@ When exporting or importing a full website, the root is a JSON **object**:
 | `thumbnail_id` | No | Numeric asset ID for page thumbnail |
 | `thumbnail` | No | Full `rbxassetid://` URI for page thumbnail |
 
-### 2.2 Component / Snippet Array
-When sharing or importing a component, widget, or button pack without a full site, the root can simply be a JSON **array**:
+### 2.2 Component / Snippet Array (Unwrapped Sibling Elements)
+When sharing or importing a component, widget, or button pack without a full site, the root can simply be a JSON **array**. Multiple elements can exist completely unwrapped side-by-side in the array without any parent wrapper frame:
 
 ```json
 [
@@ -89,11 +89,39 @@ When sharing or importing a component, widget, or button pack without a full sit
     "globalid": "5m",
     "background_color": "#c8c8c8",
     "size": "{0.1, 0},{0.1, 0}",
-    "children": []
+    "children": [
+      {
+        "class": "TextLabel",
+        "globalid": "KR",
+        "text": "Text",
+        "font_size": "scaled",
+        "rich": "false",
+        "align_x": "Center",
+        "align_y": "Center",
+        "background_transparency": "1",
+        "size": "{0.1, 0},{0.1, 0}",
+        "children": []
+      },
+      {
+        "class": "ScrollingFrame",
+        "globalid": "~O",
+        "canvassize": "{0, 0},{2, 0}",
+        "background_color": "#c8c8c8",
+        "size": "{0.1, 0},{0.1, 0}"
+      }
+    ]
   },
   {
     "class": "ImageLabel",
     "globalid": "db",
+    "image_id": "107783162934966",
+    "image": "rbxassetid://70877710889686",
+    "size": "{0.1, 0},{0.1, 0}",
+    "children": []
+  },
+  {
+    "class": "ImageButton?link",
+    "globalid": "d;",
     "image_id": "107783162934966",
     "image": "rbxassetid://70877710889686",
     "size": "{0.1, 0},{0.1, 0}"

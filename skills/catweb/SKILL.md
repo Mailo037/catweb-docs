@@ -80,33 +80,51 @@ Used when creating or publishing an entire site:
 ```
 *Note: `webcontent` can contain multiple sibling root elements as shown above.*
 
-### Format B: Component / Snippet Array (No Wrapper Object)
-Used when generating reusable components, button packs, cards, or partial UI snippets:
+### Format B: Component / Snippet Array (Unwrapped Sibling Elements)
+Used when generating reusable components, button packs, cards, or partial UI snippets. Multiple elements can exist completely unwrapped, directly side-by-side in the array without any parent container:
 ```json
 [
   {
     "class": "Frame",
     "globalid": "5m",
-    "size": "{0.4,0},{0.3,0}",
-    "background_color": "#1f1f23",
+    "background_color": "#c8c8c8",
+    "size": "{0.1, 0},{0.1, 0}",
     "children": [
       {
         "class": "TextLabel",
         "globalid": "KR",
-        "text": "Component Text",
+        "text": "Text",
         "font_size": "scaled",
         "rich": "false",
         "align_x": "Center",
         "align_y": "Center",
-        "size": "{1,0},{0.4,0}"
+        "background_transparency": "1",
+        "size": "{0.1, 0},{0.1, 0}",
+        "children": []
       },
       {
         "class": "ScrollingFrame",
         "globalid": "~O",
-        "canvassize": "{0,0},{2,0}",
-        "size": "{1,0},{0.6,0}"
+        "canvassize": "{0, 0},{2, 0}",
+        "background_color": "#c8c8c8",
+        "size": "{0.1, 0},{0.1, 0}"
       }
     ]
+  },
+  {
+    "class": "ImageLabel",
+    "globalid": "db",
+    "image_id": "107783162934966",
+    "image": "rbxassetid://70877710889686",
+    "size": "{0.1, 0},{0.1, 0}",
+    "children": []
+  },
+  {
+    "class": "ImageButton?link",
+    "globalid": "d;",
+    "image_id": "107783162934966",
+    "image": "rbxassetid://70877710889686",
+    "size": "{0.1, 0},{0.1, 0}"
   }
 ]
 ```
