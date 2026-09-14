@@ -29,6 +29,16 @@ Breaking any of these rules causes immediate import rejection (`[INVALIDATED]`) 
     - **JSON Authoring Keys (snake_case):** Used directly on elements in `webcontent` (`background_color`, `font_color`, `stroke_thickness`, `size` for grid cells, `order`).
     - **Script Display Names (Title Case):** Used ONLY inside script action parameters (`"Background Color"`, `"Text Color"`, `"Thickness"`, `"Cell Size"`, `"Order"`, `"Text"`, `"Visible"`).
 11. **Flat Control Flow in Scripts:** Control flow actions (`If` `18`, `Repeat` `22`, `Repeat forever` `23`) must **NEVER** contain a nested `actions: [...]` property. Their body consists of flat sibling actions in the event's `actions` array, terminated by `end` (`25`).
+12. **Property Action Structure (`<property>` of `<object>`):**
+    Property manipulation blocks are strictly structured with the property BEFORE the object:
+    - **Set:** `Set <property> of <object> to <any>` (`["Set", {"value":"Background Color","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"#ff0000","t":"any"}]`)
+    - **Get:** `Get <property> of <object> → <variable>` (`["Get", {"value":"Text","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]`)
+    - **Tween:** `Tween <property> of <object> to <any> ...` (`["Tween", {"value":"Position","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", ...]`)
+    > [!CAUTION]
+    > NEVER write `Set <object> property ...` or `Tween <object> property ...`. CatWeb expects `<property> of <object>`.
+13. **`Wait` Block is Action ID `3` (Logic Category):**
+    `Wait <number> seconds` has Action ID **`3`** under the **Logic** category (yellow lightbulb icon: `["Wait", {"value":"1","t":"number"}, "seconds"]`).
+    **NEVER** use Loop action IDs (`22`, `23`, `24`) for waiting! Action ID `24` is `Break` (under Loops with circular arrows). Using `24` causes CatWeb to treat the wait as a Loop break and breaks script execution.
 
 ---
 
@@ -383,7 +393,7 @@ Example flat structure:
   },
   {
     "id": "31",
-    "text": ["Set", {"value": "tl", "t": "object"}, "property", {"value": "Text", "t": "property"}, "to", {"value": "Reached 5!", "t": "any"}],
+    "text": ["Set", {"value": "Text", "t": "string", "l": "property"}, "of", {"value": "tl", "t": "object"}, "to", {"value": "Reached 5!", "t": "any"}],
     "globalid": "st1"
   },
   {
@@ -402,9 +412,11 @@ Example flat structure:
 
 ### 5.4 Parameter Shape Rules (`t` and `l`)
 - **Bare `{"t": "any"}` (No `l` property):**
-  - Action `31` Set Property (value slot)
+  - Action `31` Set Property (value slot: `"to", {"value": "...", "t": "any"}`)
   - Action `88` Tween ("to" value slot)
   - Action `0` Log, `1` Warn, `2` Error, `34` Set Cookie
+- **`{"t": "string", "l": "property"}` (Property Name slot in 31, 39, 88):**
+  - Uses Title Case property name (`"Background Color"`, `"Text"`, `"Visible"`, `"Size"`, `"Position"`, `"Order"`, `"Thickness"`)
 - **`{"t": "string", "l": "any"}` (Has `l: "any"`):**
   - Action `11` Set Variable
   - Action `12` Add to Variable
@@ -425,23 +437,24 @@ Example flat structure:
 | `15` | When donation completed | `["When donation completed..."]` |
 
 #### Common Actions
-| ID | Action | Exact `text` Array |
-|---|---|---|
-| `11` | Set Variable | `["Set", {"value":"1","t":"string","l":"variable"}, "to", {"value":"0","t":"string","l":"any"}]` |
-| `12` | Add to Variable | `["Add", {"value":"1","t":"string","l":"any"}, "to", {"value":"1","t":"string","l":"variable"}]` |
-| `31` | Set Property | `["Set", {"value":"obj","t":"object"}, "property", {"value":"Text","t":"property"}, "to", {"value":"Hello","t":"any"}]` |
-| `39` | Get Property | `["Get property", {"value":"Text","t":"property"}, "of", {"value":"obj","t":"object"}, "into", {"value":"1","t":"string","l":"variable"}]` |
-| `48` | Play Sound | `["Play sound", {"value":"6895079853","t":"id","assetbrowser":"sound"}]` |
-| `88` | Tween Property | `["Tween", {"value":"obj","t":"object"}, "property", {"value":"Background Color","t":"property"}, "to", {"value":"#2563eb","t":"any"}, "duration", {"value":"0.3","t":"number"}, "easing", {"value":"Quad","t":"easing"}, "direction", {"value":"Out","t":"direction"}]` |
-| `24` | Wait | `["Wait", {"value":"1","t":"number"}, "seconds"]` |
-| `4` | Redirect | `["Redirect to", {"value":"other.rbx","t":"string","href":"true"}]` |
-| `18` | If equal | `["If", {"value":"{1}","t":"string","l":"any"}, "is equal to", {"value":"10","t":"string","l":"any"}]` |
-| `20` | If greater than | `["If", {"value":"{1}","t":"string","l":"any"}, "is greater than", {"value":"0","t":"string","l":"any"}]` |
-| `21` | If lower than | `["If", {"value":"{1}","t":"string","l":"any"}, "is lower than", {"value":"10","t":"string","l":"any"}]` |
-| `22` | Repeat (N times) | `["Repeat", {"value":"5","t":"number"}, "times"]` |
-| `23` | Repeat forever | `["Repeat forever"]` |
-| `25` | End (Closes If/Repeat) | `["end"]` |
-| `87` | Run Function | `["Run function", {"value":"10","t":"string","l":"function"}]` |
+| ID | Category | Action | Exact `text` Array |
+|---|---|---|---|
+| `3` | **Logic** | Wait seconds | `["Wait", {"value":"1","t":"number"}, "seconds"]` |
+| `11` | Variables | Set Variable | `["Set", {"value":"1","t":"string","l":"variable"}, "to", {"value":"0","t":"string","l":"any"}]` |
+| `12` | Variables | Add to Variable | `["Add", {"value":"1","t":"string","l":"any"}, "to", {"value":"1","t":"string","l":"variable"}]` |
+| `31` | Looks | Set Property | `["Set", {"value":"Background Color","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"#ff0000","t":"any"}]` |
+| `39` | Looks | Get Property | `["Get", {"value":"Text","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `48` | Audio | Play Sound | `["Play sound", {"value":"6895079853","t":"id","assetbrowser":"sound"}]` |
+| `88` | Looks | Tween Property | `["Tween", {"value":"Position","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"{0,0},{0,100}","t":"any"}, "-", {"value":"0.3","t":"number","l":"time"}, {"value":"Quad","t":"string","l":"style"}, {"value":"Out","t":"string","l":"direction"}]` |
+| `4` | Navigation | Redirect | `["Redirect to", {"value":"other.rbx","t":"string","href":"true"}]` |
+| `18` | Logic | If equal | `["If", {"value":"{1}","t":"string","l":"any"}, "is equal to", {"value":"10","t":"string","l":"any"}]` |
+| `20` | Logic | If greater than | `["If", {"value":"{1}","t":"string","l":"any"}, "is greater than", {"value":"0","t":"string","l":"any"}]` |
+| `21` | Logic | If lower than | `["If", {"value":"{1}","t":"string","l":"any"}, "is lower than", {"value":"10","t":"string","l":"any"}]` |
+| `22` | Loops | Repeat (N times) | `["Repeat", {"value":"5","t":"number"}, "times"]` |
+| `23` | Loops | Repeat forever | `["Repeat forever"]` |
+| `24` | Loops | Break | `["Break"]` |
+| `25` | Control | End (Closes If/Repeat) | `["end"]` |
+| `87` | Functions | Run Function | `["Run function", {"value":"10","t":"string","l":"function"}]` |
 
 ---
 
@@ -482,7 +495,7 @@ Example flat structure:
 
 ## 7. Pre-flight Validation Checklist
 
-Before outputting any CatWeb JSON, verify all 10 checks:
+Before outputting any CatWeb JSON, verify all 12 checks:
 
 1. [ ] Output is a single JSON object with `favicon`, `title`, `background`, and `webcontent`.
 2. [ ] Every scalar value is a quoted string (`"font_size": "16"`, `"visible": "true"`).
@@ -494,3 +507,6 @@ Before outputting any CatWeb JSON, verify all 10 checks:
 8. [ ] UI authoring properties are in `snake_case`, script property display names are in `Title Case`.
 9. [ ] No control flow actions contain an `actions: [...]` property; all branches are flat siblings ending with `{"id":"25","text":["end"]}`.
 10. [ ] Script variables use pure numbers (`{1}`, `{2}`) to prevent Roblox moderation filtering.
+11. [ ] Property manipulation blocks are strictly ordered as `Set/Tween <property> of <object> to ...` (property BEFORE object, e.g. `["Set", {"value":"Text","t":"string","l":"property"}, "of", {"value":"tl","t":"object"}, "to", ...]`).
+12. [ ] `Wait <number> seconds` uses Action ID `3` (Logic category, lightbulb), NEVER Action ID `24` (Break in Loops).
+

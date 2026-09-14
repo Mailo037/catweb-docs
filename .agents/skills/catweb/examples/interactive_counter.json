@@ -252,13 +252,14 @@
                   "text": [
                     "Set",
                     {
+                      "value": "Text",
+                      "t": "string",
+                      "l": "property"
+                    },
+                    "of",
+                    {
                       "value": "cnt",
                       "t": "object"
-                    },
-                    "property",
-                    {
-                      "value": "Text",
-                      "t": "property"
                     },
                     "to",
                     {
@@ -303,13 +304,14 @@
                   "text": [
                     "Set",
                     {
+                      "value": "Text",
+                      "t": "string",
+                      "l": "property"
+                    },
+                    "of",
+                    {
                       "value": "cnt",
                       "t": "object"
-                    },
-                    "property",
-                    {
-                      "value": "Text",
-                      "t": "property"
                     },
                     "to",
                     {
@@ -379,13 +381,14 @@
                   "text": [
                     "Set",
                     {
+                      "value": "Text",
+                      "t": "string",
+                      "l": "property"
+                    },
+                    "of",
+                    {
                       "value": "cnt",
                       "t": "object"
-                    },
-                    "property",
-                    {
-                      "value": "Text",
-                      "t": "property"
                     },
                     "to",
                     {
