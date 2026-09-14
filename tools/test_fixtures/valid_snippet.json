@@ -1,0 +1,35 @@
+[
+  {
+    "class": "Frame",
+    "globalid": "cd",
+    "alias": "card",
+    "size": "{0,300},{0,180}",
+    "position": "{0.5,-150},{0.5,-90}",
+    "background_color": "#1e1e24",
+    "children": [
+      {
+        "class": "UICorner",
+        "globalid": "cr",
+        "radius": "0,12"
+      },
+      {
+        "class": "UIStroke",
+        "globalid": "st",
+        "stroke_color": "#33333f",
+        "stroke_thickness": "1"
+      },
+      {
+        "class": "TextLabel",
+        "globalid": "tx",
+        "alias": "card_title",
+        "text": "Component Snippet",
+        "font_size": "16",
+        "font_color": "#ffffff",
+        "size": "{1,-20},{0,30}",
+        "position": "{0,10},{0,10}",
+        "align_x": "Center",
+        "align_y": "Center"
+      }
+    ]
+  }
+]

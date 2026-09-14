@@ -43,6 +43,10 @@ Breaking any of these rules causes immediate import rejection (`[INVALIDATED]`) 
 14. **`Wait` Block is Action ID `3` (Logic Category):**
     `Wait <number> seconds` has Action ID **`3`** under the **Logic** category (yellow lightbulb icon: `["Wait", {"value":"1","t":"number"}, "seconds"]`).
     **NEVER** use Loop action IDs (`22`, `23`, `24`) for waiting! Action ID `24` is `Break` (under Loops with circular arrows).
+15. **Audio Blocks are Action ID `5` (`Play audio`) and `26` (`Play looped audio`):**
+    The audio action is `Play audio` with Action ID **`5`** (under the **Audio** category with the speaker icon 🔊: `["Play audio", {"value":"88442833509532","t":"string","l":"id","assetbrowser":"audio"}, "→", {"value":"","t":"string","l":"variable?"}]`).
+    > [!CAUTION]
+    > Action ID **`48`** is `String length` (`Get length of <string> → <variable>`) in the **Strings** category (indicated by the **`TT`** font icon). **NEVER** use ID `48` for audio/sounds! Using `48` causes CatWeb to treat the audio action as a String block.
 
 ---
 
@@ -524,11 +528,13 @@ Example flat structure:
 | ID | Category | Action | Exact `text` Array |
 |---|---|---|---|
 | `3` | **Logic** | Wait seconds | `["Wait", {"value":"1","t":"number"}, "seconds"]` |
+| `5` | **Audio** | Play audio | `["Play audio", {"value":"88442833509532","t":"string","l":"id","assetbrowser":"audio"}, "→", {"value":"","t":"string","l":"variable?"}]` |
+| `26` | **Audio** | Play looped audio | `["Play looped audio", {"value":"88442833509532","t":"string","l":"id","assetbrowser":"audio"}, "→", {"value":"","t":"string","l":"variable?"}]` |
 | `11` | Variables | Set Variable | `["Set", {"value":"1","t":"string","l":"variable"}, "to", {"value":"0","t":"string","l":"any"}]` |
 | `12` | Variables | Add to Variable | `["Add", {"value":"1","t":"string","l":"any"}, "to", {"value":"1","t":"string","l":"variable"}]` |
 | `31` | Looks | Set Property | `["Set", {"value":"Background Color","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"#ff0000","t":"any"}]` |
 | `39` | Looks | Get Property | `["Get", {"value":"Text","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]` |
-| `48` | Audio | Play Sound | `["Play sound", {"value":"6895079853","t":"id","assetbrowser":"sound"}]` |
+| `48` | Strings | String length | `["Get length of", {"value":"str","t":"string"}, "→", {"value":"1","t":"string","l":"variable"}]` |
 | `88` | Looks | Tween Property | `["Tween", {"value":"Position","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"{0,0},{0,100}","t":"any"}, "-", {"value":"0.3","t":"number","l":"time"}, {"value":"Quad","t":"string","l":"style"}, {"value":"Out","t":"string","l":"direction"}]` |
 | `4` | Navigation | Redirect | `["Redirect to", {"value":"other.rbx","t":"string","href":"true"}]` |
 | `18` | Logic | If equal | `["If", {"value":"{1}","t":"string","l":"any"}, "is equal to", {"value":"10","t":"string","l":"any"}]` |
@@ -564,24 +570,25 @@ Example flat structure:
 | `copy` | `130977740797889` | Copy clipboard |
 | `lock` | `99601667182985` | Security / Locked |
 
-### UI Audio Asset IDs
+### UI Audio Asset IDs (Confirmed from Assets.md)
 | Sound Name | Asset ID | Usage |
 |---|---|---|
-| `button_click` | `6895079853` | Standard button clicks |
-| `switch_toggle` | `9114223170` | Toggle switch |
-| `modal_open` | `9114221580` | Opening a dialog |
-| `modal_close` | `9114221798` | Closing a dialog |
-| `success_chime` | `9069609268` | Success feedback |
-| `error_buzz` | `9069608937` | Validation / error |
-| `notification_ding` | `9069609071` | Alerts / pings |
+| `click` | `88442833509532` | Button tap, general click feedback |
+| `hover` | `107511012621133` | Mouse hover over button/card |
+| `toggle` | `94316899429786` | Toggle switch, checkbox toggle |
+| `success` | `136211732441165` | Action completed, goal reached |
+| `error` | `131661013076677` | Validation error, blocked action |
+| `notification` | `131039887376992` | Toast alert, incoming message |
+| `send` | `5485567028` | Message sent, prompt dispatched |
+| `transition` | `119137729729534` | Tab switch, view swoosh |
 
 ---
 
 ## 7. Pre-flight Validation Checklist
 
-Before outputting any CatWeb JSON, verify all 12 checks:
+Before outputting any CatWeb JSON, verify all 13 checks:
 
-1. [ ] Output is a single JSON object with `favicon`, `title`, `background`, and `webcontent`.
+1. [ ] Output is a single JSON object with `favicon`, `title`, `background`, and `webcontent` (for full sites), OR a bare JSON array `[...]` (for component snippets).
 2. [ ] Every scalar value is a quoted string (`"font_size": "16"`, `"visible": "true"`).
 3. [ ] No comments (`//` or `/* */`) anywhere.
 4. [ ] All hex colors start with `#` (`"#ffffff"`).
@@ -593,4 +600,5 @@ Before outputting any CatWeb JSON, verify all 12 checks:
 10. [ ] Script variables use pure numbers (`{1}`, `{2}`) to prevent Roblox moderation filtering.
 11. [ ] Property manipulation blocks are strictly ordered as `Set/Tween <property> of <object> to ...` (property BEFORE object, e.g. `["Set", {"value":"Text","t":"string","l":"property"}, "of", {"value":"tl","t":"object"}, "to", ...]`).
 12. [ ] `Wait <number> seconds` uses Action ID `3` (Logic category, lightbulb), NEVER Action ID `24` (Break in Loops).
+13. [ ] Audio blocks use Action ID `5` (`Play audio`) or `26` (`Play looped audio`) under the **Audio** category (speaker icon 🔊), NEVER Action ID `48` (which is `String length` in the Strings category with the `TT` icon).
 

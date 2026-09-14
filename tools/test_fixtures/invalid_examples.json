@@ -1,0 +1,53 @@
+{
+  "favicon": "12345",
+  "title": "Invalid Test Site",
+  "background": "#111111",
+  "webcontent": [
+    {
+      "class": "Frame",
+      "globalid": "cd",
+      "size": "invalid_udim2",
+      "background_color": "ff0000",
+      "visible": true,
+      "layout_order": "1",
+      "children": [
+        {
+          "class": "Frame",
+          "globalid": "cd",
+          "order": 2
+        },
+        {
+          "class": "script",
+          "globalid": "sc1",
+          "enabled": "true",
+          "content": [
+            {
+              "id": "1",
+              "globalid": "ev1",
+              "text": ["When", { "value": "ghost", "t": "object", "l": "button" }, "pressed..."],
+              "actions": [
+                {
+                  "id": "18",
+                  "globalid": "if1",
+                  "text": ["If", { "value": "1", "t": "string", "l": "any" }, "is equal to", { "value": "1", "t": "string", "l": "any" }],
+                  "actions": [
+                    {
+                      "id": "31",
+                      "globalid": "s_prop",
+                      "text": ["Set", { "value": "font_color", "t": "string", "l": "property" }, "of", { "value": "ghost", "t": "object" }, "to", { "value": "#ffffff", "t": "any" }]
+                    }
+                  ]
+                },
+                {
+                  "id": "22",
+                  "globalid": "bad_wait",
+                  "text": ["Wait", { "value": "1", "t": "number" }, "seconds"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

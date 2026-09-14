@@ -269,14 +269,21 @@
                   ]
                 },
                 {
-                  "id": "48",
+                  "id": "5",
                   "globalid": "ac3",
                   "text": [
-                    "Play sound",
+                    "Play audio",
                     {
-                      "value": "6895079853",
-                      "t": "id",
-                      "assetbrowser": "sound"
+                      "value": "88442833509532",
+                      "t": "string",
+                      "l": "id",
+                      "assetbrowser": "audio"
+                    },
+                    "→",
+                    {
+                      "value": "",
+                      "t": "string",
+                      "l": "variable?"
                     }
                   ]
                 },
@@ -321,14 +328,21 @@
                   ]
                 },
                 {
-                  "id": "48",
+                  "id": "5",
                   "globalid": "ac6",
                   "text": [
-                    "Play sound",
+                    "Play audio",
                     {
-                      "value": "9069609268",
-                      "t": "id",
-                      "assetbrowser": "sound"
+                      "value": "136211732441165",
+                      "t": "string",
+                      "l": "id",
+                      "assetbrowser": "audio"
+                    },
+                    "→",
+                    {
+                      "value": "",
+                      "t": "string",
+                      "l": "variable?"
                     }
                   ]
                 },
@@ -398,14 +412,21 @@
                   ]
                 },
                 {
-                  "id": "48",
+                  "id": "5",
                   "globalid": "aca",
                   "text": [
-                    "Play sound",
+                    "Play audio",
                     {
-                      "value": "6895079853",
-                      "t": "id",
-                      "assetbrowser": "sound"
+                      "value": "88442833509532",
+                      "t": "string",
+                      "l": "id",
+                      "assetbrowser": "audio"
+                    },
+                    "→",
+                    {
+                      "value": "",
+                      "t": "string",
+                      "l": "variable?"
                     }
                   ]
                 }
