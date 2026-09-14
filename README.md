@@ -26,6 +26,31 @@ If you are asked to make a site with CatWeb in the context, assume a CatWeb JSON
 
 If something isn't covered in these docs, the additional-resources repo is the next place to look.
 
+---
+
+## Developer & AI Tooling: Semantic Validator (`tools/validate.js`)
+
+Always validate your CatWeb JSON files before importing them into Roblox CatWeb or finishing an AI generation task! The built-in validator performs deep semantic checks beyond basic JSON parsing:
+
+```bash
+# Validate a single site or component snippet
+node tools/validate.js path/to/site.json
+
+# Validate an entire folder recursively
+node tools/validate.js skills/catweb/examples/
+
+# Disable anti-moderation variable warnings
+node tools/validate.js mysite.json --no-strict
+```
+
+### What it checks:
+- **Avoids fatal `[INVALIDATED]` Roblox errors:** Rejects forbidden properties like `layout_order` (must be `order`), `cell_size` (must be `size`), and `anchor_point` (must be `anchor`).
+- **Strict String Scalars:** Ensures all numbers, booleans, and nulls are strings (`"font_size": "16"`, `"visible": "true"`).
+- **Coordinate Formats:** Validates `UDim2` (`"{1,0},{0,50}"`), `UDim` radius/padding (`"0,8"`), and `anchor` (`"0.5,0.5"`).
+- **Complete Class Whitelist:** Recognizes all visual elements, button subtypes (`TextButton?*`, `ImageButton?*`), layout modifiers, and `UIFlexItem`.
+- **Script Engine Invariants:** Validates flat control flows (no nested `actions`), Wait block Action ID `3`, and exact Title Case script property names against all 89 official CatWeb properties.
+- **Global ID Uniqueness:** Enforces 2–3 printable ASCII characters (`^[\x20-\x7E]{2,3}$`) and global uniqueness across the entire file tree.
+
 ## AI / Agent Usage & Skill Package
 
 This repository provides an all-in-one **Agent Skill** (`skills/catweb/`) that encapsulates the full CatWeb specifications, hard output invariants, schema rules, and block engine definitions so any AI assistant can generate 100% valid, importable CatWeb JSON sites and scripts:

@@ -24,14 +24,14 @@ Breaking any of these rules causes immediate import rejection (`[INVALIDATED]`) 
 3. **Every scalar value is a quoted string:** Numbers, booleans, and nulls must be strings (`"font_size": "16"` or `"scaled"`, `"visible": "true"`, `"radius": "0,8"`, `"rich": "false"`). Never output raw numbers or raw booleans in properties.
 4. **No JSON comments:** `//` and `/* */` break the parser. The output must be 100% valid JSON.
 5. **Hex colors always keep `#`:** Always `"#1a1a1a"`, never `"1a1a1a"`.
-6. **`globalid` format:** 2–3 characters, strictly unique across the entire file (e.g. `"5m"`, `"db"`, `"~O"`, `"d;"`, `"sc1"`).
+6. **`globalid` format:** 2–3 characters from the printable ASCII set (`^[\x20-\x7E]{2,3}$`, e.g. `"5m"`, `"db"`, `"~O"`, `"P+"`, `"}L"`, `"W|"`), strictly unique across the entire file.
 7. **`alias` format:** Unique, lowercase descriptive identifier (`"navbar"`, `"hero_btn"`, `"counter_lbl"`). Used for readability in the editor; scripts resolve via `globalid`.
 8. **Layout order key is `"order"`:** NEVER `"layout_order"`. Writing `"layout_order"` throws a fatal `[INVALIDATED] default not found for property layout_order` import error.
 9. **Always use `sort: "LayoutOrder"`:** When using `UIListLayout` or `UIGridLayout`, use `sort: "LayoutOrder"` and assign an integer `"order"` string to children (`"1"`, `"2"`, `"3"`). Avoid `sort: "Name"`.
 10. **UI and scripts live in ONE JSON file:** Scripts are elements with `"class": "script"` inside `webcontent` (or the snippet array). Never split scripts and UI into separate files (global IDs regenerate upon separate import).
 11. **Two Separate Vocabularies:** Never confuse JSON authoring keys with Script display names:
     - **JSON Authoring Keys (snake_case):** Used directly on elements (`background_color`, `font_color`, `stroke_thickness`, `size` for grid cells, `order`).
-    - **Script Display Names (Title Case):** Used ONLY inside script action parameters (`"Background Color"`, `"Text Color"`, `"Thickness"`, `"Cell Size"`, `"Order"`, `"Text"`, `"Visible"`).
+    - **Script Display Names (Title Case):** Used ONLY inside script action parameters (`"Background Color"`, `"Text Color"`, `"Thickness"`, `"Cell Size"`, `"Order"`, `"Text"`, `"Visible"`, `"Grow Ratio"`, etc.).
 12. **Flat Control Flow in Scripts:** Control flow actions (`If` `18`, `Repeat` `22`, `Repeat forever` `23`) must **NEVER** contain a nested `actions: [...]` property. Their body consists of flat sibling actions in the event's `actions` array, terminated by `end` (`25`).
 13. **Property Action Structure (`<property>` of `<object>`):**
     Property manipulation blocks are strictly structured with the property BEFORE the object:
@@ -47,6 +47,12 @@ Breaking any of these rules causes immediate import rejection (`[INVALIDATED]`) 
     The audio action is `Play audio` with Action ID **`5`** (under the **Audio** category with the speaker icon 🔊: `["Play audio", {"value":"88442833509532","t":"string","l":"id","assetbrowser":"audio"}, "→", {"value":"","t":"string","l":"variable?"}]`).
     > [!CAUTION]
     > Action ID **`48`** is `String length` (`Get length of <string> → <variable>`) in the **Strings** category (indicated by the **`TT`** font icon). **NEVER** use ID `48` for audio/sounds! Using `48` causes CatWeb to treat the audio action as a String block.
+16. **Always Validate with the Semantic Validator Tool (MANDATORY):**
+    Whenever creating, modifying, or delivering a CatWeb JSON site or component snippet, ALWAYS run:
+    ```bash
+    node tools/validate.js <path-to-json>
+    ```
+    This tool performs deep semantic validation across all invariants, coordinates, property vocabularies, and script block structures, ensuring 0 import errors in Roblox.
 
 ---
 
@@ -132,6 +138,17 @@ Used when generating reusable components, button packs, cards, or partial UI sni
   }
 ]
 ```
+
+### Supported Element Classes
+
+CatWeb supports the following confirmed element classes:
+
+| Category | Classes |
+|---|---|
+| **Visual Containers & Controls** | `Frame`, `ScrollingFrame`, `TextLabel`, `TextButton`, `TextBox`, `ImageLabel`, `ImageButton` |
+| **Interactive Button Subtypes** | `TextButton?link`, `ImageButton?link`, `TextButton?donation`, `ImageButton?donation`, `TextButton?transfer`, `ImageButton?transfer`, `TextButton?avataritem`, `ImageButton?avataritem` |
+| **Structure & Scripts** | `Folder`, `script` |
+| **Styling & Modifiers** | `UICorner`, `UIStroke`, `UIGradient`, `UIPadding`, `UIListLayout`, `UIGridLayout`, `UIAspectRatioConstraint`, `UISizeConstraint`, `UITextSizeConstraint`, `UIFlexItem` |
 
 ### Page Layout Architecture Patterns
 
@@ -601,4 +618,8 @@ Before outputting any CatWeb JSON, verify all 13 checks:
 11. [ ] Property manipulation blocks are strictly ordered as `Set/Tween <property> of <object> to ...` (property BEFORE object, e.g. `["Set", {"value":"Text","t":"string","l":"property"}, "of", {"value":"tl","t":"object"}, "to", ...]`).
 12. [ ] `Wait <number> seconds` uses Action ID `3` (Logic category, lightbulb), NEVER Action ID `24` (Break in Loops).
 13. [ ] Audio blocks use Action ID `5` (`Play audio`) or `26` (`Play looped audio`) under the **Audio** category (speaker icon 🔊), NEVER Action ID `48` (which is `String length` in the Strings category with the `TT` icon).
+14. [ ] **Automated Semantic Validator Check (`node tools/validate.js`):** Run the validator tool before delivering or importing the JSON to ensure `PASS (0 errors)`:
+    ```bash
+    node tools/validate.js <path-to-json>
+    ```
 

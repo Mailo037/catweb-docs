@@ -33,11 +33,43 @@ const colors = {
  * ============================================================ */
 
 export const VALID_CLASSES = new Set([
+  // Visual containers & controls
   'Frame', 'ScrollingFrame', 'TextLabel', 'TextButton', 'TextBox', 'ImageLabel',
+  'ImageButton',
+  // Button Subtypes
   'TextButton?link', 'TextButton?donation', 'TextButton?transfer', 'TextButton?avataritem',
+  'ImageButton?link', 'ImageButton?donation', 'ImageButton?transfer', 'ImageButton?avataritem',
+  // Structure & Logic
   'Folder', 'script',
+  // Styling & Layout Modifiers
   'UICorner', 'UIStroke', 'UIGradient', 'UIPadding', 'UIListLayout', 'UIGridLayout',
-  'UIAspectRatioConstraint', 'UISizeConstraint', 'UITextSizeConstraint'
+  'UIAspectRatioConstraint', 'UISizeConstraint', 'UITextSizeConstraint', 'UIFlexItem'
+]);
+
+// All 89 official CatWeb Script Display Names (from editor property pickers)
+export const VALID_SCRIPT_PROPERTIES = new Set([
+  'Absolute Position', 'Absolute Rotation', 'Absolute Size',
+  'Alias', 'Anchor Point', 'Automatic Color',
+  'Background Color', 'Background Transparency', 'Bottom Padding',
+  'Canvas Position', 'Canvas Size', 'Cell Padding', 'Cell Size',
+  'Clips Descendants', 'Content Text', 'Cursor Position',
+  'Direction', 'Editable', 'Flex Mode', 'Font', 'Font Style', 'Font Weight',
+  'Grow Ratio', 'Height', 'Horizontal Alignment',
+  'Icon', 'Identifier', 'Image ID', 'Image Rect Offset', 'Image Rect Size', 'Image Transparency',
+  'Is Loaded', 'Item ID', 'Item Line Alignment',
+  'Layer', 'Left Padding', 'Line Height',
+  'List Horizontal Alignment', 'List Horizontal Flex', 'List Padding',
+  'List Vertical Alignment', 'List Vertical Flex',
+  'Max Visible Graphemes', 'Maximum Size', 'Maximum Text Size', 'Minimum Size', 'Minimum Text Size',
+  'Name', 'Offset', 'Order',
+  'Outline Color', 'Outline Thickness', 'Outline Transparency',
+  'Placeholder', 'Placeholder Color', 'Position', 'Product Type',
+  'Radius', 'Ratio', 'Reference', 'Resample Mode', 'Rich', 'Right Padding', 'Robux Amount', 'Rotation',
+  'Scale Type', 'Selection Start', 'Shrink Ratio', 'Size', 'Slice Center', 'Slice Scale', 'Sort Order',
+  'Stroke Mode', 'Stroke Offset', 'Stroke Position', 'Stroke Sizing Mode', 'Stroke Type',
+  'Text', 'Text Bounds', 'Text Color', 'Text Size', 'Text Transparency',
+  'Tile Size', 'Tint', 'Title', 'Tooltip', 'Top Padding', 'Truncate Text',
+  'Vertical Alignment', 'Visible', 'Width', 'Wrap List', 'Wrap Text'
 ]);
 
 export const VALID_VALUES = {
@@ -122,7 +154,8 @@ const FORBIDDEN_PROPERTY_MAP = {
 const UDIM2_REGEX = /^\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}\s*,\s*\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}$/;
 const UDIM_REGEX = /^(-?[\d.]+)\s*,\s*(-?[\d.]+)$/;
 const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{3,8}$/;
-const GLOBAL_ID_REGEX = /^[A-Za-z0-9_~;.-]{2,3}$/;
+// CatWeb generates 2-3 printable ASCII characters for global IDs (including symbols like +, }, &, |, \, *)
+const GLOBAL_ID_REGEX = /^[\x20-\x7E]{2,3}$/;
 
 /* ============================================================
  * CORE VALIDATOR
@@ -691,13 +724,17 @@ export function validateCatWeb(input, options = {}) {
                   const propItem = action.text.find(it => it && typeof it === 'object' && it.l === 'property');
                   if (propItem && typeof propItem.value === 'string') {
                     const val = propItem.value;
-                    const firstChar = val.charAt(0);
-                    if (firstChar !== firstChar.toUpperCase() || val.includes('_')) {
+                    if (!VALID_SCRIPT_PROPERTIES.has(val)) {
+                      const match = Array.from(VALID_SCRIPT_PROPERTIES).find(
+                        p => p.toLowerCase().replace(/\s+/g, '') === val.toLowerCase().replace(/[_\s]+/g, '')
+                      );
                       errors.push({
                         path: `${actPath}.text`,
-                        code: 'INVALID_SCRIPT_PROPERTY_CASE',
-                        message: `Script property name "${val}" must be Title Case (e.g. "Background Color", "Text", "Order"), not snake_case!`,
-                        suggestion: `Change "${val}" to Title Case equivalent.`
+                        code: 'INVALID_SCRIPT_PROPERTY',
+                        message: `Unknown or invalid script property "${val}". Script properties must match CatWeb's exact property names.`,
+                        suggestion: match
+                          ? `Did you mean "${match}"?`
+                          : `Refer to CatWeb's official property dropdown.`
                       });
                     }
                   }

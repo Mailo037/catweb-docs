@@ -481,10 +481,12 @@ const VALID_VALUES = {
 // Allowed CatWeb element classes
 const VALID_CLASSES = new Set([
   'Frame', 'ScrollingFrame', 'TextLabel', 'TextButton', 'TextBox', 'ImageLabel',
+  'ImageButton',
   'TextButton?link', 'TextButton?donation', 'TextButton?transfer', 'TextButton?avataritem',
+  'ImageButton?link', 'ImageButton?donation', 'ImageButton?transfer', 'ImageButton?avataritem',
   'Folder', 'script',
   'UICorner', 'UIStroke', 'UIGradient', 'UIPadding', 'UIListLayout', 'UIGridLayout',
-  'UIAspectRatioConstraint', 'UISizeConstraint', 'UITextSizeConstraint'
+  'UIAspectRatioConstraint', 'UISizeConstraint', 'UITextSizeConstraint', 'UIFlexItem'
 ]);
 
 function coerceEnum(key, value) {
