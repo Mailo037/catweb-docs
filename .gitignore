@@ -1,13 +1,35 @@
+# Ignore everything by default
 *
+
+# Allow repository configuration
+!.gitignore
 !README.md
+
+# Documentation and exports
 !guild/
 !guild/**
 !game/
 !game/**
+
+# Agent Skill package (standard and agent mirror)
 !skills/
 !skills/**
 !.agents/
-!.agents/**
+.agents/*
+!.agents/skills/
+!.agents/skills/**
+
+# Developer Tools & Web Runner
 !tools/
 !tools/**
+!web-runner/
+!web-runner/**
+
+# Local secrets, credentials, and full next.js recreation app
 discord.txt
+recreation/
+.env*
+*.log
+.DS_Store
+Thumbs.db
+node_modules/
