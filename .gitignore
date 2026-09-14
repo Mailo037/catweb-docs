@@ -1,35 +1,34 @@
-# Ignore everything by default
-*
+# Dependencies & Builds
+node_modules/
+dist/
+build/
+.next/
+.vercel/
+.firebase/
 
-# Allow repository configuration
-!.gitignore
-!README.md
+# Secrets, Environment & Credentials
+.env
+.env.*
+!.env.example
+discord.txt
 
-# Documentation and exports
-!guild/
-!guild/**
-!game/
-!game/**
+# Local standalone recreation project & screenshots
+recreation/
+images/
 
-# Agent Skill package (standard and agent mirror)
-!skills/
-!skills/**
-!.agents/
+# Multi-Agent teamwork scratchpads & runtime logs
 .agents/*
 !.agents/skills/
-!.agents/skills/**
+ORIGINAL_REQUEST.md
+TEST_INFRA.md
+TEST_READY.md
+PROJECT.md
+BRIEFING.md
 
-# Developer Tools & Web Runner
-!tools/
-!tools/**
-!web-runner/
-!web-runner/**
-
-# Local secrets, credentials, and full next.js recreation app
-discord.txt
-recreation/
-.env*
-*.log
+# OS & Editor files
 .DS_Store
 Thumbs.db
-node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
