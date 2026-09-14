@@ -1,4 +1,4 @@
-# CatDocs - CatWeb Complete Reference (v2.17.3.0)
+# CatDocs - CatWeb Complete Reference (v2.18.2.3)
 
 ## Table of Contents
 
@@ -16,14 +16,15 @@
 
 ## Introduction
 
-**CatWeb** is a Roblox game where players can create 2D websites using JSON-based UI and a visual block-based scripting system. The user interface is claimed by the owner to visually represent Chrome.
+**CatWeb** is a Roblox game where players can create 2D websites using JSON-based UI and a visual block-based scripting system. The user interface visually represents a web browser environment.
 
-**Current Version:** v2.17.3.0 
+**Current Version:** v2.18.2.3 
 **TLD:** `.rbx` (CatWeb-specific, not real internet)
 
 ### Cross-References
-- **UI JSON Structure:** See CatWeb UI JSON Spec
-- **Script JSON Format:** See json-rulings.md (pairs with this document)
+- **UI JSON Structure:** See [UIGPT.md](UIGPT.md)
+- **Script JSON Format & Authoritative Blocks:** See [JSONScript.md](JSONScript.md)
+- **Assets, Icons, Sounds & Patterns:** See [Assets.md](Assets.md)
 
 ---
 
@@ -1214,8 +1215,9 @@ When generating scripts, use emoji formatting for clarity.
 
 ## Cross-References
 
-- **UI JSON Structure:** CatWeb UI JSON Spec - Complete element and styling reference
-- **Script JSON Format:** json-rulings.md - Pairs with this document for JSON generation
+- **UI JSON Structure:** [UIGPT.md](UIGPT.md) - Complete element and styling reference
+- **Script JSON Format:** [JSONScript.md](JSONScript.md) - Authoritative block shapes and rules
+- **Assets, Icons & Patterns:** [Assets.md](Assets.md) - Verified icons, sounds, component templates, and string decoder
 - **Roblox Resources:** 
   - [AudioPlayer Properties](https://create.roblox.com/docs/reference/engine/classes/AudioPlayer#properties)
   - [DateTime Formatting](https://create.roblox.com/docs/reference/engine/datatypes/DateTime)
@@ -1224,33 +1226,40 @@ When generating scripts, use emoji formatting for clarity.
 
 ## Version History
 
-**v2.17.3.0:** `<-- Newest`
-- Added Donation element as well as an Avatar Item element
-- Legacy Donation element got deprecated: Legacy Donation element. If you currently sell passes or developer products within your website, make sure to migrate to the Donation or Avatar Item element before May 29th.
+**v2.18.2.3:** `<-- Newest`
+- Changed the "Set property" action behaviors and stability.
+- Improvements to Script Compilation performance and reliability.
+- Fixes for donation handling and UI color settings.
+
+**v2.18.0.0 – v2.18.2.0:**
+- **Script Compilation Full Release:** Scripts are compiled for optimized execution without legacy action limit throttling.
+- Cross-site table broadcasts supported.
+- Analytics portal enhancements.
+
+**v2.17.3.0:**
+- Added Donation element as well as an Avatar Item element.
+- Legacy Donation element deprecated.
 
 **v2.17.2.0:**
-- Object Scope Functions: `o!<functionName>`
-- Milestone Badges: Earn Milestone Badges for every year youre on CatWeb
-- Script Search & Jump to Error
-- Uploads: Easily share elements, or an page with a 6 character code, instantly without tags.
-- Ads Portal & Discover Ads
+- Object Scope Functions: `o!<functionName>`.
+- Milestone Badges: Earn Milestone Badges for every year you're on CatWeb.
+- Script Search & Jump to Error.
+- Uploads: Easily share elements or a page with a 6-character code without filter tags.
+- Ads Portal & Discover Ads.
 
 ---
 
 ## Final Notes
 
 **For AI Assistants:**
-- Use this document as primary CatWeb reference
-- Pair with json-rulings.md for JSON generation
-- UI JSON Spec provides element structure details
-- Never assume features not documented here
-- Ask for clarification on ambiguous requests
-- Inform users of gamepass requirements
-- Remind users to link object references
-- Keep UI + scripts in single JSON
+- Use this document as the primary CatWeb conceptual reference.
+- Pair with [JSONScript.md](JSONScript.md) for valid script JSON generation.
+- Consult [UIGPT.md](UIGPT.md) for UI element schemas.
+- Use [Assets.md](Assets.md) for valid icon asset IDs and sound IDs.
+- Keep UI + scripts in a single JSON file.
 
 **For Users:**
-- This is the complete CatWeb scripting reference
-- Check Tips & Tricks for advanced techniques
-- Report outdated information to developers
-- Join community for support and examples
+- This is the complete CatWeb scripting reference.
+- Check Tips & Tricks for advanced techniques.
+- Report outdated information to developers.
+- Join the community for support and examples.

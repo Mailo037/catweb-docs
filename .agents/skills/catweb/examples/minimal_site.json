@@ -1,0 +1,320 @@
+{
+  "favicon": "16944769468",
+  "title": "Minimal CatWeb Site",
+  "background": "#0f0f11",
+  "thumbnail_id": "16944769468",
+  "thumbnail": "rbxassetid://16944769468",
+  "webcontent": [
+    {
+      "class": "Frame",
+      "globalid": "rt",
+      "alias": "root",
+      "size": "{1,0},{1,0}",
+      "position": "{0,0},{0,0}",
+      "background_color": "#0f0f11",
+      "background_transparency": "0",
+      "children": [
+        {
+          "class": "Frame",
+          "globalid": "nb",
+          "alias": "navbar",
+          "size": "{1,0},{0,56}",
+          "position": "{0,0},{0,0}",
+          "z_index": "10",
+          "background_color": "#18181b",
+          "background_transparency": "0",
+          "children": [
+            {
+              "class": "UIStroke",
+              "globalid": "ns",
+              "stroke_color": "#27272a",
+              "stroke_thickness": "1",
+              "stroke_transparency": "0"
+            },
+            {
+              "class": "UIPadding",
+              "globalid": "np",
+              "top": "0,12",
+              "bottom": "0,12",
+              "left": "0,24",
+              "right": "0,24"
+            },
+            {
+              "class": "TextLabel",
+              "globalid": "nl",
+              "alias": "navbar_brand",
+              "size": "{0,200},{1,0}",
+              "position": "{0,0},{0,0}",
+              "text": "CatWeb Minimal",
+              "font": "GothamBold",
+              "font_size": "18",
+              "font_color": "#ffffff",
+              "align_x": "Left",
+              "align_y": "Center",
+              "background_transparency": "1"
+            },
+            {
+              "class": "TextButton?link",
+              "globalid": "lk",
+              "alias": "docs_link",
+              "size": "auto",
+              "position": "{1,0},{0.5,0}",
+              "anchor": "1,0.5",
+              "text": "Documentation",
+              "font": "Gotham",
+              "font_size": "14",
+              "font_color": "#60a5fa",
+              "href": "docs.rbx",
+              "new_tab": "false",
+              "background_transparency": "1",
+              "children": [
+                {
+                  "class": "UIPadding",
+                  "globalid": "lp",
+                  "top": "0,6",
+                  "bottom": "0,6",
+                  "left": "0,12",
+                  "right": "0,12"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "class": "ScrollingFrame",
+          "globalid": "sf",
+          "alias": "body_scroller",
+          "size": "{1,0},{1,-56}",
+          "position": "{0,0},{0,56}",
+          "canvassize": "auto_y",
+          "scrollbar_thickness": "6",
+          "scrollbar_color": "#3f3f46",
+          "scrollbar_transparency": "0",
+          "background_transparency": "1",
+          "children": [
+            {
+              "class": "Frame",
+              "globalid": "pc",
+              "alias": "page_container",
+              "size": "auto_y",
+              "width": "{1,0}",
+              "position": "{0,0},{0,0}",
+              "background_transparency": "1",
+              "children": [
+                {
+                  "class": "UIPadding",
+                  "globalid": "pp",
+                  "top": "0,32",
+                  "bottom": "0,40",
+                  "left": "0,32",
+                  "right": "0,32"
+                },
+                {
+                  "class": "UIListLayout",
+                  "globalid": "pl",
+                  "direction": "Vertical",
+                  "padding": "0,24",
+                  "sort": "LayoutOrder",
+                  "alignment_horizontal": "Center",
+                  "alignment_vertical": "Top"
+                },
+                {
+                  "class": "Frame",
+                  "globalid": "h1",
+                  "alias": "hero_section",
+                  "size": "auto_y",
+                  "width": "{1,0}",
+                  "order": "1",
+                  "background_color": "#18181b",
+                  "background_transparency": "0",
+                  "children": [
+                    {
+                      "class": "UICorner",
+                      "globalid": "hc",
+                      "radius": "0,12"
+                    },
+                    {
+                      "class": "UIStroke",
+                      "globalid": "hs",
+                      "stroke_color": "#27272a",
+                      "stroke_thickness": "1",
+                      "stroke_transparency": "0"
+                    },
+                    {
+                      "class": "UIPadding",
+                      "globalid": "hp",
+                      "top": "0,28",
+                      "bottom": "0,28",
+                      "left": "0,28",
+                      "right": "0,28"
+                    },
+                    {
+                      "class": "UIListLayout",
+                      "globalid": "hl",
+                      "direction": "Vertical",
+                      "padding": "0,12",
+                      "sort": "LayoutOrder",
+                      "alignment_horizontal": "Left",
+                      "alignment_vertical": "Top"
+                    },
+                    {
+                      "class": "TextLabel",
+                      "globalid": "ht",
+                      "alias": "hero_title",
+                      "size": "{1,0},{0,32}",
+                      "order": "1",
+                      "text": "Welcome to CatWeb",
+                      "font": "GothamBold",
+                      "font_size": "26",
+                      "font_color": "#ffffff",
+                      "align_x": "Left",
+                      "align_y": "Center",
+                      "background_transparency": "1"
+                    },
+                    {
+                      "class": "TextLabel",
+                      "globalid": "hd",
+                      "alias": "hero_desc",
+                      "size": "{1,0},{0,40}",
+                      "order": "2",
+                      "text": "A clean, modern starter template following the sticky navbar and scrolling body architecture.",
+                      "font": "SourceSans",
+                      "font_size": "15",
+                      "font_color": "#a1a1aa",
+                      "align_x": "Left",
+                      "align_y": "Top",
+                      "wrap": "true",
+                      "background_transparency": "1"
+                    },
+                    {
+                      "class": "TextButton",
+                      "globalid": "hb",
+                      "alias": "hero_cta_btn",
+                      "size": "auto",
+                      "order": "3",
+                      "text": "Get Started",
+                      "font": "GothamBold",
+                      "font_size": "14",
+                      "font_color": "#ffffff",
+                      "background_color": "#2563eb",
+                      "auto_color": "true",
+                      "children": [
+                        {
+                          "class": "UICorner",
+                          "globalid": "hbc",
+                          "radius": "0,8"
+                        },
+                        {
+                          "class": "UIPadding",
+                          "globalid": "hbp",
+                          "top": "0,10",
+                          "bottom": "0,10",
+                          "left": "0,20",
+                          "right": "0,20"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "class": "Frame",
+                  "globalid": "f1",
+                  "alias": "feature_card",
+                  "size": "auto_y",
+                  "width": "{1,0}",
+                  "order": "2",
+                  "background_color": "#18181b",
+                  "background_transparency": "0",
+                  "children": [
+                    {
+                      "class": "UICorner",
+                      "globalid": "fc",
+                      "radius": "0,12"
+                    },
+                    {
+                      "class": "UIStroke",
+                      "globalid": "fs",
+                      "stroke_color": "#27272a",
+                      "stroke_thickness": "1",
+                      "stroke_transparency": "0"
+                    },
+                    {
+                      "class": "UIPadding",
+                      "globalid": "fp",
+                      "top": "0,24",
+                      "bottom": "0,24",
+                      "left": "0,28",
+                      "right": "0,28"
+                    },
+                    {
+                      "class": "UIListLayout",
+                      "globalid": "fl",
+                      "direction": "Vertical",
+                      "padding": "0,8",
+                      "sort": "LayoutOrder",
+                      "alignment_horizontal": "Left",
+                      "alignment_vertical": "Top"
+                    },
+                    {
+                      "class": "TextLabel",
+                      "globalid": "ft",
+                      "alias": "feature_title",
+                      "size": "{1,0},{0,26}",
+                      "order": "1",
+                      "text": "Production-Ready Architecture",
+                      "font": "GothamBold",
+                      "font_size": "18",
+                      "font_color": "#f4f4f5",
+                      "align_x": "Left",
+                      "align_y": "Center",
+                      "background_transparency": "1"
+                    },
+                    {
+                      "class": "TextLabel",
+                      "globalid": "fd",
+                      "alias": "feature_desc",
+                      "size": "{1,0},{0,36}",
+                      "order": "2",
+                      "text": "Every scalar value is a quoted string, layout order uses 'order', and colors keep leading #.",
+                      "font": "SourceSans",
+                      "font_size": "14",
+                      "font_color": "#a1a1aa",
+                      "align_x": "Left",
+                      "align_y": "Top",
+                      "wrap": "true",
+                      "background_transparency": "1"
+                    }
+                  ]
+                },
+                {
+                  "class": "Frame",
+                  "globalid": "ftr",
+                  "alias": "footer_section",
+                  "size": "{1,0},{0,48}",
+                  "order": "3",
+                  "background_transparency": "1",
+                  "children": [
+                    {
+                      "class": "TextLabel",
+                      "globalid": "ftl",
+                      "alias": "footer_text",
+                      "size": "{1,0},{1,0}",
+                      "position": "{0,0},{0,0}",
+                      "text": "© 2026 CatWeb. Built with CatWeb Development Skill.",
+                      "font": "SourceSans",
+                      "font_size": "13",
+                      "font_color": "#71717a",
+                      "align_x": "Center",
+                      "align_y": "Center",
+                      "background_transparency": "1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -950,3 +950,108 @@ https://cdn.discordapp.com/attachments/1227278934278934558/1503811500907954316/T
 
 {Reactions}
 great (42)
+
+
+[23.05.2026 17:17] humancat222
+<@&1248733400676962375>
+
+2 weeks ago, Script Compilation was announced. While we’ve tried to match legacy behavior as closely as possible, the nature of how this system works makes breaking changes inevitable.
+
+We’ve worked hard to ensure the vast majority of sites are unaffected, but you can learn all about the upcoming changes, check if you need to take action, and find more details on how Script Compilation works here: <https://docs.google.com/document/d/e/2PACX-1vQZwuxt0G0euyx4n6Alnp5nzcJf6-dRTxhHEpVg1CMsx2HuFujNV1cg4K_ZPtdYbSi_iK4dEIrTP7ec/pub>
+
+For those interested in trying Script Compilation at launch, stay tuned for the early access form soon!
+
+
+[02.06.2026 19:00] humancat222
+<@&1248733400676962375>
+# Script Compilation 
+Apply [here](https://forms.gle/5BLcMZtLQQGiMncM8) to join the early beta for Script Compilation. If accepted, at launch, all sites you visit will be compiled and ran using Script Compilation.
+
+{Embed}
+https://forms.gle/5BLcMZtLQQGiMncM8
+Script Compilation Public Beta Opt-In
+Opt-in to the public beta of Script Compilation
+https://lh3.googleusercontent.com/MqA1FRmIufhMcevRQdLGvxD9XIjIMg46dSyOcnOLZUkpqqf6XepDSoeR8Aw9PLe0t_UndjHXlAANJ-w=w1200-h630-p
+
+{Reactions}
+🔥 (37) why_would_you_do_that (5) cat_yipee (5) developer (4)
+
+
+[03.06.2026 12:47] humancat222
+❗ We are aware of issues currently making CatWeb inaccessible and working to resolve them as soon as possible. In the meantime, you can try out Everturn Sandbox:
+- <https://www.roblox.com/games/16557792215/Everturn-Sandbox-Public-Beta>
+- https://discord.gg/Ef2SMs3khs
+
+
+[04.06.2026 15:21] humancat222
+<@&1248733400676962375> 
+
+Hello, everyone! As you may or may not have noticed, CatWeb is now back and playable.
+
+## What happened to CatWeb?
+> The game was falsely flagged and removed by Roblox's automated moderation systems.
+
+## What now?
+> The situation has been solved and you can join CatWeb again, without any additional changes: <https://www.roblox.com/games/16855862021/CatWeb-Make-a-Website>
+
+Stay tuned for news about the upcoming update coming soon!
+
+
+[28.06.2026 16:00] humancat222
+<@&1248733400676962375> 
+## 🌕 CATWEB COMPILATION UPDATE
+
+- 💠 **We’re introducing Script Compilation,** a new system that turns scripts into a faster format before they run instead of executing raw code directly. The rollout will start tomorrow, starting with those who applied for early access.
+
+- 🖱️ Easily add interactable images with the new Image Button and Image Link elements.
+
+- ↔️ Expand the Editor preview and test across pages without ever publishing.
+
+- 📱 Create responsive layouts with the new flex properties, which allow you to customize how extra space is shared between elements.
+
+View the full list of changes **in-game** or in <#1226576814613467156>
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1227278934278934558/1520821083799027873/CompilationUpdateThumb.png?ex=6aa96b81&is=6aa81a01&hm=34e082dd3080c94c7ce96a27cd65eb7a8ea10102ce0d930b9075b6261e2b5440&
+
+{Reactions}
+🔥 (57) 💠 (34) Tongue (34) 😱 (33) developer (10) Go (36) ⏩ (9)
+
+
+[29.06.2026 15:52] humancat222
+The initial rollout of Script Compilation has begun. If you have applied for early beta access, and have been accepted, you should now have access to the feature.
+
+All Script Compilation related bugs can be reported in <#1226226089047756931> with the new 🔵 **Script Compilation** tag.
+
+
+[07.07.2026 13:17] humancat222
+The general rollout of Script Compilation has begun.
+
+Please continue reporting any Script Compilation related bugs in <#1226226089047756931> with the 🔵 **Script Compilation** tag!
+
+
+[08.07.2026 09:51] humancat222
+<@&1248733400676962375> 
+## CatWeb Localization Survey
+
+If you use CatWeb in a language other than English, we'd love to hear your feedback on the quality of the localization, your thoughts on our recent improvements, and how we can make CatWeb Localization even better for everyone.
+
+Help us improve CatWeb Localization by completing the survey here: https://forms.gle/UEXyHDgixzKCyKGN6
+
+{Embed}
+https://forms.gle/UEXyHDgixzKCyKGN6
+CatWeb Localization Feedback Survey
+If you use CatWeb in a language other than English, we'd love to hear your feedback on the quality of the localization, your thoughts on our recent improvements, and how we can make CatWeb Localization even better for everyone.
+https://lh5.googleusercontent.com/ufJrm2Sm5KZU7-zumTxRaWfHrJ-ZgdSZvmk2Y9mUvQn4zoqBQVMLCe7vBtsyXo64JwQGmSwD0KJ5nJc=w1200-h630-p
+
+
+[21.07.2026 16:00] humancat222
+<@&1248733400676962375> 
+# Script Compilation Full Release
+Our latest script system, Script Compilation, has been fully released! You can now publish your Script Compilation projects for everyone to use.
+
+We will follow up soon with more improvements only possible with this system such as increases in the runtime object limit.
+
+The 🔵 **Script Compilation** tag has been removed from the <#1226226089047756931> forum, so all Script Compilation exclusive issues should now be sent as a normal bug report.
+
+-# We also have a thread for you to send your Script Compilation projects! https://discord.com/channels/1226224104370208860/1525243051478487060

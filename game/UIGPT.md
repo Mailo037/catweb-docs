@@ -1,629 +1,163 @@
-# CatWeb UI JSON Specification (v2.17.3.0)
+# CatWeb UI JSON Specification (v2.18.2.3)
 
 ## Overview
 
-CatWeb is a Roblox game where players can create 2D websites using JSON-based UI and a visual block-based scripting system. The user interface is claimed by the owner to visually represent Chrome.
+CatWeb is a Roblox game where players build 2D websites using JSON-based UI and a visual block-based scripting system. The user interface visually represents a web browser environment.
 
-**Current Version:** v2.17.3.0  
-**TLD:** `.rbx` (CatWeb-specific, not real internet TLD)
-
----
-
-**Important when setting `strings`:**
-- Roblox moderates each string you set, be it a `text`, `placeholder`, `aliases`, `variable` or generally any content visible to users including strings in scripts, when a string gets tagged it will be replaced with `#`'s.
-- This can not be avoid this. If this happens, consider using numbers for variable names.
-- There is one work around, which is using the `concatenate` in a script when the `site loads` and then `setting` the `object's property` to that `value`.
-Here is an example JSON for that:
-```json
-[
-  {
-    "class": "script",
-    "globalid": "string-setter",
-    "content": [
-      {
-        "id": "0",
-        "globalid": "main-event",
-        "x": "0",
-        "y": "0",
-        "text": ["When website loaded..."],
-        "width": "350",
-        "actions": [
-          {
-            "id": "109",
-            "globalid": "concatenate1",
-            "text": [
-              "Concatenate",
-              { "t": "string", "value": "string 1" },
-              "with",
-              { "t": "string", "value": "string 2" },
-              "→",
-              { "t": "string", "l": "variable", "value": "end string" }
-            ]
-          },
-          {
-            "id": "31",
-            "globalid": "setting-property-of-object",
-            "text": [
-              "Set",
-              { "t": "string", "l": "property", "value": "property" },
-              "of",
-              { "t": "object", "value":"the-globalID-of-the-object-you-want-to-change-the-property-of", },
-              "to",
-              { "t": "any", "value": "{end string}" }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-]
-```
-
-- You can also duplicate the concatenate to stitch multiple strings into one larger string, just make sure that `string 1` matches the previous `end string`
-- If you want to use this across multiple objects, do NOT create a separate script for each one that only adds unnecessary object count, just duplicate the event
+- **Current Version:** v2.18.2.3  
+- **TLD:** `.rbx` (CatWeb-specific, not real internet TLD)
 
 ---
 
-## Quick Start
+## Output Contract & Hard Invariants
 
-### Basic Page Structure
-
-```json
-[
-  {
-    "class": "Frame",
-    "globalid": "root_frame",
-    "size": "{1,0},{1,0}",
-    "background_color": "#1a1a1a",
-    "children": [
-      // All your UI elements go here
-    ]
-  }
-]
-```
-
-**Critical Rules:**
-- Root must be a JSON array
-- Only ONE root element per page (typically a Frame)
-- All other elements nest inside `children`
-- **NEVER add comments to JSON** - they break parsing
+1. **Top-level full site is a JSON object:** Contains `favicon`, `title`, `background`, and `webcontent` (array containing the root visual element).
+2. **Every scalar value is a quoted string:** No raw numbers, booleans, or nulls (`"font_size": "16"`, `"visible": "true"`, never raw numbers or booleans).
+3. **No comments in JSON:** `//` or `/* */` break the importer completely. All JSON must be strictly valid.
+4. **Hex colors keep `#`:** Always `"#1a1a1a"`, never `"1a1a1a"`.
+5. **`globalid` format:** Exactly 2–3 alphanumeric characters (`[A-Za-z0-9]{2,3}`), strictly unique across the whole file. No spaces, quotes, or punctuation.
+6. **`alias` format:** Unique across the file, lowercase descriptive label (e.g. `navbar`, `hero_btn`, `statcard1`). Used in editor only; scripts resolve by `globalid`.
+7. **Layout order key is `"order"`:** Never `"layout_order"`. Using `"layout_order"` throws a fatal `[INVALIDATED] default not found for property layout_order` import error.
+8. **Always use `sort: "LayoutOrder"`:** When using `UIListLayout` or `UIGridLayout`, use `sort: "LayoutOrder"` and assign an integer `"order"` string to children. Avoid `sort: "Name"`.
+9. **UI and scripts live in ONE file:** Scripts are elements with `"class": "script"` inside `webcontent`. Never split into separate files (globalids regenerate on import).
+10. **Two separate vocabularies:** Never confuse JSON authoring keys (snake_case) with Script display names (Title Case).
 
 ---
 
-## Core Concepts
+## 1. Two Separate Vocabularies (CRITICAL)
 
-### IDs & References
+CatWeb has two independent naming systems that describe properties:
 
-**globalid** (required)
-- Internal unique identifier
-- Used by scripts for object references (NOT alias)
-- Can be any string (letters/numbers/symbols)
-- **IMPORTANT:** When JSON is imported, globalids are regenerated
-  - Always keep UI + scripts in ONE JSON file
-  - Scripts reference objects via globalid internally
+| Context | Style | Examples | Where Used |
+|---|---|---|---|
+| **JSON Authoring Keys** | snake_case | `background_color`, `font_color`, `stroke_thickness`, `size` (for grid cell size), `order` | Written directly on elements in `webcontent` |
+| **Script Display Names** | Title Case | `Background Color`, `Text Color`, `Thickness`, `Cell Size`, `Order` | Used ONLY inside script action parameters (Get / Set / Tween) |
 
-**alias** (optional)
-- Human-readable name shown in explorer
-- Safe to rename without breaking functionality
-- Not used by scripts
+> [!WARNING]
+> **NEVER derive one from the other:**
+> - Writing `"cell_size"` in a `UIGridLayout` JSON throws fatal `[INVALIDATED] default not found for property cell_size` (the JSON key is `"size"`).
+> - Writing `"layout_order"` in a child element throws fatal `[INVALIDATED] default not found for property layout_order` (the JSON key is `"order"`).
+> - Writing `"background_color"` inside a script Set Property block fails at runtime (the script property name is `"Background Color"`).
 
+---
 
-### UDim2 Format
+## 2. Top-Level File Structure
 
-All position/size properties: `"{scaleX,offsetX},{scaleY,offsetY}"`
-
-- **scale**: 0-1 (percentage of parent) - `0.5` = 50%
-- **offset**: pixels - `20` = 20 pixels
-
-**Examples:**
-```
-"{0.5,0},{0.5,0}"    - centered, 50% width/height
-"{1,0},{1,0}"        - fills entire parent
-"{0.9,-10},{0.8,20}" - 90% width - 10px, 80% height + 20px
-```
-
-**Best Practice:** Use scale for responsiveness, offset for fine-tuning
-
-### Auto-Sizing
-
-Dynamic sizing modes:
-- `"auto"` - Both width and height fit content
-- `"auto_x"` - Width fits content, height uses scale/offset
-- `"auto_y"` - Height fits content, width uses scale/offset
+When exporting or importing a full website, the root is a JSON **object**:
 
 ```json
 {
-  "class": "TextLabel",
-  "size": "auto_x",
-  "height": "0, 32",
-  "text": "Dynamic Width Label"
+  "favicon": "16944769468",
+  "title": "My Website",
+  "background": "#0f0f11",
+  "webcontent": [
+    {
+      "class": "Frame",
+      "globalid": "rt",
+      "alias": "root",
+      "size": "{1,0},{1,0}",
+      "position": "{0,0},{0,0}",
+      "background_color": "#0f0f11",
+      "children": []
+    }
+  ],
+  "thumbnail_id": "16944769468",
+  "thumbnail": "rbxassetid://16944769468"
 }
 ```
 
-### Alternative Size Properties
+| Key | Required | Description |
+|---|---|---|
+| `favicon` | Yes | Numeric Roblox asset ID (no prefix) |
+| `title` | Yes | Page title shown in the tab |
+| `background` | Yes | Fallback hex background color |
+| `webcontent` | Yes | Array containing exactly **one** root element (Frame or ScrollingFrame) |
+| `thumbnail_id` | No | Numeric asset ID for page thumbnail |
+| `thumbnail` | No | Full `rbxassetid://` URI for page thumbnail |
 
-```json
-{
-  "width": "0, 150",   // UDim format
-  "height": "0, 32"    // UDim format
-}
-```
-
-### Color Format
-
-- Hex with/without `#`: `"#ff0000"` or `"ff0000"`
-- RGB auto-converts: `"255,0,0"` → `"#ff0000"`
-
-### Transparency
-
-String from `"0"` (opaque) to `"1"` (invisible)
+> [!NOTE]
+> Scripts are placed inside `webcontent` as elements with `"class": "script"`, typically nested under the root Frame or a designated logic container. A top-level root `"script"` key throws `[INVALIDATED] invalid property script`.
 
 ---
 
-## Required Properties
+## 3. Page Root Architecture
 
-Every element must have:
+### Pattern A: Sites with Sticky Navbar (Recommended)
+The root element is a non-scrolling `Frame` (`size: "{1,0},{1,0}"`). The navbar and body scroller are **siblings**:
+
+```
+Root Frame {1,0},{1,0} (non-scrolling)
+  ├── Navbar Frame {1,0},{0,56} (z_index: "10", stays fixed at top)
+  └── Body ScrollingFrame {1,0},{1,-56} (position: "{0,0},{0,56}", canvassize: "auto_y")
+       └── Page Container Frame (size: "auto_y", width: "{1,0}", UIListLayout Vertical)
+            ├── Hero Section
+            ├── Features Section
+            └── Footer
+```
+
+> [!CAUTION]
+> **Never nest the `ScrollingFrame` inside the navbar `Frame`!** If nested, content will be clipped to the navbar's 56px height.
+
+### Pattern B: Simple Single Scroller
+For sites without a sticky navbar, use one `ScrollingFrame` as the root element with `canvassize: "auto_y"`.
+
+---
+
+## 4. Layout & Positioning Fundamentals
+
+### 4.1 UDim2 Format
+Position and Size use the UDim2 string format: `"{xScale,xOffset},{yScale,yOffset}"`
+- **Scale (0–1):** Percentage of parent container (`1` = 100%, `0.5` = 50%).
+- **Offset (pixels):** Exact pixel values added to scale (`0, 56` = 56px).
+
+Single-axis UDim (used by `radius`, `padding`, `width`, `height`): `"scale,offset"` (e.g. `"0,16"` = 16px, `"1,0"` = 100%).
+
+### 4.2 Auto-Sizing
+| Sizing Value | Behavior | Common Use Cases |
+|---|---|---|
+| `"auto"` | Both axes adjust to fit content | Buttons, badges, chips, tags |
+| `"auto_y"` + `"width": "{1,0}"` | Height expands with content, width fixed | Sections, cards, stacked lists |
+| `"auto_x"` + `"height": "{0,32}"` | Width expands with content, height fixed | Pill tags, tab buttons |
+
+### 4.3 Centering Fixed-Width Blocks
+CatWeb does **not** have an auto-center property. A fixed-width container inside a full-width parent will hug the left edge by default.
+To center horizontally:
+- Set `position` x to `0.5`: `"position": "{0.5,0},{yScale,yOffset}"`
+- Set `anchor` x to `0.5`: `"anchor": "0.5,0"` (or `"0.5,0.5"` for full center)
+
+### 4.4 Canonical Inset & Padding Pattern
+**Never** fake padding by offsetting `position` and shrinking `size`. Always attach a `UIPadding` child to the container, and allow the child element to fill (`size: "{1,0},{1,0}"`):
 
 ```json
 {
   "class": "Frame",
-  "globalid": "unique_id",
-  "size": "{1,0},{1,0}",
-  "children": []
-}
-```
-
----
-
-## Common Properties
-
-Apply to most visual elements (Frame, ScrollingFrame, TextLabel, TextButton, TextBox, ImageLabel, etc.):
-
-```json
-{
-  "alias": "MyElement",
+  "globalid": "bx",
+  "alias": "card_box",
+  "size": "{1,0},{0,80}",
   "position": "{0,0},{0,0}",
-  "anchor": "0.5,0.5",           // 0-1, "0.5,0.5" = center
-  "background_color": "#ffffff",
-  "background_transparency": "0",
-  "visible": "true",
-  "rotation": "45",              // degrees (string)
-  "z_index": "1",                // layer order (higher = on top)
-  "order": "1",                  // layout/rendering order
-  "canvas": "true",              // canvas rendering mode
-  "width": "0, 150",             // explicit width override
-  "height": "0, 32"              // explicit height override
-}
-```
-
-**Anchor Point Guide:**
-- `"0,0"` = top-left
-- `"0.5,0.5"` = center
-- `"1,1"` = bottom-right
-
----
-
-## Element Classes
-
-### Frame
-Basic container with only common properties.
-
-```json
-{
-  "class": "Frame",
-  "globalid": "container",
-  "size": "{0.5,0},{0.5,0}",
-  "background_color": "#2a2a2a",
-  "children": []
-}
-```
-
----
-
-### ScrollingFrame
-Scrollable container.
-
-```json
-{
-  "class": "ScrollingFrame",
-  "globalid": "scroll",
-  "canvassize": "{0,0},{2,0}",      // content size (can exceed frame)
-  "scrollbar_thickness": "12",
-  "scrollbar_color": "#4a4a4a",
-  "scrollbar_transparency": "0"
-}
-```
-
-**Tip when using objects inside a scrolling frame:**
-- If you use the `pixel-based` sizing system, set the scrolling frame `canvas` to `auto_y` for it to `automaticly scale` to the right size. This will not work with `scale-based` sizing!
-
----
-
-### TextLabel
-Non-interactive text display.
-
-```json
-{
-  "class": "TextLabel",
-  "globalid": "label",
-  "text": "Hello World",
-  "font": "GothamBold",             // Gotham, GothamBold, SourceSans, Roboto or any font ID from the [Roblox Creator Store](https://create.roblox.com/store/fonts)
-  "font_size": "scaled",            // "scaled" or number between 0-100
-  "font_color": "#ffffff",
-  "font_weight": "Medium",          // Regular, Medium, Bold
-  "font_style": "Normal",           // Normal, Italic
-  "font_transparency": "0",
-  "align_x": "Center",              // Left, Center, Right
-  "align_y": "Center",              // Top, Center, Bottom
-  "line_height": "1",               // spacing multiplier ("1.5")
-  "rich": "false",                  // rich text formatting
-  "wrap": "true",                   // text wrapping
-  "truncate": "AtEnd"               // AtEnd, None, SplitWord
-}
-```
-
-**Rendering Limits:**
-- Display: ~16,000-32,000 characters (exceeding = TEXT_OVERLOAD)
-- Total: 200,000 characters max
-
----
-
-### TextButton
-Clickable button with text. Same as TextLabel plus.
-
-```json
-{
-  "class": "TextButton",
-  "auto_color": "true"  // automatic hover color change
-}
-```
-
----
-
-### TextBox
-User input field. Same as TextLabel plus.
-
-```json
-{
-  "class": "TextBox",
-  "placeholder": "Enter text...",
-  "placeholder_color": "#888888",
-  "editable": "true",
-  "multiline": "false"
-}
-```
-
----
-
-### ImageLabel
-Displays images.
-
-```json
-{
-  "class": "ImageLabel",
-  "globalid": "img",
-  "image_id": "16944769468",        // Roblox asset ID (numbers only)
-  "image": "rbxassetid://16944769468",
-  "image_transparency": "0",
-  "image_color": "#ffffff",         // tint color
-  "resample_mode": "Default",
-  "scale_type": "Stretch"           // Crop, Fit, Slice, Stretch, Tile
-}
-```
-
-**9-Slice Scaling:**
-
-```json
-{
-  "scale_type": "Slice",
-  "slice_center": "128, 128, 128, 128"  // left, top, right, bottom (pixels)
-}
-```
-
-**Note:** Use `✨ Set image` action in scripts for automatic high-res loading
-
----
-
-### TextButton?link
-Button that opens URLs.
-
-```json
-{
-  "class": "TextButton?link",
-  "href": "example.rbx",
-  "new_tab": "false"
-}
-```
-
----
-
-### TextButton?donation
-Button prompting Roblox purchases.
-
-```json
-{
-  "class": "TextButton?donation",
-  "product": "1506394485",
-  "product_type": "GamePass",       // GamePass, Asset, Product
-  "thanks_href": ""                 // optional redirect after purchase
-}
-```
-
-**Note:**
-- This element has been archived due to an roblox update, through which users can no longer sell their gamepass and Dev-Products anywhere except in their own game
-- This Element has been replaced by the new `TextButton?transfer` and `TextButton?avataritem` elements
-
-
-### TextButton?transfer
-Button prompting Roblox transfer.
-
-```json
-{
-  "class":"TextButton?transfer",
-  "robux_amount":"60",              // number value, any amount of robux
-  "transfer_id":"1"                 // Used to help differenciate transfers from different sources. Must be a number and is only useful if you handle donations through a script.
-}
-```
-
-### TextButton?avataritem
-Button prompting Roblox avatar item purchase.
-
-```json
-{
-  "class":"TextButton?avataritem",
-  "product":"0"                     // This can be the Item ID of a Shirt, T-Shirt, Pants, Accessory, Head, Emote, or any other type of avatar item.
-}
-```
-
----
-
-### Folder
-Invisible organizational container (not rendered).
-
-```json
-{
-  "class": "Folder",
-  "globalid": "components",
-  "children": []
-}
-```
-
----
-
-### script
-Contains CatWeb scripting logic. See CatDocs for full scripting specification.
-
-```json
-{
-  "class": "script",
-  "alias": "MyScript",
-  "globalid": "script_1",
-  "enabled": "true",
-  "content": [
-    // Event objects with actions (see CatDocs)
-  ]
-}
-```
-
-**Script Object References:**
-- Scripts reference objects via **globalid** (not alias)
-- Use `(parent)` to reference script's parent element
-- Recommended: Use `(parent)` over hardcoded globalids when possible
-
----
-
-## Styling Elements
-
-**CRITICAL:** Styling elements must be children of visual elements.
-
-### UICorner
-Rounds corners.
-
-```json
-{
-  "class": "UICorner",
-  "globalid": "corner",
-  "radius": "0.1,0"  // "1,0" = circle, "0,12" = 12px radius
-}
-```
-
----
-
-### UIStroke
-Adds border/outline.
-
-```json
-{
-  "class": "UIStroke",
-  "globalid": "stroke",
-  "stroke_color": "#000000",
-  "stroke_thickness": "2",
-  "stroke_transparency": "0",
-  "stroke_mode": "Border",          // Border, Contextual
-  "stroke_type": "Round"            // Round, Miter, Bevel
-}
-```
-
----
-
-### UIGradient
-Color gradient.
-
-```json
-{
-  "class": "UIGradient",
-  "globalid": "gradient",
-  "gradient_color": "[[0,\"ff0000\"],[1,\"0000ff\"]]",
-  "gradient_transparency": "[[0,0],[1,1]]",
-  "rotation": "90",
-  "gradient_offset": "0,0"
-}
-```
-
-**Format:** `[[position, "color"], ...]` where position is 0-1
-
----
-
-### UIPadding
-Internal spacing.
-
-```json
-{
-  "class": "UIPadding",
-  "globalid": "padding",
-  "top": "0,10",
-  "left": "0,10",
-  "right": "0,10",
-  "bottom": "0,10"
-}
-```
-
----
-
-### UIListLayout
-Arranges children in list.
-
-```json
-{
-  "class": "UIListLayout",
-  "globalid": "list",
-  "direction": "Vertical",          // Vertical, Horizontal
-  "padding": "0,12",
-  "alignment_horizontal": "Center",
-  "alignment_vertical": "Top",
-  "sort": "LayoutOrder",
-  "wrap_list": "false"
-}
-```
-
----
-
-### UIGridLayout
-Arranges children in grid.
-
-```json
-{
-  "class": "UIGridLayout",
-  "globalid": "grid",
-  "size": "{0.3,0},{0.3,0}",
-  "padding": "0,10",
-  "alignment_horizontal": "Center",
-  "alignment_vertical": "Top",
-  "sort": "LayoutOrder"
-}
-```
-
----
-
-### UIAspectRatioConstraint
-Maintains aspect ratio.
-
-```json
-{
-  "class": "UIAspectRatioConstraint",
-  "globalid": "aspect",
-  "ratio": "1.77"  // 1 = 1:1, 1.77 = 16:9, 0.56 = 9:16
-}
-```
-
----
-
-### UISizeConstraint
-Limits element size.
-
-```json
-{
-  "class": "UISizeConstraint",
-  "globalid": "constraint",
-  "min_size": "100,100",
-  "max_size": "500,500"  // "inf" for unlimited
-}
-```
-
----
-
-### UITextSizeConstraint
-Limits text size scaling (text elements only).
-
-```json
-{
-  "class": "UITextSizeConstraint",
-  "globalid": "text_constraint",
-  "min_text_size": "12",
-  "max_text_size": "16"
-}
-```
-
----
-
-## Limits & Constraints
-
-- **Element limit:** 100 (free) / 400 (premium)
-- **Root elements:** 1 per page
-- **Text rendering:** ~16k-32k visible, 200k total
-- **Runtime objects:** 1000 max (including script-created)
-- **Variable storage:** 5MB total per page
-- **Subdomains:** 3 (free) / 5 (premium)
-- **Pages:** 15 (free) / 30 (premium)
-
----
-
-## Best Practices for AI Generation
-
-### DO ✓
-- **Use pixel-based sizing** for it to be consistent on all platforms
-- **Keep UI + scripts in ONE JSON** to prevent globalid regeneration breaking references
-- **Use meaningful aliases** for objects referenced in scripts
-- **Use `(parent)` references** in scripts instead of hardcoding globalids when possible
-- **Nest styling elements** properly inside visual elements
-- **Test anchor points** - `"0.5,0.5"` for centering
-- **Use Folders** to organize (don't count toward render but do toward limit)
-- **Use `auto_x`/`auto_y`** for dynamic sizing
-- **Add UITextSizeConstraint** with `font_size: "scaled"`
-- **Add a padding** in e.g. an `TextButton`, to not make the button look that crammed
-
-### DON'T ✗
-- **NEVER add comments to JSON** - they break parsing
-- **Don't use raw numbers/objects** for UDim2 - always strings
-- **Don't put children in multiple root elements**
-- **Don't nest layouts inside layouts**
-- **Don't forget `#` in colors** (works without but be consistent)
-- **Don't use 9-slice unnecessarily**
-
----
-
-## Common Patterns
-
-**Centering:**
-```json
-{
-  "position": "{0.5,0},{0.5,0}",
-  "anchor": "0.5,0.5",
-  "size": "{0.5,0},{0.5,0}"
-}
-```
-
-**Full-screen background:**
-```json
-{
-  "position": "{0,0},{0,0}",
-  "size": "{1,0},{1,0}",
-  "z_index": "-1"
-}
-```
-
-**Dynamic-width button:**
-```json
-{
-  "class": "TextButton",
-  "size": "auto_x",
-  "height": "0, 32",
+  "background_color": "#1f1f23",
   "children": [
     {
       "class": "UIPadding",
-      "globalid": "pad",
-      "left": "0,16",
-      "right": "0,16"
+      "globalid": "pd",
+      "left": "0,20",
+      "right": "0,20",
+      "top": "0,16",
+      "bottom": "0,16"
+    },
+    {
+      "class": "TextLabel",
+      "globalid": "tx",
+      "alias": "card_text",
+      "size": "{1,0},{1,0}",
+      "position": "{0,0},{0,0}",
+      "text": "Card Content",
+      "font": "SourceSans",
+      "font_size": "16",
+      "font_color": "#ffffff",
+      "align_x": "Left",
+      "align_y": "Center",
+      "background_transparency": "1"
     }
   ]
 }
@@ -631,105 +165,472 @@ Limits text size scaling (text elements only).
 
 ---
 
-## Available Fonts
+## 5. Common Properties
 
-- `Gotham` (regular)
-- `GothamBold`
-- `SourceSans` (default)
-- `Roboto`
-- All fonts ID from the [Roblox Creator Store](https://create.roblox.com/store/fonts)
+Properties supported across visual elements:
 
-**Font Weights:** Regular, Medium, Bold  
-**Font Styles:** Normal, Italic
-
----
-
-## Quick Reference Table
-
-| Property | Type | Range/Options | Default |
-|----------|------|---------------|---------|
-| position | string (UDim2) | Any | `"{0,0},{0,0}"` |
-| size | string (UDim2) | Any, "auto", "auto_x", "auto_y" | Required |
-| anchor | string | `"0-1,0-1"` | `"0,0"` |
-| background_transparency | string | `"0"` - `"1"` | `"0"` |
-| rotation | string | Any number | `"0"` |
-| z_index | string (int) | Any integer | `"0"` |
-| visible | string | `"true"` / `"false"` | `"true"` |
-| font_size | string | `"scaled"` or number | `"scaled"` |
-| align_x | string | Left, Center, Right | `"Center"` |
-| align_y | string | Top, Center, Bottom | `"Center"` |
-| wrap | string | `"true"` / `"false"` | `"true"` |
+| Property | Type | Range / Format | Default | Notes |
+|---|---|---|---|---|
+| `class` | string | Element class name | Required | See Section 6 |
+| `globalid` | string | `[A-Za-z0-9]{2,3}` | Required | Unique identifier for scripts |
+| `alias` | string | Lowercase string | Optional | Human-readable editor label |
+| `position` | string | UDim2 `"{xS,xO},{yS,yO}"` | `"{0,0},{0,0}"` | Element position |
+| `size` | string | UDim2 / `"auto"` / `"auto_x"` / `"auto_y"` | Required | Element size |
+| `width` | string | UDim `"scale,offset"` | None | Used alongside `auto_y` |
+| `height` | string | UDim `"scale,offset"` | None | Used alongside `auto_x` |
+| `anchor` | string | `"x,y"` (0 to 1) | `"0,0"` | `"0.5,0.5"` = center |
+| `background_color` | string | Hex code `"#rrggbb"` | `"#ffffff"` | Keep leading `#` |
+| `background_transparency` | string | `"0"` (opaque) to `"1"` (invisible) | `"0"` | Decimal string |
+| `visible` | string | `"true"` / `"false"` | `"true"` | Controls visibility |
+| `rotation` | string | Degrees string (`"0"`–`"360"`) | `"0"` | Rotation angle |
+| `z_index` | string | Integer string | `"1"` | Higher renders on top |
+| `order` | string | Integer string | None | Layout order for UIListLayout |
+| `tooltip` | string | Text string | None | Displayed on hover |
+| `children` | array | Array of child element objects | `[]` | Nested children |
 
 ---
 
-## Cross-References
+## 6. Element Classes
 
-- **For scripting logic:** See CatDocs (main reference document)
-- **For script JSON structure:** See json-rulings.md (pairs with CatDocs)
-- **For CatWeb game info:** Premium costs 299 Robux, Cookies gamepass 80 Robux (regional pricing may apply)
-
----
-
-## Example: Complete Card Component
-
+### Frame
+Generic 2D container element.
 ```json
-[
-  {
-    "class": "Frame",
-    "globalid": "root",
-    "size": "{1,0},{1,0}",
-    "background_color": "#000000",
-    "children": [
-      {
-        "class": "Frame",
-        "globalid": "card",
-        "alias": "ProfileCard",
-        "size": "{0.4,0},{0.6,0}",
-        "position": "{0.5,0},{0.5,0}",
-        "anchor": "0.5,0.5",
-        "background_color": "#2a2a2a",
-        "children": [
-          {
-            "class": "UICorner",
-            "globalid": "corner",
-            "radius": "0,16"
-          },
-          {
-            "class": "ImageLabel",
-            "globalid": "avatar",
-            "alias": "Avatar",
-            "size": "{0,120},{0,120}",
-            "position": "{0.5,0},{0,30}",
-            "anchor": "0.5,0",
-            "image_id": "16944769468",
-            "image": "rbxassetid://16944769468",
-            "background_transparency": "1",
-            "children": [
-              {
-                "class": "UICorner",
-                "globalid": "avatar_corner",
-                "radius": "1,0"
-              }
-            ]
-          },
-          {
-            "class": "TextLabel",
-            "globalid": "username",
-            "alias": "Username",
-            "size": "{0.8,0},{0,40}",
-            "position": "{0.5,0},{0,170}",
-            "anchor": "0.5,0",
-            "background_transparency": "1",
-            "text": "Username",
-            "font": "GothamBold",
-            "font_size": "24",
-            "font_color": "#ffffff",
-            "align_x": "Center",
-            "align_y": "Center"
-          }
-        ]
-      }
-    ]
-  }
-]
+{
+  "class": "Frame",
+  "globalid": "f1",
+  "alias": "container",
+  "size": "{1,0},{0,200}",
+  "position": "{0,0},{0,0}",
+  "background_color": "#18181b",
+  "background_transparency": "0",
+  "children": []
+}
 ```
+
+### ScrollingFrame
+Scrollable container element.
+```json
+{
+  "class": "ScrollingFrame",
+  "globalid": "sf",
+  "alias": "scroller",
+  "size": "{1,0},{1,0}",
+  "position": "{0,0},{0,0}",
+  "canvassize": "auto_y",
+  "scrollbar_thickness": "8",
+  "scrollbar_color": "#3f3f46",
+  "scrollbar_transparency": "0",
+  "background_transparency": "1",
+  "children": []
+}
+```
+*Note on `canvassize`:* Use `"auto_y"` so the scroll canvas automatically expands to fit stacked children.
+
+### TextLabel
+Text display element.
+```json
+{
+  "class": "TextLabel",
+  "globalid": "tl",
+  "alias": "heading",
+  "size": "{1,0},{0,32}",
+  "position": "{0,0},{0,0}",
+  "text": "Welcome to CatWeb",
+  "font": "GothamBold",
+  "font_size": "24",
+  "font_color": "#f4f4f5",
+  "font_weight": "Bold",
+  "font_style": "Normal",
+  "font_transparency": "0",
+  "align_x": "Left",
+  "align_y": "Center",
+  "line_height": "1",
+  "wrap": "true",
+  "truncate": "AtEnd",
+  "background_transparency": "1"
+}
+```
+*Rendering limits:* ~16,000–32,000 characters visible per element (exceeding causes `TEXT_OVERLOAD`), 200,000 total characters per page.
+
+### TextButton
+Clickable button element with text. Supports all `TextLabel` properties plus:
+```json
+{
+  "class": "TextButton",
+  "globalid": "bt",
+  "alias": "cta_button",
+  "size": "auto",
+  "position": "{0,0},{0,0}",
+  "text": "Click Here",
+  "font": "GothamBold",
+  "font_size": "14",
+  "font_color": "#ffffff",
+  "background_color": "#2563eb",
+  "auto_color": "true",
+  "children": [
+    {
+      "class": "UIPadding",
+      "globalid": "bp",
+      "top": "0,10",
+      "bottom": "0,10",
+      "left": "0,20",
+      "right": "0,20"
+    },
+    {
+      "class": "UICorner",
+      "globalid": "bc",
+      "radius": "0,8"
+    }
+  ]
+}
+```
+
+### TextButton?link
+Hyperlink button opening a `.rbx` URL.
+```json
+{
+  "class": "TextButton?link",
+  "globalid": "lk",
+  "alias": "nav_link",
+  "size": "auto",
+  "position": "{0,0},{0,0}",
+  "text": "Documentation",
+  "font": "SourceSans",
+  "font_size": "14",
+  "font_color": "#93c5fd",
+  "href": "docs.rbx",
+  "new_tab": "false",
+  "background_transparency": "1"
+}
+```
+
+### TextButton?transfer (Donation)
+Button prompting a Robux transfer/donation to the site owner.
+```json
+{
+  "class": "TextButton?transfer",
+  "globalid": "dn",
+  "alias": "donate_btn",
+  "size": "{0,160},{0,40}",
+  "position": "{0,0},{0,0}",
+  "text": "Donate 50 R$",
+  "font": "GothamBold",
+  "font_size": "14",
+  "font_color": "#ffffff",
+  "background_color": "#16a34a",
+  "robux_amount": "50",
+  "transfer_id": "1"
+}
+```
+
+### TextButton?avataritem
+Button prompting an in-experience purchase of a Roblox avatar item (accessory, clothing, etc.).
+```json
+{
+  "class": "TextButton?avataritem",
+  "globalid": "ai",
+  "alias": "buy_item_btn",
+  "size": "{0,160},{0,40}",
+  "position": "{0,0},{0,0}",
+  "text": "Get Item",
+  "font": "GothamBold",
+  "font_size": "14",
+  "font_color": "#ffffff",
+  "background_color": "#7c3aed",
+  "product": "12345678"
+}
+```
+
+### TextBox
+Interactive text input field.
+```json
+{
+  "class": "TextBox",
+  "globalid": "tb",
+  "alias": "search_input",
+  "size": "{1,0},{0,40}",
+  "position": "{0,0},{0,0}",
+  "text": "",
+  "placeholder": "Type search query...",
+  "placeholder_color": "#71717a",
+  "font": "SourceSans",
+  "font_size": "14",
+  "font_color": "#ffffff",
+  "background_color": "#27272a",
+  "editable": "true",
+  "multiline": "false"
+}
+```
+
+### ImageLabel
+Image display element.
+```json
+{
+  "class": "ImageLabel",
+  "globalid": "im",
+  "alias": "hero_banner",
+  "size": "{1,0},{0,240}",
+  "position": "{0,0},{0,0}",
+  "image_id": "16944769468",
+  "image": "rbxassetid://16944769468",
+  "image_color": "#ffffff",
+  "image_transparency": "0",
+  "scale_type": "Fit",
+  "background_transparency": "1"
+}
+```
+*Scaling modes:* `"Fit"`, `"Crop"`, `"Stretch"`, `"Tile"`, `"Slice"`. For UI icons, refer to the verified icon table in `game/Assets.md`.
+
+### Folder
+Organizational container that has no visual representation and takes no layout space.
+```json
+{
+  "class": "Folder",
+  "globalid": "fd",
+  "alias": "component_group",
+  "children": []
+}
+```
+
+### script
+Contains block-based scripts. Must be an element in `webcontent`. See `game/JSONScript.md` for full scripting specifications.
+```json
+{
+  "class": "script",
+  "globalid": "s1",
+  "alias": "page_controller",
+  "enabled": "true",
+  "content": []
+}
+```
+
+---
+
+## 7. Styling Modifier Elements
+
+> [!IMPORTANT]
+> Styling elements must always be child elements of a visual element (e.g. inside `Frame`, `TextButton`, `ImageLabel`). They modify their parent.
+
+### UICorner
+Rounds the parent element's corners.
+```json
+{
+  "class": "UICorner",
+  "globalid": "c1",
+  "radius": "0,12"
+}
+```
+*`radius`:* `"0,12"` = 12px radius; `"1,0"` = full pill / circle.
+
+### UIStroke
+Adds a border or outline to the parent.
+```json
+{
+  "class": "UIStroke",
+  "globalid": "s1",
+  "stroke_color": "#3f3f46",
+  "stroke_thickness": "1",
+  "stroke_transparency": "0",
+  "stroke_mode": "Border"
+}
+```
+*`stroke_mode`:* `"Border"` (outer) or `"Contextual"`.
+
+### UIGradient
+Applies color and transparency gradients across the parent.
+```json
+{
+  "class": "UIGradient",
+  "globalid": "g1",
+  "gradient_color": "[[0,\"#3b82f6\"],[1,\"#1d4ed8\"]]",
+  "gradient_transparency": "[[0,0],[1,0]]",
+  "rotation": "90",
+  "gradient_offset": "0,0"
+}
+```
+*Note:* Every hex color inside `gradient_color` must keep its `#`.
+
+### UIPadding
+Defines inner margins / padding for the parent element.
+```json
+{
+  "class": "UIPadding",
+  "globalid": "p1",
+  "top": "0,16",
+  "bottom": "0,16",
+  "left": "0,24",
+  "right": "0,24"
+}
+```
+
+### UIListLayout (Flexbox & Lists)
+Lays out children in a row or column with spacing and flex controls.
+```json
+{
+  "class": "UIListLayout",
+  "globalid": "ll",
+  "direction": "Vertical",
+  "padding": "0,16",
+  "sort": "LayoutOrder",
+  "alignment_horizontal": "Left",
+  "alignment_vertical": "Top",
+  "vertical_flex": "None",
+  "horizontal_flex": "None",
+  "wrap_list": "false"
+}
+```
+
+| Key | Values | Description |
+|---|---|---|
+| `direction` | `"Vertical"`, `"Horizontal"` | Layout flow axis |
+| `padding` | UDim string (e.g. `"0,16"`) | Gap between child items in pixels |
+| `sort` | `"LayoutOrder"` | Orders children by their integer `"order"` property |
+| `alignment_horizontal` | `"Left"`, `"Center"`, `"Right"` | Cross/main alignment |
+| `alignment_vertical` | `"Top"`, `"Center"`, `"Bottom"` | Cross/main alignment |
+| `horizontal_flex` | `"None"`, `"Fill"`, `"SpaceAround"`, `"SpaceBetween"`, `"SpaceEvenly"` | Flex distribution along horizontal axis |
+| `vertical_flex` | `"None"`, `"Fill"`, `"SpaceAround"`, `"SpaceBetween"`, `"SpaceEvenly"` | Flex distribution along vertical axis |
+| `wrap_list` | `"true"`, `"false"` | Wraps overflowing horizontal children to a new line (ideal for chips/tags) |
+
+### UIGridLayout
+Arranges children in a grid.
+```json
+{
+  "class": "UIGridLayout",
+  "globalid": "gl",
+  "size": "{0,180},{0,120}",
+  "padding": "0,16",
+  "sort": "LayoutOrder",
+  "alignment_horizontal": "Center",
+  "alignment_vertical": "Top"
+}
+```
+> [!IMPORTANT]
+> The cell size JSON key is `"size"`, **not** `"cell_size"`.
+
+### Constraints
+- **`UIAspectRatioConstraint`:** `{"class": "UIAspectRatioConstraint", "globalid": "ar", "ratio": "1.777"}` (maintains aspect ratio, e.g. 16:9 = `1.777`).
+- **`UISizeConstraint`:** `{"class": "UISizeConstraint", "globalid": "sc", "min_size": "200,100", "max_size": "800,600"}`.
+- **`UITextSizeConstraint`:** `{"class": "UITextSizeConstraint", "globalid": "tc", "min_text_size": "12", "max_text_size": "28"}`.
+
+---
+
+## 8. Design Tokens (Visual Polish Guide)
+
+Ad-hoc sizes and spacing create visually weak pages. Use this consistent scale:
+
+- **Spacing & Padding (px):** `4`, `8`, `12`, `16`, `20`, `24`, `32`, `40`, `48`.
+- **Corner Radii (px):** `6`–`8` buttons/inputs, `12`–`16` cards/panels, `1,0` pill/circle tags.
+- **Typography Scale:**
+  - `11`–`12`: Caption, badge, small metadata
+  - `13`–`15`: Body text, navigation links, table cells (Regular / Medium)
+  - `16`–`18`: Card titles, subheadings (SemiBold / Bold)
+  - `20`–`24`: Section headers, modal titles (Bold)
+  - `28`–`36`: Hero headlines, prominent stat numbers (Bold)
+- **Surfaces & Borders:** Always add a 1px `UIStroke` one step lighter than the background on dark cards. Two adjacent surfaces without border separation blend together into an unreadable block.
+
+---
+
+## 9. Common Layout Recipes
+
+### Recipe A: Stacked Page Sections
+```json
+{
+  "class": "Frame",
+  "globalid": "pc",
+  "alias": "page_container",
+  "size": "auto_y",
+  "width": "{1,0}",
+  "position": "{0,0},{0,0}",
+  "background_transparency": "1",
+  "children": [
+    {
+      "class": "UIListLayout",
+      "globalid": "pl",
+      "direction": "Vertical",
+      "padding": "0,32",
+      "sort": "LayoutOrder"
+    },
+    {
+      "class": "Frame",
+      "globalid": "s1",
+      "alias": "hero_section",
+      "order": "1",
+      "size": "auto_y",
+      "width": "{1,0}",
+      "position": "{0,0},{0,0}",
+      "background_color": "#111827",
+      "children": []
+    },
+    {
+      "class": "Frame",
+      "globalid": "s2",
+      "alias": "features_section",
+      "order": "2",
+      "size": "auto_y",
+      "width": "{1,0}",
+      "position": "{0,0},{0,0}",
+      "background_color": "#1f2937",
+      "children": []
+    }
+  ]
+}
+```
+
+### Recipe B: Horizontal Wrapping Chips / Tags
+```json
+{
+  "class": "Frame",
+  "globalid": "cr",
+  "alias": "chip_row",
+  "size": "auto_y",
+  "width": "{1,0}",
+  "position": "{0,0},{0,0}",
+  "background_transparency": "1",
+  "children": [
+    {
+      "class": "UIListLayout",
+      "globalid": "cl",
+      "direction": "Horizontal",
+      "padding": "0,8",
+      "sort": "LayoutOrder",
+      "wrap_list": "true"
+    },
+    {
+      "class": "TextButton",
+      "globalid": "c1",
+      "alias": "chip_1",
+      "order": "1",
+      "size": "auto",
+      "position": "{0,0},{0,0}",
+      "text": "Technology",
+      "font": "SourceSans",
+      "font_size": "12",
+      "font_color": "#e4e4e7",
+      "background_color": "#27272a",
+      "children": [
+        { "class": "UIPadding", "globalid": "cp1", "top": "0,6", "bottom": "0,6", "left": "0,12", "right": "0,12" },
+        { "class": "UICorner", "globalid": "cc1", "radius": "1,0" }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## 10. Available Fonts
+
+- `SourceSans` (default body font)
+- `Gotham` (clean modern sans)
+- `GothamBold` (standard heading font)
+- `Roboto`
+- `BuilderSans` / `BuilderSansBold`
+- Any valid font asset from the Roblox Creator Store
+
+---
+
+## 11. Cross-References
+
+- **Scripting & Block Logic:** See [JSONScript.md](JSONScript.md) for action shapes, event bindings, and scripting invariants.
+- **Assets, Icons, Sounds & Patterns:** See [Assets.md](Assets.md) for verified Roblox icon IDs, sound IDs, interactive component templates, and the anti-filter string decoder.
+- **Complete Reference:** See [CatDocs.md](CatDocs.md).

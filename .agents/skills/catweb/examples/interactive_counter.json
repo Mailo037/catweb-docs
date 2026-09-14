@@ -1,0 +1,416 @@
+{
+  "favicon": "16944769468",
+  "title": "Interactive Counter",
+  "background": "#0f0f11",
+  "thumbnail_id": "16944769468",
+  "thumbnail": "rbxassetid://16944769468",
+  "webcontent": [
+    {
+      "class": "Frame",
+      "globalid": "rt",
+      "alias": "root",
+      "size": "{1,0},{1,0}",
+      "position": "{0,0},{0,0}",
+      "background_color": "#0f0f11",
+      "background_transparency": "0",
+      "children": [
+        {
+          "class": "UIPadding",
+          "globalid": "rp",
+          "top": "0,24",
+          "bottom": "0,24",
+          "left": "0,24",
+          "right": "0,24"
+        },
+        {
+          "class": "UIListLayout",
+          "globalid": "rl",
+          "direction": "Vertical",
+          "alignment_horizontal": "Center",
+          "alignment_vertical": "Center",
+          "padding": "0,16"
+        },
+        {
+          "class": "Frame",
+          "globalid": "cd",
+          "alias": "counter_card",
+          "size": "{0,380},{0,340}",
+          "background_color": "#18181b",
+          "background_transparency": "0",
+          "children": [
+            {
+              "class": "UICorner",
+              "globalid": "cc",
+              "radius": "0,16"
+            },
+            {
+              "class": "UIStroke",
+              "globalid": "cs",
+              "stroke_color": "#27272a",
+              "stroke_thickness": "1",
+              "stroke_transparency": "0"
+            },
+            {
+              "class": "UIPadding",
+              "globalid": "cp",
+              "top": "0,28",
+              "bottom": "0,28",
+              "left": "0,28",
+              "right": "0,28"
+            },
+            {
+              "class": "UIListLayout",
+              "globalid": "cl",
+              "direction": "Vertical",
+              "padding": "0,16",
+              "sort": "LayoutOrder",
+              "alignment_horizontal": "Center",
+              "alignment_vertical": "Center"
+            },
+            {
+              "class": "TextLabel",
+              "globalid": "ch",
+              "alias": "card_title",
+              "size": "{1,0},{0,28}",
+              "order": "1",
+              "text": "CatWeb Counter",
+              "font": "GothamBold",
+              "font_size": "20",
+              "font_color": "#ffffff",
+              "align_x": "Center",
+              "align_y": "Center",
+              "background_transparency": "1"
+            },
+            {
+              "class": "Frame",
+              "globalid": "df",
+              "alias": "display_box",
+              "size": "{1,0},{0,72}",
+              "order": "2",
+              "background_color": "#09090b",
+              "background_transparency": "0",
+              "children": [
+                {
+                  "class": "UICorner",
+                  "globalid": "dc",
+                  "radius": "0,8"
+                },
+                {
+                  "class": "UIStroke",
+                  "globalid": "ds",
+                  "stroke_color": "#27272a",
+                  "stroke_thickness": "1",
+                  "stroke_transparency": "0"
+                },
+                {
+                  "class": "TextLabel",
+                  "globalid": "cnt",
+                  "alias": "count_label",
+                  "size": "{1,0},{1,0}",
+                  "position": "{0,0},{0,0}",
+                  "text": "Count: 0",
+                  "font": "GothamBold",
+                  "font_size": "32",
+                  "font_color": "#3b82f6",
+                  "align_x": "Center",
+                  "align_y": "Center",
+                  "background_transparency": "1"
+                }
+              ]
+            },
+            {
+              "class": "TextButton",
+              "globalid": "btn",
+              "alias": "click_btn",
+              "size": "{1,0},{0,48}",
+              "order": "3",
+              "text": "Click to Count (+1)",
+              "font": "GothamBold",
+              "font_size": "16",
+              "font_color": "#ffffff",
+              "background_color": "#2563eb",
+              "auto_color": "true",
+              "children": [
+                {
+                  "class": "UICorner",
+                  "globalid": "bc",
+                  "radius": "0,8"
+                },
+                {
+                  "class": "UIPadding",
+                  "globalid": "bp",
+                  "top": "0,10",
+                  "bottom": "0,10",
+                  "left": "0,20",
+                  "right": "0,20"
+                }
+              ]
+            },
+            {
+              "class": "TextButton",
+              "globalid": "rst",
+              "alias": "reset_btn",
+              "size": "{1,0},{0,38}",
+              "order": "4",
+              "text": "Reset Counter",
+              "font": "Gotham",
+              "font_size": "14",
+              "font_color": "#a1a1aa",
+              "background_color": "#27272a",
+              "auto_color": "true",
+              "children": [
+                {
+                  "class": "UICorner",
+                  "globalid": "rc",
+                  "radius": "0,6"
+                },
+                {
+                  "class": "UIPadding",
+                  "globalid": "rbp",
+                  "top": "0,8",
+                  "bottom": "0,8",
+                  "left": "0,16",
+                  "right": "0,16"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "class": "script",
+          "globalid": "sc1",
+          "alias": "counter_logic",
+          "enabled": "true",
+          "content": [
+            {
+              "id": "0",
+              "globalid": "ev0",
+              "x": "4500",
+              "y": "4800",
+              "width": "350",
+              "text": [
+                "When website loaded..."
+              ],
+              "actions": [
+                {
+                  "id": "11",
+                  "globalid": "ac0",
+                  "text": [
+                    "Set",
+                    {
+                      "value": "1",
+                      "t": "string",
+                      "l": "variable"
+                    },
+                    "to",
+                    {
+                      "value": "0",
+                      "t": "string",
+                      "l": "any"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "1",
+              "globalid": "ev1",
+              "x": "4900",
+              "y": "4800",
+              "width": "350",
+              "text": [
+                "When",
+                {
+                  "value": "btn",
+                  "t": "object",
+                  "l": "button"
+                },
+                "pressed..."
+              ],
+              "actions": [
+                {
+                  "id": "12",
+                  "globalid": "ac1",
+                  "text": [
+                    "Add",
+                    {
+                      "value": "1",
+                      "t": "string",
+                      "l": "any"
+                    },
+                    "to",
+                    {
+                      "value": "1",
+                      "t": "string",
+                      "l": "variable"
+                    }
+                  ]
+                },
+                {
+                  "id": "31",
+                  "globalid": "ac2",
+                  "text": [
+                    "Set",
+                    {
+                      "value": "cnt",
+                      "t": "object"
+                    },
+                    "property",
+                    {
+                      "value": "Text",
+                      "t": "property"
+                    },
+                    "to",
+                    {
+                      "value": "Count: {1}",
+                      "t": "any"
+                    }
+                  ]
+                },
+                {
+                  "id": "48",
+                  "globalid": "ac3",
+                  "text": [
+                    "Play sound",
+                    {
+                      "value": "6895079853",
+                      "t": "id",
+                      "assetbrowser": "sound"
+                    }
+                  ]
+                },
+                {
+                  "id": "18",
+                  "globalid": "ac4",
+                  "text": [
+                    "If",
+                    {
+                      "value": "{1}",
+                      "t": "string",
+                      "l": "any"
+                    },
+                    "is equal to",
+                    {
+                      "value": "10",
+                      "t": "string",
+                      "l": "any"
+                    }
+                  ]
+                },
+                {
+                  "id": "31",
+                  "globalid": "ac5",
+                  "text": [
+                    "Set",
+                    {
+                      "value": "cnt",
+                      "t": "object"
+                    },
+                    "property",
+                    {
+                      "value": "Text",
+                      "t": "property"
+                    },
+                    "to",
+                    {
+                      "value": "Goal reached: {1}!",
+                      "t": "any"
+                    }
+                  ]
+                },
+                {
+                  "id": "48",
+                  "globalid": "ac6",
+                  "text": [
+                    "Play sound",
+                    {
+                      "value": "9069609268",
+                      "t": "id",
+                      "assetbrowser": "sound"
+                    }
+                  ]
+                },
+                {
+                  "id": "25",
+                  "globalid": "ac7",
+                  "text": [
+                    "end"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "1",
+              "globalid": "ev2",
+              "x": "4900",
+              "y": "5300",
+              "width": "350",
+              "text": [
+                "When",
+                {
+                  "value": "rst",
+                  "t": "object",
+                  "l": "button"
+                },
+                "pressed..."
+              ],
+              "actions": [
+                {
+                  "id": "11",
+                  "globalid": "ac8",
+                  "text": [
+                    "Set",
+                    {
+                      "value": "1",
+                      "t": "string",
+                      "l": "variable"
+                    },
+                    "to",
+                    {
+                      "value": "0",
+                      "t": "string",
+                      "l": "any"
+                    }
+                  ]
+                },
+                {
+                  "id": "31",
+                  "globalid": "ac9",
+                  "text": [
+                    "Set",
+                    {
+                      "value": "cnt",
+                      "t": "object"
+                    },
+                    "property",
+                    {
+                      "value": "Text",
+                      "t": "property"
+                    },
+                    "to",
+                    {
+                      "value": "Count: 0",
+                      "t": "any"
+                    }
+                  ]
+                },
+                {
+                  "id": "48",
+                  "globalid": "aca",
+                  "text": [
+                    "Play sound",
+                    {
+                      "value": "6895079853",
+                      "t": "id",
+                      "assetbrowser": "sound"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1129,3 +1129,155 @@ https://cdn.discordapp.com/attachments/1226247519726600263/1502325629066940617/A
 
 {Reactions}
 ⌨️ (114) supershock (3)
+
+
+[20.05.2026 12:41] humancat222
+<@&1227581453983023154>
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1226247519726600263/1506638008072404992/image.png?ex=6aa93cfd&is=6aa7eb7d&hm=5a04c864eccc97fab5d3c1d2379f4280f4a3b01fa3ffc77e795550dadd978e5e&
+
+{Reactions}
+🖼️ (129)
+
+
+[10.06.2026 18:48] humancat222
+<@&1227581453983023154>
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1226247519726600263/1514340550881317116/image.png?ex=6aa8ea4a&is=6aa798ca&hm=ca7e935bdd922f2bd575d400fd75db1acef179ce87c7b8e54ecfc0c44e10e9be&
+
+{Reactions}
+↔️ (63) 🔥 (65) ⭐ (8)
+
+
+[15.06.2026 20:00] humancat222
+<@&1227581453983023154> Test your sites across pages entirely inside of the Editor without ever publishing.
+
+Follow **CatWeb Compilation Update** on Roblox, scheduled to release on June 28th: <https://www.roblox.com/events/5503390751771460218>
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1226247519726600263/1516170588060909688/image.png?ex=6aa8fb25&is=6aa7a9a5&hm=6608f08d834e416989b9aa5b69e0adfc2e3413d1409039073efe0bcea6526733&
+https://cdn.discordapp.com/attachments/1226247519726600263/1516170588517957782/image.png?ex=6aa8fb25&is=6aa7a9a5&hm=cbe30baae04185a45319cd0428058c1aca1ea3d3e2602b0115e05a72d15d7b81&
+
+{Reactions}
+🖥️ (61) 🔥 (62)
+
+
+[21.06.2026 17:30] humancat222
+<@&1227581453983023154> Testing is getting way easier with Compilation Update
+
+https://youtu.be/Jzwxncm5eyY
+
+Follow the update: <https://www.roblox.com/events/5503390751771460218>
+
+{Embed}
+https://www.youtube.com/watch?v=Jzwxncm5eyY
+Test your sites without ever leaving the Editor with Enlarged Test
+Test now works across pages in the same domain. Enlarge the site preview to use the full editor space and edit, test and debug without ever publishing or leaving the Editor.
+
+Coming in CatWeb Compilation Update: https://www.roblox.com/events/5503390751771460218
+https://i.ytimg.com/vi/Jzwxncm5eyY/maxresdefault.jpg
+
+{Reactions}
+↔️ (52) 👍 (11) Tongue (14) shockedcat (5) 🇫 (6)
+
+
+[24.06.2026 20:30] humancat222
+<@&1227581453983023154> Broadcasting tables is getting way better with Compilation Update
+
+Previously, tables were limited to just 5 entries. With this update, that limit is being replaced with a limit of **8 strings** (including both indexes and values), but **unlimited entries**!
+
+We're also adding support for **nested tables**, meaning you can have tables inside other tables, making it easier to broadcast more complex data structures.
+
+And yes, this applies to every type of broadcast, cross-site or not, across page or site, Legacy Interpreter or Script Compilation... We can't wait to see what you'll build with these new capabilities!
+
+Don't miss the release of **Compilation Update** in 4 days: <https://www.roblox.com/events/5503390751771460218>
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1226247519726600263/1519439478492631350/Broadcast_limits.png?ex=6aa90209&is=6aa7b089&hm=88c240892f5326730c7c82b8e456ef6a56cda97d1cb9b93adfd5eb4123326281&
+
+{Reactions}
+🛜 (58) 👍 (25) ❤️ (22) 🇼 (6)
+
+
+[25.06.2026 19:00] humancat222
+<@&1227581453983023154> Easier every day with **Compilation Update**, releasing in just 3 days: <https://www.roblox.com/events/5503390751771460218>
+
+https://youtu.be/HosmG8J9jRU
+
+{Embed}
+https://www.youtube.com/watch?v=HosmG8J9jRU
+Easier every day with Compilation Update
+You can now hover an element in the editor to quickly add an element parented below it. Also, in the Script Editor, you can press another object field while selecting an element to copy its value.
+
+Coming in CatWeb Compilation Update: https://www.roblox.com/events/5503390751771460218
+https://i.ytimg.com/vi/HosmG8J9jRU/maxresdefault.jpg
+
+{Reactions}
+💠 (52)
+
+
+[27.06.2026 11:15] humancat222
+<@&1227581453983023154> **Compilation Update** is releasing tomorrow: <https://www.roblox.com/events/5503390751771460218>
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1226247519726600263/1520386968821829632/image.png?ex=6aa928b4&is=6aa7d734&hm=bffd71c8c111edfc1b71fd91975fbe7831b148fdf6afb5f98a3d34f283bc5ce0&
+
+{Reactions}
+👍 (57) 🔥 (44) ⌨️ (40) Tongue (11) 😱 (29) perrycholo (19)
+
+
+[17.08.2026 18:00] humancat222
+<@&1227581453983023154> Use Analytics to view statistics about your sites
+
+https://youtu.be/tOvEvpJNPsI
+
+{Embed}
+https://www.youtube.com/watch?v=tOvEvpJNPsI
+Discover more about your sites with Analytics
+View stats such as session time, popular pages, reach, demographics and more using the new Analytics.
+https://i.ytimg.com/vi/tOvEvpJNPsI/maxresdefault.jpg
+
+{Reactions}
+📊 (62) Conversation (14)
+
+
+[20.08.2026 17:00] humancat222
+<@&1227581453983023154>
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1226247519726600263/1540042972177891349/image.png?ex=6aa8d109&is=6aa77f89&hm=51291bd784c2ea7dc9938ce78e29f920a235077f59a003487be16b801cde20cd&
+
+{Reactions}
+🔥 (99) 🖱️ (43) computer_mouse (45)
+
+
+[05.09.2026 16:00] humancat222
+<@&1227581453983023154> Along with being able to customize and hide the mouse icon via scripts, you will also be able to set the "Mouse Icon" property in elements, changing the icon when the mouse is hovered over the element.
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1226247519726600263/1545825884483883058/mouseicon.png?ex=6aa96b8a&is=6aa81a0a&hm=211d54eb97fd788cb4d446b5f2ebcdc9e7ae87c45017a9e0d0494050c3ebf029&
+
+{Reactions}
+🖱️ (73) WOWZA (48) 🔥 (45) aniyay (30) TetoHeart (20) 👀 (24) Dogwhat (21)
+
+
+[09.09.2026 17:00] humancat222
+<@&1227581453983023154>
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1226247519726600263/1547290538624028692/image.png?ex=6aa8d0db&is=6aa77f5b&hm=7e6cc923c1e0989698a3f3185417500acbf148198be12f2bb33180cddddd74c7&
+
+{Reactions}
+🔘 (82) 🥹 (32) NatsukiAYAYA (16) TetoHeart (15) ❤️ (15) Theia_Chat (16)
+
+
+[10.09.2026 17:00] humancat222
+<@&1227581453983023154> For those who paid attention to our last sneak peek...
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1226247519726600263/1547652926917578822/image.png?ex=6aa8d0db&is=6aa77f5b&hm=24a095c137ea1c7eeb914a8ded31a9859183d0b4959d5ab2bd2d42699a090782&
+
+{Reactions}
+🔆 (71) thinking_cat (8) NatsukiCheer (10) b_chat (12) NatsuChibiSpin (8) TetoHeart (2)

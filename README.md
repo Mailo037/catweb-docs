@@ -2,19 +2,20 @@
 
 Everything you need to know about building in **CatWeb** (Roblox) — the Roblox game where you build 2D websites with JSON-based UI and a visual block-scripting system.
 
-> Targeting CatWeb version **v2.17.3.0**
+> Targeting CatWeb version **v2.18.2.3**
 
 ---
 
 ## Included Documents
 
-1. [CatDocs - A overall explanation](CatDocs.md)
-2. [JSONScript - A guide for scripting in catweb](JSONScript.md)
-3. [UIGPT - A guide on how to use the custom JSON format](UIGPT.md)
-4. [Documents regarding catwebs development and the discord group](/guild/)
+1. [CatDocs - Overall explanation & reference](game/CatDocs.md)
+2. [JSONScript - Guide for scripting & authoritative block shapes](game/JSONScript.md)
+3. [UIGPT - Guide on how to use the custom JSON format & element schema](game/UIGPT.md)
+4. [Assets & Patterns - Icons, sounds, reusable components & string decoder](game/Assets.md)
+5. [Documents regarding CatWeb development and the Discord group](guild/)
 
 
-If you are getting asked to make a site with catweb in the context, assume he means a catweb JSON, and not a real life e.g. HTML code, thus use the [UIGPT documentation](UIGPT.md).
+If you are asked to make a site with CatWeb in the context, assume a CatWeb JSON site object is required (with `favicon`, `title`, `background`, and `webcontent`), and not real-life HTML code — refer to the [UIGPT documentation](game/UIGPT.md) and [Assets & Patterns](game/Assets.md).
 
 ---
 
@@ -25,13 +26,24 @@ If you are getting asked to make a site with catweb in the context, assume he me
 
 If something isn't covered in these docs, the additional-resources repo is the next place to look.
 
-## AI / agent usage
+## AI / Agent Usage & Skill Package
 
-If you're an AI assistant looking at this repo, you can either read the four `.md` files directly, or use the [`catweb-mcp`](https://github.com/Mailo037/catweb-mcp) MCP server — it exposes `get_doc(name)` (returns full content of `CatDocs`, `JSONScript`, `UIGPT`, etc.) and `search(query, kind="docs")` for targeted lookups, so you don't have to load all 75KB of docs every time.
+This repository provides an all-in-one **Agent Skill** (`skills/catweb/`) that encapsulates the full CatWeb specifications, hard output invariants, schema rules, and block engine definitions so any AI assistant can generate 100% valid, importable CatWeb JSON sites and scripts:
+
+- [`skills/catweb/SKILL.md`](skills/catweb/SKILL.md) (and native workspace mirror [`.agents/skills/catweb/SKILL.md`](.agents/skills/catweb/SKILL.md)): Complete specification, output invariants, layout architecture patterns, element schemas, JSONScript block engine reference, asset IDs, and pre-flight checklist.
+- [`skills/catweb/examples/minimal_site.json`](skills/catweb/examples/minimal_site.json): Production-ready minimal site implementing the standard sticky navbar + scrolling body architecture.
+- [`skills/catweb/examples/interactive_counter.json`](skills/catweb/examples/interactive_counter.json): Complete interactive site featuring button click events, numeric variable incrementing (`{1}`), `Set Property` text updates, UI audio playback, and flat control flow.
+
+### How to use with any AI Assistant / Agent:
+
+1. **Workspace Agent Discovery (Cursor / Windsurf / Antigravity):** The skill is installed at `.agents/skills/catweb/SKILL.md` and `skills/catweb/SKILL.md`, enabling automatic discovery and mounting by workspace agents.
+2. **Claude Projects / Custom GPTs:** Upload [`skills/catweb/SKILL.md`](skills/catweb/SKILL.md) as project knowledge or paste its contents into the system instructions.
+3. **Direct Chat / LLM Prompting:** Copy the contents of [`skills/catweb/SKILL.md`](skills/catweb/SKILL.md) into your prompt along with your site idea (e.g. *"Create a portfolio site for CatWeb following this skill file"*).
+4. **CatWeb MCP Server:** If you prefer on-demand search and retrieval, use [`catweb-mcp`](https://github.com/Mailo037/catweb-mcp) with tools like `get_doc` and `search`.
 
 ---
 
 # Credits
 
-Big thanks to **@sytesn** on Discord, or [**@quitism**](https://github.com/quitism) on Github, for providing these docs.
-The docs were modified and are kept up to date by me.
+Big thanks to **@sytesn** on Discord, or [**@quitism**](https://github.com/quitism) on Github, for providing initial docs, and **DevsLovePizza** for the SiteGPT specifications, confirmed block palette schemas, and token architectures.
+The docs are modified and kept up to date by me.

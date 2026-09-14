@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CatWeb &harr; HTML Converter</title>
+<style>
+  :root {
+    --bg: #121212;
+    --panel: #1e1e1e;
+    --panel-2: #252525;
+    --border: #333;
+    --text: #e8e8e8;
+    --muted: #888;
+    --accent: #ff9500;
+    --accent-hover: #ffae44;
+    --error: #ff5555;
+    --success: #4ade80;
+    --code-bg: #181818;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+  header h1 .arrow { color: var(--accent); }
+  header .badge {
+    background: var(--panel-2);
+    color: var(--muted);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'Consolas', 'Monaco', monospace;
+  }
+  header .spacer { flex: 1; }
+
+  .btn {
+    background: var(--accent);
+    color: #000;
+    border: 0;
+    padding: 7px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .btn.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    font-weight: 500;
+  }
+  .btn.secondary:hover { background: var(--panel-2); border-color: #555; }
+  .btn.ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 9px;
+    font-size: 11px;
+    border-radius: 4px;
+  }
+  .btn.ghost:hover { color: var(--text); border-color: #555; }
+
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    min-height: 0;
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    min-width: 0;
+    border-right: 1px solid var(--border);
+  }
+  .panel:last-child { border-right: 0; }
+
+  .panel-header {
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+    padding: 9px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .panel-header h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .panel-header .actions { display: flex; gap: 6px; }
+
+  .panel textarea {
+    flex: 1;
+    background: var(--code-bg);
+    color: var(--text);
+    border: 0;
+    padding: 14px;
+    font-family: 'Consolas', 'JetBrains Mono', 'Monaco', monospace;
+    font-size: 13px;
+    resize: none;
+    outline: none;
+    line-height: 1.55;
+    tab-size: 2;
+  }
+  .panel textarea::placeholder { color: #555; }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+    background: var(--bg);
+    min-width: 180px;
+  }
+  .controls .btn { width: 100%; padding: 10px 14px; }
+  .controls .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+  .controls .hint {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .preview-row {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    transition: height 0.2s;
+    display: flex;
+    flex-direction: column;
+  }
+  .preview-row.collapsed { height: 38px; }
+  .preview-row.expanded { height: 340px; }
+  .preview-row.dragging { transition: none; }
+  .preview-row .panel-header { cursor: pointer; user-select: none; }
+  .preview-row .panel-header h2::before { content: '\25B6'; margin-right: 8px; font-size: 9px; transition: transform 0.15s; display: inline-block; }
+  .preview-row.expanded .panel-header h2::before { transform: rotate(90deg); }
+  .preview-row iframe {
+    flex: 1;
+    background: #fff;
+    border: 0;
+    width: 100%;
+    display: none;
+  }
+  .preview-row.expanded iframe { display: block; }
+
+  /* drag-to-resize handle (only visible when preview is expanded) */
+  .resize-handle {
+    height: 6px;
+    background: var(--border);
+    cursor: ns-resize;
+    flex-shrink: 0;
+    display: none;
+    position: relative;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .resize-handle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 2px;
+    background: var(--muted);
+    border-radius: 1px;
+    opacity: 0.5;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .preview-row.expanded .resize-handle { display: block; }
+  .resize-handle:hover { background: rgba(255, 149, 0, 0.18); }
+  .resize-handle:hover::after { background: #fff; opacity: 1; }
+  .resize-handle.dragging { background: var(--accent); }
+  .resize-handle.dragging::after { background: #000; opacity: 1; }
+
+  /* Fullscreen mode for the preview pane */
+  .preview-row:fullscreen,
+  .preview-row:-webkit-full-screen {
+    height: 100vh !important;
+    width: 100vw !important;
+    background: var(--bg);
+  }
+  .preview-row:fullscreen iframe,
+  .preview-row:-webkit-full-screen iframe { display: block !important; flex: 1; }
+  .preview-row:fullscreen .resize-handle,
+  .preview-row:-webkit-full-screen .resize-handle { display: none !important; }
+
+  .status {
+    background: var(--panel-2);
+    border-top: 1px solid var(--border);
+    padding: 6px 16px;
+    font-size: 11.5px;
+    color: var(--muted);
+    font-family: 'Consolas', monospace;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--muted);
+  }
+  .status.success .dot { background: var(--success); }
+  .status.error .dot { background: var(--error); }
+  .status.error { color: var(--error); }
+  .status.success { color: var(--success); }
+  .status.working .dot { background: var(--accent); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* Custom scrollbar */
+  textarea::-webkit-scrollbar { width: 12px; height: 12px; }
+  textarea::-webkit-scrollbar-track { background: var(--code-bg); }
+  textarea::-webkit-scrollbar-thumb { background: #333; border: 3px solid var(--code-bg); border-radius: 6px; }
+  textarea::-webkit-scrollbar-thumb:hover { background: #444; }
+
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; grid-template-rows: 1fr auto 1fr; }
+    .panel { border-right: 0; border-bottom: 1px solid var(--border); }
+    .controls { flex-direction: row; min-width: 0; flex-wrap: wrap; }
+    .controls .btn { width: auto; flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CatWeb <span class="arrow">&harr;</span> HTML</h1>
+  <span class="badge">v1.0 &middot; CatWeb 2.17.3</span>
+  <div class="spacer"></div>
+  <button class="btn ghost" id="btn-sample-html">Load HTML sample</button>
+  <button class="btn ghost" id="btn-sample-catweb">Load CatWeb sample</button>
+  <button class="btn ghost" id="btn-clear">Clear all</button>
+</header>
+
+<div class="main">
+  <div class="panel">
+    <div class="panel-header">
+      <h2>HTML</h2>
+      <div class="actions">
+        <button class="btn ghost" data-copy="html-input">Copy</button>
+        <button class="btn ghost" data-format="html">Format</button>
+      </div>
+    </div>
+    <textarea id="html-input" placeholder="<!-- Paste HTML here -->
+<div style='padding: 20px; background: #1a1a1a; color: white;'>
+  <h1>Hello, CatWeb!</h1>
+  <button>Click me</button>
+</div>"></textarea>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="btn-to-catweb">HTML &rarr; CatWeb</button>
+    <button class="btn" id="btn-to-html">CatWeb &rarr; HTML</button>
+    <div class="divider"></div>
+    <button class="btn secondary" id="btn-preview-catweb">Preview CatWeb</button>
+    <button class="btn secondary" id="btn-preview-html">Preview HTML</button>
+    <div class="divider"></div>
+    <button class="btn secondary" id="btn-view-catweb-code">View CatWeb code</button>
+    <button class="btn secondary" id="btn-view-html-code">View HTML code</button>
+    <div class="hint">
+      Tip: HTML uses<br>browser-rendered styles<br>(supports CSS classes)
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>CatWeb JSON</h2>
+      <div class="actions">
+        <button class="btn ghost" data-copy="catweb-input">Copy</button>
+        <button class="btn ghost" data-format="json">Format</button>
+      </div>
+    </div>
+    <textarea id="catweb-input" placeholder='[
+  {
+    "class": "Frame",
+    "globalid": "root",
+    "size": "{1,0},{1,0}",
+    "background_color": "#1a1a1a",
+    "children": []
+  }
+]'></textarea>
+  </div>
+</div>
+
+<div class="preview-row collapsed" id="preview-row">
+  <div class="resize-handle" id="resize-handle" title="Drag to resize"></div>
+  <div class="panel-header" id="preview-toggle">
+    <h2>Preview</h2>
+    <div class="actions">
+      <button class="btn ghost" id="btn-fullscreen" title="Toggle fullscreen (Esc to exit)">Fullscreen</button>
+      <span class="btn ghost" id="preview-label">Click to expand</span>
+    </div>
+  </div>
+  <iframe id="preview-frame" src="about:blank" sandbox="allow-same-origin"></iframe>
+</div>
+
+<div class="status" id="status">
+  <span class="dot"></span>
+  <span id="status-text">Ready. Paste HTML or CatWeb JSON and click a convert button.</span>
+</div>
+
+<script>
+'use strict';
+
+/* ============================================================
+ * CatWeb <-> HTML Converter
+ * Spec: CatWeb v2.17.3.0 (see ../game/CatDocs.md, ../game/UIGPT.md)
+ * ============================================================ */
+
+const VIEWPORT_W = 1920;
+const VIEWPORT_H = 1080;
+
+const $ = id => document.getElementById(id);
+
+/* ---------------- Color helpers ---------------- */
+
+function rgbToHex(rgb) {
+  if (!rgb) return null;
+  rgb = String(rgb).trim();
+  if (rgb === 'transparent' || rgb === 'rgba(0, 0, 0, 0)') return null;
+  if (rgb.startsWith('#')) {
+    if (rgb.length === 4) {
+      return '#' + rgb.slice(1).split('').map(c => c + c).join('');
+    }
+    return rgb.toLowerCase();
+  }
+  const m = rgb.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (!m) return null;
+  return '#' + [m[1], m[2], m[3]].map(n =>
+    Math.max(0, Math.min(255, parseInt(n))).toString(16).padStart(2, '0')
+  ).join('');
+}
+
+function rgbToAlpha(rgb) {
+  if (!rgb) return 1;
+  const m = String(rgb).match(/rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/i);
+  return m ? parseFloat(m[1]) : 1;
+}
+
+function normColor(c) {
+  if (!c) return '#000000';
+  c = String(c).trim();
+  if (c.startsWith('#')) {
+    if (c.length === 4) return '#' + c.slice(1).split('').map(x => x + x).join('');
+    return c.toLowerCase();
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(c)) return '#' + c.toLowerCase();
+  if (/^[0-9a-fA-F]{3}$/.test(c)) return '#' + c.split('').map(x => x + x).join('').toLowerCase();
+  const parts = c.split(',').map(p => parseInt(p.trim()));
+  if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+    return '#' + parts.map(n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join('');
+  }
+  return c;
+}
+
+function hexToRgba(hex, alpha = 1) {
+  hex = String(hex).replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  if (hex.length !== 6) return `rgba(0, 0, 0, ${alpha})`;
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/* ---------------- UDim helpers ---------------- */
+
+function parseUDim(str) {
+  if (typeof str !== 'string') return { scale: 0, offset: 0 };
+  const parts = str.split(',').map(s => parseFloat(s.trim()));
+  return { scale: parts[0] || 0, offset: parts[1] || 0 };
+}
+
+function parseUDim2(str) {
+  if (typeof str !== 'string') return null;
+  const m = str.match(/\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}\s*,\s*\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}/);
+  if (!m) return null;
+  return {
+    x: { scale: parseFloat(m[1]), offset: parseFloat(m[2]) },
+    y: { scale: parseFloat(m[3]), offset: parseFloat(m[4]) }
+  };
+}
+
+function udimToCss(scale, offset) {
+  scale = scale || 0;
+  offset = offset || 0;
+  if (scale === 0) return `${offset}px`;
+  if (offset === 0) return `${scale * 100}%`;
+  if (offset > 0) return `calc(${scale * 100}% + ${offset}px)`;
+  return `calc(${scale * 100}% - ${Math.abs(offset)}px)`;
+}
+
+function makeUDim2(xScale, xOff, yScale, yOff) {
+  return `{${xScale},${xOff}},{${yScale},${yOff}}`;
+}
+
+/* ---------------- ID helpers ---------------- */
+
+let idCounter = 0;
+function genId(prefix = 'el') {
+  idCounter++;
+  return `${prefix}_${idCounter}${Math.random().toString(36).slice(2, 5)}`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+}
+function escapeAttr(s) {
+  return String(s).replace(/[&"]/g, ch => ({ '&': '&amp;', '"': '&quot;' }[ch]));
+}
+
+/* ---------------- Value validation ----------------
+ * Per CatWeb spec, several properties only accept a fixed set of values.
+ * Invalid values silently break things at import time, so we coerce them
+ * to the closest allowed value (case-insensitive) or drop them. */
+
+const VALID_VALUES = {
+  // Booleans (stored as strings "true"/"false")
+  visible:            ['true', 'false'],
+  auto_color:         ['true', 'false'],
+  canvas:             ['true', 'false'],
+  rich:               ['true', 'false'],
+  wrap:               ['true', 'false'],
+  truncate_text:      ['true', 'false'],
+  multiline:          ['true', 'false'],
+  editable:           ['true', 'false'],
+  new_tab:            ['true', 'false'],
+  enabled:            ['true', 'false'],
+  wrap_list:          ['true', 'false'],
+
+  // Enums
+  align_x:              ['Left', 'Center', 'Right'],
+  align_y:              ['Top', 'Center', 'Bottom'],
+  font_weight:          ['Thin', 'ExtraLight', 'Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold', 'Heavy'],
+  font_style:           ['Normal', 'Italic'],
+  truncate:             ['AtEnd', 'None', 'SplitWord'],
+  scale_type:           ['Crop', 'Fit', 'Slice', 'Stretch', 'Tile'],
+  resample_mode:        ['Default', 'Pixelated'],
+  stroke_mode:          ['Border', 'Contextual'],
+  stroke_type:          ['Round', 'Miter', 'Bevel'],
+  direction:            ['Vertical', 'Horizontal'],
+  alignment_horizontal: ['Left', 'Center', 'Right'],
+  alignment_vertical:   ['Top', 'Center', 'Bottom'],
+  sort:                 ['LayoutOrder', 'Name'],
+  product_type:         ['GamePass', 'Asset', 'Product']
+};
+
+// Allowed CatWeb element classes
+const VALID_CLASSES = new Set([
+  'Frame', 'ScrollingFrame', 'TextLabel', 'TextButton', 'TextBox', 'ImageLabel',
+  'TextButton?link', 'TextButton?donation', 'TextButton?transfer', 'TextButton?avataritem',
+  'Folder', 'script',
+  'UICorner', 'UIStroke', 'UIGradient', 'UIPadding', 'UIListLayout', 'UIGridLayout',
+  'UIAspectRatioConstraint', 'UISizeConstraint', 'UITextSizeConstraint'
+]);
+
+function coerceEnum(key, value) {
+  const allowed = VALID_VALUES[key];
+  if (!allowed) return value;
+  const str = String(value);
+  if (allowed.includes(str)) return str;
+  const ci = allowed.find(v => v.toLowerCase() === str.toLowerCase());
+  return ci || null; // null signals "drop this key"
+}
+
+function coerceNumString(value, min, max) {
+  const n = parseFloat(value);
+  if (isNaN(n)) return null;
+  const clamped = Math.max(min, Math.min(max, n));
+  return String(+clamped.toFixed(4));
+}
+
+function coerceHexColor(value) {
+  if (typeof value !== 'string') return null;
+  let v = value.trim();
+  if (v.startsWith('#')) v = v.slice(1);
+  if (/^[0-9a-fA-F]{3}$/.test(v)) v = v.split('').map(c => c + c).join('');
+  if (!/^[0-9a-fA-F]{6}$/.test(v)) return null;
+  return '#' + v.toLowerCase();
+}
+
+// Properties that should be 0..1 transparencies
+const TRANSPARENCY_KEYS = new Set([
+  'background_transparency', 'font_transparency', 'image_transparency',
+  'stroke_transparency', 'scrollbar_transparency'
+]);
+
+// Properties that should be valid hex colors
+const COLOR_KEYS = new Set([
+  'background_color', 'font_color', 'placeholder_color',
+  'stroke_color', 'scrollbar_color', 'image_color', 'outline_color'
+]);
+
+function sanitizeElement(el, issues) {
+  if (!el || typeof el !== 'object') return;
+
+  // Class must be valid
+  if (el.class && !VALID_CLASSES.has(el.class)) {
+    issues.push(`Unknown class: "${el.class}"`);
+  }
+
+  for (const key of Object.keys(el)) {
+    if (key === 'children') continue;
+    const val = el[key];
+
+    if (VALID_VALUES[key]) {
+      const coerced = coerceEnum(key, val);
+      if (coerced === null) {
+        issues.push(`Dropped invalid ${key}="${val}" (allowed: ${VALID_VALUES[key].join(', ')})`);
+        delete el[key];
+      } else if (coerced !== val) {
+        issues.push(`Coerced ${key}: "${val}" -> "${coerced}"`);
+        el[key] = coerced;
+      } else if (typeof val !== 'string') {
+        el[key] = String(val);
+      }
+      continue;
+    }
+
+    if (COLOR_KEYS.has(key)) {
+      const hex = coerceHexColor(val);
+      if (hex === null) {
+        issues.push(`Dropped invalid ${key}="${val}" (expected hex color)`);
+        delete el[key];
+      } else if (hex !== val) {
+        el[key] = hex;
+      }
+      continue;
+    }
+
+    if (TRANSPARENCY_KEYS.has(key)) {
+      const t = coerceNumString(val, 0, 1);
+      if (t === null) { delete el[key]; continue; }
+      el[key] = t;
+      continue;
+    }
+  }
+
+  if (Array.isArray(el.children)) {
+    for (const child of el.children) sanitizeElement(child, issues);
+  }
+}
+
+function sanitizeCatWeb(arr) {
+  const issues = [];
+  if (Array.isArray(arr)) {
+    for (const el of arr) sanitizeElement(el, issues);
+  }
+  return { data: arr, issues };
+}
+
+/* ============================================================
+ * HTML -> CatWeb
+ * ============================================================ */
+
+function htmlToCatWeb(html) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText =
+      `position: absolute; left: -99999px; top: -99999px; ` +
+      `width: ${VIEWPORT_W}px; height: ${VIEWPORT_H}px; border: 0; visibility: hidden;`;
+
+    let settled = false;
+    const finish = (fn) => {
+      if (settled) return; settled = true;
+      try { document.body.removeChild(iframe); } catch(e) {}
+      fn();
+    };
+
+    iframe.onload = () => {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc || !doc.body) throw new Error('Failed to load HTML into iframe');
+        // Wait a tick for layout to settle
+        requestAnimationFrame(() => {
+          try {
+            const result = buildCatWebFromDoc(doc);
+            finish(() => resolve(result));
+          } catch (e) {
+            finish(() => reject(e));
+          }
+        });
+      } catch (e) {
+        finish(() => reject(e));
+      }
+    };
+    iframe.onerror = (e) => finish(() => reject(new Error('iframe error')));
+
+    iframe.srcdoc = html.trim().startsWith('<') ? html : `<!DOCTYPE html><html><body>${html}</body></html>`;
+    document.body.appendChild(iframe);
+  });
+}
+
+function buildCatWebFromDoc(doc) {
+  idCounter = 0;
+  const body = doc.body;
+  const win = doc.defaultView;
+
+  const bodyStyle = win.getComputedStyle(body);
+  const rootBg = rgbToHex(bodyStyle.backgroundColor);
+
+  // Build root frame that fills the viewport
+  const root = {
+    class: 'Frame',
+    globalid: genId('root'),
+    alias: 'Root',
+    size: '{1,0},{1,0}',
+    position: '{0,0},{0,0}',
+    background_color: rootBg || '#1a1a1a',
+    children: []
+  };
+  if (!rootBg) root.background_transparency = '1';
+
+  // Detect root layout (flex/grid on body)
+  const rootLayout = detectLayout(body, bodyStyle);
+  if (rootLayout) root.children.push(rootLayout);
+
+  // Body padding
+  const rootPadding = detectPadding(bodyStyle);
+  if (rootPadding) root.children.push(rootPadding);
+
+  // Walk children
+  const visualChildren = Array.from(body.children).filter(c =>
+    !['SCRIPT', 'STYLE', 'META', 'LINK', 'TITLE', 'NOSCRIPT'].includes(c.tagName)
+  );
+
+  for (let i = 0; i < visualChildren.length; i++) {
+    const converted = convertElementToCatWeb(visualChildren[i], body, win, i);
+    if (converted) root.children.push(converted);
+  }
+
+  return [root];
+}
+
+function convertElementToCatWeb(el, parent, win, orderIdx) {
+  const tag = el.tagName.toLowerCase();
+  if (['script', 'style', 'meta', 'link', 'title', 'noscript', 'head'].includes(tag)) return null;
+
+  const cs = win.getComputedStyle(el);
+  if (cs.display === 'none') return null;
+
+  const cw = {};
+  cw.globalid = genId(el.id || tag);
+  if (el.id) cw.alias = el.id;
+  else if (el.getAttribute('alt')) cw.alias = el.getAttribute('alt');
+  else if (el.classList && el.classList.length) cw.alias = el.classList[0];
+
+  const hasChildren = Array.from(el.children).some(c =>
+    !['SCRIPT','STYLE','META','LINK','TITLE','NOSCRIPT'].includes(c.tagName)
+  );
+  const directText = getDirectText(el).trim();
+
+  /* ---- Pick CatWeb class ---- */
+  switch (tag) {
+    case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
+    case 'p': case 'span': case 'label': case 'small': case 'em':
+    case 'strong': case 'b': case 'i': case 'code': case 'pre':
+    case 'blockquote': case 'figcaption':
+      cw.class = 'TextLabel';
+      cw.text = el.textContent;
+      cw.background_transparency = '1';
+      break;
+
+    case 'button':
+      cw.class = 'TextButton';
+      cw.text = directText || el.textContent.trim();
+      cw.auto_color = 'true';
+      break;
+
+    case 'a':
+      cw.class = 'TextButton?link';
+      cw.text = directText || el.textContent.trim();
+      cw.href = el.getAttribute('href') || '';
+      cw.new_tab = el.target === '_blank' ? 'true' : 'false';
+      cw.auto_color = 'true';
+      break;
+
+    case 'img': {
+      cw.class = 'ImageLabel';
+      const src = el.getAttribute('src') || '';
+      const idMatch = src.match(/(?:assetid?[=/]|rbxassetid:\/\/)(\d{4,})/i)
+        || src.match(/(\d{8,})/);
+      cw.image_id = idMatch ? idMatch[1] : '0';
+      cw.image = `rbxassetid://${cw.image_id}`;
+      cw.background_transparency = '1';
+      const objectFit = cs.objectFit;
+      const fitMap = { cover: 'Crop', contain: 'Fit', fill: 'Stretch', none: 'Tile' };
+      cw.scale_type = fitMap[objectFit] || 'Stretch';
+      break;
+    }
+
+    case 'input': {
+      const t = (el.type || 'text').toLowerCase();
+      if (t === 'image') {
+        cw.class = 'ImageLabel';
+        cw.image_id = '0';
+      } else if (t === 'button' || t === 'submit' || t === 'reset') {
+        cw.class = 'TextButton';
+        cw.text = el.value || (t === 'submit' ? 'Submit' : 'Button');
+        cw.auto_color = 'true';
+      } else if (t === 'checkbox' || t === 'radio') {
+        cw.class = 'Frame';
+        cw.background_color = '#ffffff';
+      } else {
+        cw.class = 'TextBox';
+        cw.placeholder = el.getAttribute('placeholder') || '';
+        cw.text = el.value || '';
+        cw.placeholder_color = '#888888';
+        cw.editable = el.disabled ? 'false' : 'true';
+        cw.multiline = 'false';
+      }
+      break;
+    }
+
+    case 'textarea':
+      cw.class = 'TextBox';
+      cw.placeholder = el.getAttribute('placeholder') || '';
+      cw.text = el.value || el.textContent || '';
+      cw.placeholder_color = '#888888';
+      cw.editable = el.disabled ? 'false' : 'true';
+      cw.multiline = 'true';
+      break;
+
+    default: {
+      // Scroll container?
+      if (['auto', 'scroll'].includes(cs.overflow) ||
+          ['auto', 'scroll'].includes(cs.overflowY) ||
+          ['auto', 'scroll'].includes(cs.overflowX)) {
+        cw.class = 'ScrollingFrame';
+        cw.canvassize = 'auto_y';
+        cw.scrollbar_thickness = '10';
+        cw.scrollbar_color = '#666666';
+        cw.scrollbar_transparency = '0';
+      } else if (!hasChildren && directText) {
+        // Text-only element treated as TextLabel
+        cw.class = 'TextLabel';
+        cw.text = directText;
+        cw.background_transparency = '1';
+      } else {
+        cw.class = 'Frame';
+      }
+    }
+  }
+
+  /* ---- Size ---- */
+  cw.size = computeSize(el, cs);
+
+  /* ---- Position ---- */
+  if (['absolute', 'fixed'].includes(cs.position)) {
+    cw.position = computeAbsolutePosition(el, cs);
+    if (cs.transform && cs.transform !== 'none') {
+      const t = parseTransform(cs.transform);
+      if (t.tx || t.ty) {
+        // Approximate anchor from translate(-X%,-Y%)
+      }
+    }
+  }
+
+  /* ---- Background ---- */
+  if (cw.class !== 'TextLabel' && cw.class !== 'ImageLabel') {
+    const bg = rgbToHex(cs.backgroundColor);
+    if (bg) {
+      cw.background_color = bg;
+      const a = rgbToAlpha(cs.backgroundColor);
+      if (a < 1) cw.background_transparency = String(+(1 - a).toFixed(3));
+    } else {
+      cw.background_transparency = '1';
+    }
+  }
+
+  /* ---- Text styling ---- */
+  if (['TextLabel', 'TextButton', 'TextButton?link', 'TextBox'].includes(cw.class)) {
+    const c = rgbToHex(cs.color);
+    if (c) cw.font_color = c;
+
+    const fs = parseFloat(cs.fontSize);
+    if (fs) cw.font_size = String(Math.round(fs));
+
+    const fw = cs.fontWeight;
+    // CatWeb's font_weight enum has no "Light" (300) — map it to ExtraLight.
+    const weightMap = {
+      '100': 'Thin', '200': 'ExtraLight', '300': 'ExtraLight',
+      '400': 'Regular', '500': 'Medium', '600': 'SemiBold',
+      '700': 'Bold', '800': 'ExtraBold', '900': 'Heavy',
+      'normal': 'Regular', 'bold': 'Bold'
+    };
+    if (weightMap[fw]) cw.font_weight = weightMap[fw];
+
+    if (cs.fontStyle === 'italic' || cs.fontStyle === 'oblique') cw.font_style = 'Italic';
+
+    if (cs.textAlign && cs.textAlign !== 'start') {
+      const ax = { left: 'Left', center: 'Center', right: 'Right', justify: 'Left' };
+      cw.align_x = ax[cs.textAlign] || 'Left';
+    } else {
+      cw.align_x = 'Left';
+    }
+    cw.align_y = 'Center';
+
+    const fam = cs.fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+    const knownFonts = ['Gotham', 'GothamBold', 'SourceSans', 'Roboto'];
+    if (knownFonts.includes(fam)) cw.font = fam;
+    else if (fam && !['serif', 'sans-serif', 'monospace', 'cursive', 'system-ui', 'Times', 'Arial'].includes(fam)) {
+      cw.font = fam;
+    }
+
+    const lh = cs.lineHeight;
+    if (lh && lh !== 'normal') {
+      const lhPx = parseFloat(lh);
+      const lhRatio = lhPx / (fs || 16);
+      if (!isNaN(lhRatio) && lhRatio > 0 && lhRatio <= 3) {
+        cw.line_height = String(+lhRatio.toFixed(2));
+      }
+    }
+
+    if (cs.whiteSpace === 'nowrap' || cs.whiteSpace === 'pre') {
+      cw.wrap = 'false';
+    }
+
+    if (cs.textOverflow === 'ellipsis') cw.truncate = 'AtEnd';
+  }
+
+  /* ---- Rotation ---- */
+  const rot = extractRotation(cs.transform);
+  if (rot) cw.rotation = String(rot);
+
+  /* ---- Z-index ---- */
+  if (cs.zIndex && cs.zIndex !== 'auto' && cs.zIndex !== '0') {
+    cw.z_index = cs.zIndex;
+  }
+
+  /* ---- Visibility ---- */
+  if (cs.visibility === 'hidden') cw.visible = 'false';
+
+  /* ---- Clips descendants (JSON key is `canvas`; runtime name is "Clips Descendants") ---- */
+  if (cs.overflow === 'hidden') cw.canvas = 'true';
+
+  /* ---- Styling children (UICorner / UIStroke / UIPadding / UIListLayout / UIGradient) ---- */
+  const stylingChildren = [];
+
+  // UICorner
+  const r = parseFloat(cs.borderRadius);
+  if (r > 0) {
+    stylingChildren.push({
+      class: 'UICorner',
+      globalid: genId('corner'),
+      radius: `0,${Math.round(r)}`
+    });
+  }
+
+  // UIStroke
+  const bw = parseFloat(cs.borderTopWidth) || 0;
+  const bs = cs.borderTopStyle;
+  if (bw > 0 && bs !== 'none' && bs !== 'hidden') {
+    const bc = rgbToHex(cs.borderTopColor);
+    if (bc) {
+      stylingChildren.push({
+        class: 'UIStroke',
+        globalid: genId('stroke'),
+        stroke_color: bc,
+        stroke_thickness: String(Math.round(bw)),
+        stroke_transparency: '0',
+        stroke_mode: 'Border',
+        stroke_type: 'Round'
+      });
+    }
+  }
+
+  // UIPadding
+  const pad = detectPadding(cs);
+  if (pad) stylingChildren.push(pad);
+
+  // UIListLayout / UIGridLayout
+  const layout = detectLayout(el, cs);
+  if (layout) stylingChildren.push(layout);
+
+  // UIGradient
+  if (cs.backgroundImage && cs.backgroundImage.includes('gradient')) {
+    const grad = parseGradient(cs.backgroundImage);
+    if (grad) stylingChildren.push(grad);
+  }
+
+  /* ---- Real children ---- */
+  const childList = [];
+  if (hasChildren) {
+    const kids = Array.from(el.children).filter(c =>
+      !['SCRIPT','STYLE','META','LINK','TITLE','NOSCRIPT'].includes(c.tagName)
+    );
+    for (let i = 0; i < kids.length; i++) {
+      const k = convertElementToCatWeb(kids[i], el, win, i);
+      if (k) childList.push(k);
+    }
+  }
+
+  if (stylingChildren.length || childList.length) {
+    cw.children = [...stylingChildren, ...childList];
+  }
+
+  // Order index if parent is flex/grid
+  const parentCs = win.getComputedStyle(parent);
+  if ((parentCs.display === 'flex' || parentCs.display === 'inline-flex' ||
+       parentCs.display === 'grid' || parentCs.display === 'inline-grid')
+      && typeof orderIdx === 'number') {
+    cw.order = String(orderIdx + 1);
+  }
+
+  return cw;
+}
+
+function getDirectText(el) {
+  let t = '';
+  for (const n of el.childNodes) {
+    if (n.nodeType === 3) t += n.textContent;
+  }
+  return t;
+}
+
+function computeSize(el, cs) {
+  // CatWeb sizes describe the FULL bounding box (no box-sizing concept).
+  // In HTML, getComputedStyle().width returns the content-box width by
+  // default — that excludes padding and border. Using it directly produces
+  // tiny / wrong sizes for elements with padding (e.g. <input>s collapse
+  // to just their line-height). getBoundingClientRect() / offsetWidth give
+  // the full painted box, which matches CatWeb's model.
+  const inlineW = el.style && el.style.width;
+  const inlineH = el.style && el.style.height;
+
+  const rect = el.getBoundingClientRect();
+  let xScale = 0, xOff = 0;
+  let yScale = 0, yOff = 0;
+
+  // Width
+  if (inlineW && inlineW.endsWith('%')) {
+    xScale = +(parseFloat(inlineW) / 100).toFixed(4);
+  } else if (typeof cs.width === 'string' && cs.width.endsWith('%')) {
+    xScale = +(parseFloat(cs.width) / 100).toFixed(4);
+  } else {
+    xOff = Math.round(rect.width || el.offsetWidth || 0);
+  }
+
+  // Height
+  if (inlineH && inlineH.endsWith('%')) {
+    yScale = +(parseFloat(inlineH) / 100).toFixed(4);
+  } else if (typeof cs.height === 'string' && cs.height.endsWith('%')) {
+    yScale = +(parseFloat(cs.height) / 100).toFixed(4);
+  } else {
+    yOff = Math.round(rect.height || el.offsetHeight || 0);
+  }
+
+  return makeUDim2(xScale, xOff, yScale, yOff);
+}
+
+function computeAbsolutePosition(el, cs) {
+  const left = parseFloat(cs.left) || 0;
+  const top = parseFloat(cs.top) || 0;
+  return makeUDim2(0, Math.round(left), 0, Math.round(top));
+}
+
+function detectPadding(cs) {
+  const t = parseFloat(cs.paddingTop) || 0;
+  const r = parseFloat(cs.paddingRight) || 0;
+  const b = parseFloat(cs.paddingBottom) || 0;
+  const l = parseFloat(cs.paddingLeft) || 0;
+  if (!t && !r && !b && !l) return null;
+  return {
+    class: 'UIPadding',
+    globalid: genId('padding'),
+    top: `0,${Math.round(t)}`,
+    right: `0,${Math.round(r)}`,
+    bottom: `0,${Math.round(b)}`,
+    left: `0,${Math.round(l)}`
+  };
+}
+
+function detectLayout(el, cs) {
+  if (cs.display === 'flex' || cs.display === 'inline-flex') {
+    const dir = cs.flexDirection.startsWith('row') ? 'Horizontal' : 'Vertical';
+    const gap = parseFloat(cs.gap) || parseFloat(cs.rowGap) || parseFloat(cs.columnGap) || 0;
+
+    const justifyMap = { 'flex-start': 'start', 'center': 'center', 'flex-end': 'end',
+      'space-between': 'start', 'space-around': 'center', 'space-evenly': 'center' };
+    const alignMap = { 'flex-start': 'start', 'center': 'center', 'flex-end': 'end',
+      'stretch': 'start', 'baseline': 'start', 'normal': 'start' };
+
+    const j = justifyMap[cs.justifyContent] || 'start';
+    const a = alignMap[cs.alignItems] || 'start';
+
+    let hAlign, vAlign;
+    if (dir === 'Horizontal') {
+      hAlign = { start: 'Left', center: 'Center', end: 'Right' }[j];
+      vAlign = { start: 'Top', center: 'Center', end: 'Bottom' }[a];
+    } else {
+      vAlign = { start: 'Top', center: 'Center', end: 'Bottom' }[j];
+      hAlign = { start: 'Left', center: 'Center', end: 'Right' }[a];
+    }
+
+    return {
+      class: 'UIListLayout',
+      globalid: genId('list'),
+      direction: dir,
+      padding: `0,${Math.round(gap)}`,
+      alignment_horizontal: hAlign,
+      alignment_vertical: vAlign,
+      sort: 'LayoutOrder',
+      wrap_list: cs.flexWrap === 'wrap' ? 'true' : 'false'
+    };
+  }
+  if (cs.display === 'grid' || cs.display === 'inline-grid') {
+    // Try to infer cell size from first child's computed width/height
+    const first = el.children[0];
+    let cellW = 100, cellH = 100;
+    if (first) {
+      cellW = Math.round(first.offsetWidth) || 100;
+      cellH = Math.round(first.offsetHeight) || 100;
+    }
+    const gap = parseFloat(cs.gap) || 0;
+    return {
+      class: 'UIGridLayout',
+      globalid: genId('grid'),
+      size: `{0,${cellW}},{0,${cellH}}`,
+      padding: `0,${Math.round(gap)}`,
+      alignment_horizontal: 'Center',
+      alignment_vertical: 'Top',
+      sort: 'LayoutOrder'
+    };
+  }
+  return null;
+}
+
+function parseGradient(bg) {
+  // Match linear-gradient(angle, color1 pos, color2 pos, ...)
+  const m = bg.match(/linear-gradient\(([^)]+)\)/);
+  if (!m) return null;
+  const inner = m[1];
+  const parts = splitTopLevel(inner, ',').map(s => s.trim());
+  let rotation = 0;
+  let startIdx = 0;
+  if (parts[0].endsWith('deg')) {
+    rotation = parseFloat(parts[0]) - 90;
+    startIdx = 1;
+  } else if (parts[0].startsWith('to ')) {
+    const dirMap = { 'to right': 0, 'to bottom': 90, 'to left': 180, 'to top': 270,
+      'to bottom right': 45, 'to bottom left': 135, 'to top left': 225, 'to top right': 315 };
+    rotation = dirMap[parts[0]] || 0;
+    startIdx = 1;
+  }
+  const stops = [];
+  for (let i = startIdx; i < parts.length; i++) {
+    const stop = parts[i];
+    const sm = stop.match(/(#[0-9a-fA-F]{3,6}|rgba?\([^)]+\))\s*([\d.]+%)?/);
+    if (!sm) continue;
+    const hex = rgbToHex(sm[1]) || sm[1];
+    const cleanHex = hex.replace('#', '');
+    const pos = sm[2] ? parseFloat(sm[2]) / 100 : (i - startIdx) / Math.max(1, parts.length - startIdx - 1);
+    stops.push([+pos.toFixed(3), cleanHex]);
+  }
+  if (!stops.length) return null;
+  return {
+    class: 'UIGradient',
+    globalid: genId('gradient'),
+    gradient_color: JSON.stringify(stops),
+    rotation: String(Math.round(rotation)),
+    gradient_offset: '0,0'
+  };
+}
+
+function splitTopLevel(s, sep) {
+  const out = []; let depth = 0; let cur = '';
+  for (const ch of s) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    if (ch === sep && depth === 0) { out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+function extractRotation(transform) {
+  if (!transform || transform === 'none') return 0;
+  const rotM = transform.match(/rotate\(\s*(-?[\d.]+)\s*deg\s*\)/);
+  if (rotM) return Math.round(parseFloat(rotM[1]));
+  const mat = transform.match(/matrix\(([^)]+)\)/);
+  if (mat) {
+    const [a, b] = mat[1].split(',').map(parseFloat);
+    const angle = Math.round(Math.atan2(b, a) * 180 / Math.PI);
+    return angle;
+  }
+  return 0;
+}
+
+function parseTransform(transform) {
+  const m = transform.match(/translate\(\s*(-?[\d.]+)%?\s*,\s*(-?[\d.]+)%?\s*\)/);
+  if (m) return { tx: parseFloat(m[1]), ty: parseFloat(m[2]) };
+  return { tx: 0, ty: 0 };
+}
+
+/* ============================================================
+ * CatWeb -> HTML
+ * ============================================================ */
+
+function catWebToHtml(jsonStr) {
+  let data;
+  try {
+    data = JSON.parse(jsonStr);
+  } catch (e) {
+    throw new Error('Invalid JSON: ' + e.message);
+  }
+  if (!Array.isArray(data)) throw new Error('CatWeb JSON root must be an array.');
+
+  // Sanitize so unknown enum/color/transparency values don't silently break rendering
+  sanitizeCatWeb(data);
+
+  const bodyParts = [];
+  for (const el of data) {
+    const out = renderCatWebElement(el);
+    if (out) bodyParts.push(out);
+  }
+
+  return [
+    '<!DOCTYPE html>',
+    '<html lang="en">',
+    '<head>',
+    '<meta charset="UTF-8">',
+    '<title>CatWeb Page</title>',
+    '<style>',
+    '* { box-sizing: border-box; margin: 0; padding: 0; }',
+    'html, body { width: 100%; height: 100%; font-family: \'Gotham\', \'Inter\', system-ui, sans-serif; overflow: hidden; }',
+    'body { position: relative; color: #000; background: #fff; }',
+    '.cw { position: relative; overflow: visible; box-sizing: border-box; }',
+    '.cw-text-host { display: flex; }',
+    '.cw-button { cursor: pointer; border: 0; outline: 0; font: inherit; color: inherit; background: inherit; padding: 0; user-select: none; }',
+    '.cw-button:hover { filter: brightness(1.08); }',
+    '.cw-link { text-decoration: none; }',
+    '.cw-img { display: block; }',
+    '.cw-input { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; padding: 0; width: 100%; height: 100%; resize: none; }',
+    '.cw-scroll { overflow: auto; }',
+    '.cw-text-content { width: 100%; height: 100%; display: flex; }',
+    '</style>',
+    '</head>',
+    '<body>',
+    bodyParts.join('\n'),
+    '</body>',
+    '</html>'
+  ].join('\n');
+}
+
+function renderCatWebElement(el) {
+  if (!el || typeof el !== 'object') return '';
+  const cls = el.class;
+  if (!cls) return '';
+  if (cls === 'script' || cls === 'Folder') return '';
+  if (cls.startsWith('UI')) return ''; // styling, applied to parent
+
+  // Gather styling from immediate children
+  const stylingChildren = (el.children || []).filter(c => c && c.class && c.class.startsWith('UI'));
+  const visualChildren = (el.children || []).filter(c =>
+    c && c.class && !c.class.startsWith('UI') && c.class !== 'script' && c.class !== 'Folder'
+  );
+
+  const css = buildCssFromCatWeb(el);
+  const stylingCss = applyStylingChildren(stylingChildren);
+  // For UICorner/UIStroke style merge them onto the host element
+  css.push(...stylingCss.host);
+
+  let tag, attrs = '', innerHtml = '', selfClosing = false;
+  const classes = ['cw'];
+
+  switch (cls) {
+    case 'Frame':
+      tag = 'div';
+      break;
+    case 'ScrollingFrame':
+      tag = 'div';
+      classes.push('cw-scroll');
+      break;
+    case 'TextLabel':
+      tag = 'div';
+      classes.push('cw-text-host');
+      innerHtml = renderTextContent(el);
+      break;
+    case 'TextButton':
+      tag = 'button';
+      classes.push('cw-button', 'cw-text-host');
+      attrs += ' type="button"';
+      innerHtml = renderTextContent(el);
+      break;
+    case 'TextButton?link':
+      tag = 'a';
+      classes.push('cw-button', 'cw-link', 'cw-text-host');
+      attrs += ` href="${escapeAttr(el.href || '#')}"`;
+      if (el.new_tab === 'true') attrs += ' target="_blank" rel="noopener"';
+      innerHtml = renderTextContent(el);
+      break;
+    case 'TextButton?donation':
+    case 'TextButton?transfer':
+    case 'TextButton?avataritem': {
+      tag = 'button';
+      classes.push('cw-button', 'cw-text-host');
+      attrs += ' type="button" title="Roblox purchase prompt (preview only)"';
+      let label = el.text;
+      if (!label) {
+        if (cls === 'TextButton?transfer') label = `Donate ${el.robux_amount || 0} R$`;
+        else if (cls === 'TextButton?avataritem') label = `Buy item ${el.product || ''}`;
+        else label = `Buy ${el.product_type || 'item'} ${el.product || ''}`;
+      }
+      innerHtml = `<span class="cw-text-content" style="${textAlignStyle(el)}">${escapeHtml(label)}</span>`;
+      break;
+    }
+    case 'TextBox': {
+      const multi = el.multiline === 'true';
+      tag = multi ? 'textarea' : 'input';
+      classes.push('cw-input');
+      attrs += ` placeholder="${escapeAttr(el.placeholder || '')}"`;
+      if (el.editable === 'false') attrs += ' readonly';
+      if (!multi) {
+        attrs += ` type="text" value="${escapeAttr(el.text || '')}"`;
+        selfClosing = true;
+      } else {
+        innerHtml = escapeHtml(el.text || '');
+      }
+      break;
+    }
+    case 'ImageLabel': {
+      tag = 'img';
+      classes.push('cw-img');
+      const id = el.image_id || '0';
+      const src = id !== '0'
+        ? `https://www.roblox.com/asset-thumbnail/image?assetId=${encodeURIComponent(id)}&width=420&height=420&format=png`
+        : '';
+      attrs += ` src="${escapeAttr(src)}" alt="${escapeAttr(el.alias || '')}" loading="lazy" onerror="this.style.opacity=0.2"`;
+      selfClosing = true;
+      break;
+    }
+    default:
+      tag = 'div';
+  }
+
+  // Render visual children
+  let childrenHtml = '';
+  if (visualChildren.length) {
+    childrenHtml = visualChildren.map(c => renderCatWebElement(c)).filter(Boolean).join('\n');
+  }
+
+  const styleStr = css.join(' ');
+  const classStr = classes.join(' ');
+
+  if (selfClosing) {
+    return `<${tag} class="${classStr}" style="${styleStr}"${attrs}>`;
+  }
+
+  return `<${tag} class="${classStr}" style="${styleStr}"${attrs}>${innerHtml}${childrenHtml}</${tag}>`;
+}
+
+function renderTextContent(el) {
+  return `<span class="cw-text-content" style="${textAlignStyle(el)}">${escapeHtml(el.text || '')}</span>`;
+}
+
+function textAlignStyle(el) {
+  const ax = el.align_x || 'Left';
+  const ay = el.align_y || 'Center';
+  const justify = { Left: 'flex-start', Center: 'center', Right: 'flex-end' }[ax] || 'flex-start';
+  const align = { Top: 'flex-start', Center: 'center', Bottom: 'flex-end' }[ay] || 'center';
+  const wrap = el.wrap === 'false' ? 'nowrap' : 'pre-wrap';
+  return `justify-content:${justify};align-items:${align};text-align:${ax.toLowerCase()};white-space:${wrap};word-break:break-word;`;
+}
+
+function buildCssFromCatWeb(el) {
+  const css = [];
+  const cls = el.class;
+
+  /* ---- Size ---- */
+  if (el.size) {
+    if (el.size === 'auto') { css.push('width: max-content;', 'height: max-content;'); }
+    else if (el.size === 'auto_x') { css.push('width: max-content;'); }
+    else if (el.size === 'auto_y') { css.push('height: max-content;'); }
+    else {
+      const s = parseUDim2(el.size);
+      if (s) {
+        css.push(`width: ${udimToCss(s.x.scale, s.x.offset)};`);
+        css.push(`height: ${udimToCss(s.y.scale, s.y.offset)};`);
+      }
+    }
+  } else if (el.width || el.height) {
+    if (el.width) {
+      const w = parseUDim(el.width);
+      css.push(`width: ${udimToCss(w.scale, w.offset)};`);
+    }
+    if (el.height) {
+      const h = parseUDim(el.height);
+      css.push(`height: ${udimToCss(h.scale, h.offset)};`);
+    }
+  }
+
+  /* ---- Position ----
+     Default is `position: relative` (set in the global .cw rule) so children
+     of UIListLayout/UIGridLayout parents flow through flex/grid layout the way
+     CatWeb intends. Only switch to absolute when an explicit position was given. */
+  if (el.position) {
+    const p = parseUDim2(el.position);
+    if (p) {
+      css.push('position: absolute;');
+      css.push(`left: ${udimToCss(p.x.scale, p.x.offset)};`);
+      css.push(`top: ${udimToCss(p.y.scale, p.y.offset)};`);
+    }
+  }
+
+  /* ---- Anchor + rotation ---- */
+  const transforms = [];
+  if (el.anchor) {
+    const parts = String(el.anchor).split(',').map(parseFloat);
+    const ax = parts[0] || 0, ay = parts[1] || 0;
+    if (ax || ay) transforms.push(`translate(-${ax * 100}%, -${ay * 100}%)`);
+  }
+  if (el.rotation && el.rotation !== '0' && el.rotation !== 0) {
+    transforms.push(`rotate(${el.rotation}deg)`);
+  }
+  if (transforms.length) css.push(`transform: ${transforms.join(' ')};`);
+
+  /* ---- Background ---- */
+  const wantsBg = !['TextLabel', 'ImageLabel'].includes(cls) || el.background_color;
+  if (el.background_transparency === '1') {
+    css.push('background-color: transparent;');
+  } else if (el.background_color) {
+    const color = normColor(el.background_color);
+    const trans = parseFloat(el.background_transparency || '0') || 0;
+    if (trans > 0 && trans < 1) css.push(`background-color: ${hexToRgba(color, 1 - trans)};`);
+    else css.push(`background-color: ${color};`);
+  } else if (cls === 'Frame' || cls === 'ScrollingFrame') {
+    css.push('background-color: #ffffff;');
+  } else {
+    css.push('background-color: transparent;');
+  }
+
+  /* ---- Text styling ---- */
+  if (['TextLabel', 'TextButton', 'TextButton?link', 'TextButton?donation',
+       'TextButton?transfer', 'TextButton?avataritem', 'TextBox'].includes(cls)) {
+    if (el.font_color) css.push(`color: ${normColor(el.font_color)};`);
+    if (el.font_size && el.font_size !== 'scaled') css.push(`font-size: ${parseFloat(el.font_size)}px;`);
+    else if (el.font_size === 'scaled') css.push('font-size: clamp(10px, 2vmin, 32px);');
+    if (el.font_weight) {
+      const wm = { Thin: 100, ExtraLight: 200, Light: 300, Regular: 400, Medium: 500,
+                   SemiBold: 600, Bold: 700, ExtraBold: 800, Heavy: 900 };
+      css.push(`font-weight: ${wm[el.font_weight] || 400};`);
+    }
+    if (el.font_style === 'Italic') css.push('font-style: italic;');
+    if (el.font_transparency && parseFloat(el.font_transparency) > 0) {
+      css.push(`opacity: ${1 - parseFloat(el.font_transparency)};`);
+    }
+    if (el.line_height) css.push(`line-height: ${el.line_height};`);
+    if (el.font) {
+      const fontName = String(el.font);
+      if (/^\d+$/.test(fontName)) {
+        // Roblox font ID - fallback to system font
+        css.push(`font-family: 'Gotham', 'Inter', sans-serif;`);
+      } else {
+        css.push(`font-family: '${fontName}', 'Inter', sans-serif;`);
+      }
+    }
+  }
+
+  /* ---- Image-specific ---- */
+  if (cls === 'ImageLabel') {
+    const fit = { Crop: 'cover', Fit: 'contain', Stretch: 'fill', Tile: 'none', Slice: 'fill' };
+    css.push(`object-fit: ${fit[el.scale_type] || 'fill'};`);
+    if (el.image_transparency && parseFloat(el.image_transparency) > 0) {
+      css.push(`opacity: ${1 - parseFloat(el.image_transparency)};`);
+    }
+    if (el.image_color) {
+      // Color tint - approximate with mix-blend or filter (not perfect)
+    }
+  }
+
+  /* ---- Misc ---- */
+  if (el.z_index) css.push(`z-index: ${el.z_index};`);
+  if (el.visible === 'false') css.push('visibility: hidden;');
+  if (el.canvas === 'true') css.push('overflow: hidden;');
+
+  /* ---- ScrollingFrame canvas ---- */
+  if (cls === 'ScrollingFrame') {
+    css.push('overflow: auto;');
+  }
+
+  return css;
+}
+
+function applyStylingChildren(children) {
+  const host = [];
+  for (const c of children) {
+    if (!c || !c.class) continue;
+    switch (c.class) {
+      case 'UICorner': {
+        const r = parseUDim(c.radius || '0,0');
+        if (r.scale >= 1) host.push('border-radius: 9999px;');
+        else if (r.scale > 0) host.push(`border-radius: ${r.scale * 50}%;`);
+        else if (r.offset > 0) host.push(`border-radius: ${r.offset}px;`);
+        break;
+      }
+      case 'UIStroke': {
+        const t = parseFloat(c.stroke_thickness || '1') || 1;
+        const col = normColor(c.stroke_color || '#000000');
+        const trans = parseFloat(c.stroke_transparency || '0') || 0;
+        if (trans < 1) {
+          const finalColor = trans > 0 ? hexToRgba(col, 1 - trans) : col;
+          host.push(`outline: ${t}px solid ${finalColor};`);
+          host.push(`outline-offset: -${t}px;`);
+        }
+        break;
+      }
+      case 'UIPadding': {
+        const top = parseUDim(c.top || '0,0').offset;
+        const right = parseUDim(c.right || '0,0').offset;
+        const bottom = parseUDim(c.bottom || '0,0').offset;
+        const left = parseUDim(c.left || '0,0').offset;
+        host.push(`padding: ${top}px ${right}px ${bottom}px ${left}px;`);
+        break;
+      }
+      case 'UIListLayout': {
+        const dir = c.direction === 'Horizontal' ? 'row' : 'column';
+        const gap = parseUDim(c.padding || '0,0').offset;
+        host.push('display: flex;');
+        host.push(`flex-direction: ${dir};`);
+        host.push(`gap: ${gap}px;`);
+        if (c.wrap_list === 'true') host.push('flex-wrap: wrap;');
+        const hMap = { Left: 'flex-start', Center: 'center', Right: 'flex-end' };
+        const vMap = { Top: 'flex-start', Center: 'center', Bottom: 'flex-end' };
+        if (dir === 'row') {
+          if (c.alignment_horizontal) host.push(`justify-content: ${hMap[c.alignment_horizontal] || 'flex-start'};`);
+          if (c.alignment_vertical) host.push(`align-items: ${vMap[c.alignment_vertical] || 'flex-start'};`);
+        } else {
+          if (c.alignment_vertical) host.push(`justify-content: ${vMap[c.alignment_vertical] || 'flex-start'};`);
+          if (c.alignment_horizontal) host.push(`align-items: ${hMap[c.alignment_horizontal] || 'flex-start'};`);
+        }
+        break;
+      }
+      case 'UIGridLayout': {
+        const cellSize = parseUDim2(c.size || '{0,100},{0,100}') || { x: { scale: 0, offset: 100 } };
+        const gap = parseUDim(c.padding || '0,0').offset;
+        const cellW = udimToCss(cellSize.x.scale, cellSize.x.offset);
+        host.push('display: grid;');
+        host.push(`grid-template-columns: repeat(auto-fill, minmax(${cellW}, 1fr));`);
+        host.push(`gap: ${gap}px;`);
+        break;
+      }
+      case 'UIGradient': {
+        try {
+          let stops = c.gradient_color;
+          if (typeof stops === 'string') stops = JSON.parse(stops);
+          if (Array.isArray(stops) && stops.length) {
+            const stopStr = stops.map(s => {
+              const pos = Math.round(parseFloat(s[0]) * 100);
+              return `${normColor(s[1])} ${pos}%`;
+            }).join(', ');
+            const rot = (parseFloat(c.rotation) || 0) + 90;
+            host.push(`background-image: linear-gradient(${rot}deg, ${stopStr});`);
+          }
+        } catch (e) { /* ignore */ }
+        break;
+      }
+      case 'UIAspectRatioConstraint': {
+        host.push(`aspect-ratio: ${c.ratio || '1'};`);
+        break;
+      }
+      case 'UISizeConstraint': {
+        const mn = String(c.min_size || '0,0').split(',').map(parseFloat);
+        const mx = String(c.max_size || '0,0').split(',').map(parseFloat);
+        if (mn[0]) host.push(`min-width: ${mn[0]}px;`);
+        if (mn[1]) host.push(`min-height: ${mn[1]}px;`);
+        if (mx[0] && isFinite(mx[0])) host.push(`max-width: ${mx[0]}px;`);
+        if (mx[1] && isFinite(mx[1])) host.push(`max-height: ${mx[1]}px;`);
+        break;
+      }
+    }
+  }
+  return { host };
+}
+
+/* ============================================================
+ * UI Wiring
+ * ============================================================ */
+
+function setStatus(msg, level = '') {
+  const s = $('status');
+  $('status-text').textContent = msg;
+  s.classList.remove('success', 'error', 'working');
+  if (level) s.classList.add(level);
+}
+
+function countElements(arr) {
+  let n = 0;
+  const walk = items => {
+    for (const it of items) {
+      if (!it) continue;
+      n++;
+      if (it.children) walk(it.children);
+    }
+  };
+  walk(arr);
+  return n;
+}
+
+let _previewBlobUrl = null;
+
+function updatePreview(html) {
+  const frame = $('preview-frame');
+
+  // Always clear the previous state. An iframe with NO src AND NO srcdoc can
+  // fall back to the parent URL in some browsers — that's what produces the
+  // "converter rendering itself inside the preview" duplication bug.
+  frame.removeAttribute('srcdoc');
+  if (_previewBlobUrl) {
+    URL.revokeObjectURL(_previewBlobUrl);
+    _previewBlobUrl = null;
+  }
+
+  const content = String(html == null ? '' : html);
+  if (!content.trim()) {
+    frame.src = 'about:blank';
+    return;
+  }
+
+  // Prefer a blob URL over srcdoc: srcdoc is an HTML attribute and runs into
+  // size caps on large pasted documents, after which the iframe silently keeps
+  // its old / inherited content. Blob URLs have no such limit.
+  try {
+    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+    _previewBlobUrl = URL.createObjectURL(blob);
+    frame.src = _previewBlobUrl;
+  } catch (e) {
+    console.error('Preview blob URL failed; falling back to srcdoc:', e);
+    frame.removeAttribute('src');
+    try {
+      frame.srcdoc = content;
+    } catch (e2) {
+      frame.src = 'about:blank';
+      setStatus('Preview failed: ' + e2.message, 'error');
+    }
+  }
+}
+
+$('btn-to-catweb').addEventListener('click', async () => {
+  const html = $('html-input').value.trim();
+  if (!html) { setStatus('Paste some HTML first.', 'error'); return; }
+  setStatus('Rendering HTML and extracting computed styles...', 'working');
+  try {
+    const raw = await htmlToCatWeb(html);
+    const { data, issues } = sanitizeCatWeb(raw);
+    $('catweb-input').value = JSON.stringify(data, null, 2);
+    const count = countElements(data);
+    if (issues.length) {
+      console.warn('CatWeb validation:', issues);
+      setStatus(`Converted: ${count} element(s). ${issues.length} value(s) coerced — see console.`, 'success');
+    } else {
+      setStatus(`Converted to CatWeb: ${count} element(s). All values valid.`, 'success');
+    }
+  } catch (e) {
+    console.error(e);
+    setStatus('Conversion failed: ' + e.message, 'error');
+  }
+});
+
+$('btn-to-html').addEventListener('click', () => {
+  const json = $('catweb-input').value.trim();
+  if (!json) { setStatus('Paste some CatWeb JSON first.', 'error'); return; }
+  setStatus('Converting CatWeb to HTML...', 'working');
+  try {
+    const html = catWebToHtml(json);
+    $('html-input').value = html;
+    setStatus('Converted to HTML.', 'success');
+  } catch (e) {
+    console.error(e);
+    setStatus('Conversion failed: ' + e.message, 'error');
+  }
+});
+
+$('btn-preview-html').addEventListener('click', () => {
+  $('preview-row').classList.remove('collapsed');
+  $('preview-row').classList.add('expanded');
+  $('preview-label').textContent = 'Click header to collapse';
+  updatePreview($('html-input').value || '<p style="padding: 20px; font-family: system-ui">Nothing to preview.</p>');
+});
+
+$('btn-preview-catweb').addEventListener('click', () => {
+  $('preview-row').classList.remove('collapsed');
+  $('preview-row').classList.add('expanded');
+  $('preview-label').textContent = 'Click header to collapse';
+  try {
+    const html = catWebToHtml($('catweb-input').value || '[]');
+    updatePreview(html);
+    setStatus('Rendering CatWeb preview (HTML approximation).', 'success');
+  } catch (e) {
+    setStatus('Could not render CatWeb preview: ' + e.message, 'error');
+  }
+});
+
+$('btn-view-catweb-code').addEventListener('click', () => {
+  const json = $('catweb-input').value.trim();
+  if (!json) { setStatus('No CatWeb JSON to display.', 'error'); return; }
+  try {
+    const parsed = JSON.parse(json);
+    const pretty = JSON.stringify(parsed, null, 2);
+    expandPreview();
+    updatePreview(renderCodeViewer(highlightJson(pretty), 'CatWeb JSON'));
+    setStatus(`Showing CatWeb code (${countElements(Array.isArray(parsed) ? parsed : [parsed])} elements).`, 'success');
+  } catch (e) {
+    setStatus('Invalid CatWeb JSON: ' + e.message, 'error');
+  }
+});
+
+$('btn-view-html-code').addEventListener('click', () => {
+  const html = $('html-input').value;
+  if (!html.trim()) { setStatus('No HTML to display.', 'error'); return; }
+  expandPreview();
+  updatePreview(renderCodeViewer(highlightHtml(html), 'HTML source'));
+  setStatus('Showing HTML code.', 'success');
+});
+
+function expandPreview() {
+  $('preview-row').classList.remove('collapsed');
+  $('preview-row').classList.add('expanded');
+  $('preview-label').textContent = 'Click header to collapse';
+}
+
+function renderCodeViewer(highlightedBody, title) {
+  return [
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>',
+    'html, body { margin: 0; padding: 0; background: #181818; color: #d4d4d4; height: 100%; }',
+    'body { font-family: "Consolas", "JetBrains Mono", "Monaco", monospace; font-size: 13px; line-height: 1.55; }',
+    '.bar { position: sticky; top: 0; background: #1f1f1f; border-bottom: 1px solid #333; padding: 8px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: #888; font-weight: 700; font-family: "Inter", system-ui, sans-serif; }',
+    'pre { margin: 0; padding: 16px; white-space: pre-wrap; word-break: break-word; tab-size: 2; }',
+    '.tok-key { color: #9cdcfe; }',
+    '.tok-string { color: #ce9178; }',
+    '.tok-number { color: #b5cea8; }',
+    '.tok-bool, .tok-null { color: #569cd6; }',
+    '.tok-punct { color: #d4d4d4; }',
+    '.tok-tag { color: #569cd6; }',
+    '.tok-tagname { color: #4ec9b0; }',
+    '.tok-attr { color: #9cdcfe; }',
+    '.tok-attrval { color: #ce9178; }',
+    '.tok-comment { color: #6a9955; font-style: italic; }',
+    '.tok-doctype { color: #808080; }',
+    '::-webkit-scrollbar { width: 12px; height: 12px; }',
+    '::-webkit-scrollbar-track { background: #181818; }',
+    '::-webkit-scrollbar-thumb { background: #333; border: 3px solid #181818; border-radius: 6px; }',
+    '::-webkit-scrollbar-thumb:hover { background: #444; }',
+    '</style></head><body>',
+    `<div class="bar">${title}</div>`,
+    `<pre>${highlightedBody}</pre>`,
+    '</body></html>'
+  ].join('');
+}
+
+function escapeForHighlight(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJson(json) {
+  // Operate on escaped text so injected spans aren't re-escaped
+  const esc = escapeForHighlight(json);
+  return esc.replace(
+    /("(?:\\u[a-fA-F0-9]{4}|\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+    (m, str, colon, kw, num) => {
+      if (str !== undefined) {
+        if (colon !== undefined) return `<span class="tok-key">${str}</span><span class="tok-punct">${colon}</span>`;
+        return `<span class="tok-string">${str}</span>`;
+      }
+      if (kw !== undefined) return `<span class="${kw === 'null' ? 'tok-null' : 'tok-bool'}">${kw}</span>`;
+      if (num !== undefined) return `<span class="tok-number">${num}</span>`;
+      return m;
+    }
+  );
+}
+
+function highlightHtml(html) {
+  // escapeForHighlight only escapes &, <, > — quotes stay literal, so attribute
+  // values can be matched with " and ' directly.
+  const esc = escapeForHighlight(html);
+  return esc
+    .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="tok-comment">$1</span>')
+    .replace(/(&lt;!DOCTYPE[^&]*?&gt;)/gi, '<span class="tok-doctype">$1</span>')
+    .replace(
+      /(&lt;\/?)([a-zA-Z][\w-]*)((?:\s+[a-zA-Z-][\w-]*(?:="[^"]*"|='[^']*'|=[^\s>&]+)?)*)\s*(\/?&gt;)/g,
+      (m, open, name, attrs, close) => {
+        const attrsHtml = attrs.replace(
+          /\s+([a-zA-Z-][\w-]*)(="[^"]*"|='[^']*'|=[^\s>&]+)?/g,
+          (mm, attrName, attrVal) => {
+            const valPart = attrVal
+              ? `<span class="tok-punct">=</span><span class="tok-attrval">${attrVal.slice(1)}</span>`
+              : '';
+            return ` <span class="tok-attr">${attrName}</span>${valPart}`;
+          }
+        );
+        return `<span class="tok-tag">${open}</span><span class="tok-tagname">${name}</span>${attrsHtml}<span class="tok-tag">${close}</span>`;
+      }
+    );
+}
+
+$('preview-toggle').addEventListener('click', () => {
+  const row = $('preview-row');
+  if (row.classList.contains('expanded')) {
+    row.classList.remove('expanded');
+    row.classList.add('collapsed');
+    $('preview-label').textContent = 'Click to expand';
+  } else {
+    row.classList.remove('collapsed');
+    row.classList.add('expanded');
+    $('preview-label').textContent = 'Click header to collapse';
+  }
+});
+
+/* ---------------- Resize handle ---------------- */
+(() => {
+  const handle = $('resize-handle');
+  const row = $('preview-row');
+  let dragging = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  handle.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true;
+    startY = e.clientY;
+    startHeight = row.getBoundingClientRect().height;
+    handle.classList.add('dragging');
+    row.classList.add('dragging');
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const delta = startY - e.clientY;            // drag up -> grow preview
+    const min = 80;
+    const max = Math.max(min + 20, window.innerHeight - 180);
+    const next = Math.max(min, Math.min(max, startHeight + delta));
+    row.style.height = next + 'px';
+  });
+
+  const stop = () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    row.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+  document.addEventListener('mouseup', stop);
+  document.addEventListener('mouseleave', stop);
+
+  // Keep height sane when the window shrinks
+  window.addEventListener('resize', () => {
+    if (!row.classList.contains('expanded')) return;
+    const cur = row.getBoundingClientRect().height;
+    const max = Math.max(100, window.innerHeight - 180);
+    if (cur > max) row.style.height = max + 'px';
+  });
+})();
+
+/* ---------------- Fullscreen ---------------- */
+$('btn-fullscreen').addEventListener('click', (e) => {
+  e.stopPropagation(); // don't trigger the panel-header collapse toggle
+  const row = $('preview-row');
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+  if (fsEl) {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    return;
+  }
+  // Make sure the preview is expanded before going fullscreen
+  if (row.classList.contains('collapsed')) {
+    row.classList.remove('collapsed');
+    row.classList.add('expanded');
+    $('preview-label').textContent = 'Click header to collapse';
+  }
+  const req = row.requestFullscreen || row.webkitRequestFullscreen;
+  if (req) {
+    Promise.resolve(req.call(row)).catch(err => {
+      setStatus('Fullscreen rejected: ' + err.message, 'error');
+    });
+  } else {
+    setStatus('Fullscreen not supported in this browser.', 'error');
+  }
+});
+
+const onFullscreenChange = () => {
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+  $('btn-fullscreen').textContent = (fsEl === $('preview-row')) ? 'Exit fullscreen' : 'Fullscreen';
+};
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+$('btn-clear').addEventListener('click', () => {
+  $('html-input').value = '';
+  $('catweb-input').value = '';
+  setStatus('Cleared.');
+});
+
+$('btn-sample-html').addEventListener('click', () => {
+  $('html-input').value = SAMPLE_HTML;
+  setStatus('HTML sample loaded. Click "HTML → CatWeb" to convert.');
+});
+
+$('btn-sample-catweb').addEventListener('click', () => {
+  $('catweb-input').value = SAMPLE_CATWEB;
+  setStatus('CatWeb sample loaded. Click "CatWeb → HTML" to convert.');
+});
+
+document.querySelectorAll('[data-copy]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const target = $(btn.dataset.copy);
+    if (!target.value) { setStatus('Nothing to copy.', 'error'); return; }
+    try {
+      await navigator.clipboard.writeText(target.value);
+      setStatus('Copied to clipboard.', 'success');
+    } catch (e) {
+      target.select();
+      document.execCommand('copy');
+      setStatus('Copied to clipboard.', 'success');
+    }
+  });
+});
+
+document.querySelectorAll('[data-format]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const kind = btn.dataset.format;
+    if (kind === 'json') {
+      try {
+        const parsed = JSON.parse($('catweb-input').value);
+        $('catweb-input').value = JSON.stringify(parsed, null, 2);
+        setStatus('JSON formatted.', 'success');
+      } catch (e) {
+        setStatus('Invalid JSON: ' + e.message, 'error');
+      }
+    } else {
+      $('html-input').value = formatHtml($('html-input').value);
+      setStatus('HTML formatted.', 'success');
+    }
+  });
+});
+
+function formatHtml(html) {
+  // Minimal pretty-printer
+  let depth = 0;
+  return html
+    .replace(/>\s*</g, '>\n<')
+    .split('\n')
+    .map(line => {
+      line = line.trim();
+      if (!line) return '';
+      if (/^<\//.test(line)) depth = Math.max(0, depth - 1);
+      const out = '  '.repeat(depth) + line;
+      if (/^<[^/!?][^>]*[^/]>$/.test(line) && !line.match(/^<(br|hr|img|input|meta|link)/i)) {
+        depth++;
+      }
+      return out;
+    })
+    .filter(Boolean)
+    .join('\n');
+}
+
+/* ---------------- Samples ---------------- */
+
+const SAMPLE_HTML = `<div style="background: #1a1a1a; color: white; padding: 40px; width: 100%; height: 100%; font-family: Gotham, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;">
+  <h1 style="font-size: 36px; font-weight: bold; color: #ff9500;">Welcome to CatWeb</h1>
+  <p style="font-size: 16px; color: #aaa; text-align: center; max-width: 400px;">Build 2D websites in Roblox with JSON UI and a block-based scripting system.</p>
+  <div style="background: #2a2a2a; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px; width: 360px; border: 1px solid #333;">
+    <span style="font-size: 18px; font-weight: bold;">Sign in</span>
+    <input type="text" placeholder="Username" style="background: #1a1a1a; color: white; border: 1px solid #444; border-radius: 6px; padding: 10px; font-size: 14px;">
+    <input type="text" placeholder="Password" style="background: #1a1a1a; color: white; border: 1px solid #444; border-radius: 6px; padding: 10px; font-size: 14px;">
+    <button style="background: #ff9500; color: #000; border: 0; border-radius: 6px; padding: 12px; font-weight: bold; font-size: 14px; cursor: pointer;">Continue</button>
+    <a href="reset.rbx" style="color: #ff9500; text-align: center; font-size: 13px; text-decoration: none;">Forgot password?</a>
+  </div>
+</div>`;
+
+const SAMPLE_CATWEB = `[
+  {
+    "class": "Frame",
+    "globalid": "root",
+    "alias": "Root",
+    "size": "{1,0},{1,0}",
+    "background_color": "#1a1a1a",
+    "children": [
+      {
+        "class": "UIListLayout",
+        "globalid": "rootList",
+        "direction": "Vertical",
+        "padding": "0,24",
+        "alignment_horizontal": "Center",
+        "alignment_vertical": "Center"
+      },
+      {
+        "class": "UIPadding",
+        "globalid": "rootPad",
+        "top": "0,40",
+        "right": "0,40",
+        "bottom": "0,40",
+        "left": "0,40"
+      },
+      {
+        "class": "TextLabel",
+        "globalid": "title",
+        "alias": "Title",
+        "size": "auto",
+        "text": "Welcome to CatWeb",
+        "font": "GothamBold",
+        "font_size": "36",
+        "font_color": "#ff9500",
+        "font_weight": "Bold",
+        "background_transparency": "1",
+        "align_x": "Center",
+        "align_y": "Center"
+      },
+      {
+        "class": "TextLabel",
+        "globalid": "subtitle",
+        "alias": "Subtitle",
+        "size": "{0,400},{0,40}",
+        "text": "Build 2D websites in Roblox with JSON UI and block-based scripting.",
+        "font": "Gotham",
+        "font_size": "16",
+        "font_color": "#aaaaaa",
+        "background_transparency": "1",
+        "align_x": "Center",
+        "align_y": "Center",
+        "wrap": "true"
+      },
+      {
+        "class": "Frame",
+        "globalid": "card",
+        "alias": "SignInCard",
+        "size": "{0,360},{0,260}",
+        "background_color": "#2a2a2a",
+        "children": [
+          { "class": "UICorner", "globalid": "cardCorner", "radius": "0,12" },
+          { "class": "UIStroke", "globalid": "cardStroke", "stroke_color": "#333333", "stroke_thickness": "1", "stroke_transparency": "0" },
+          { "class": "UIPadding", "globalid": "cardPad", "top": "0,24", "right": "0,24", "bottom": "0,24", "left": "0,24" },
+          { "class": "UIListLayout", "globalid": "cardList", "direction": "Vertical", "padding": "0,12", "alignment_horizontal": "Left", "alignment_vertical": "Top" },
+          {
+            "class": "TextLabel",
+            "globalid": "cardTitle",
+            "size": "{1,0},{0,24}",
+            "text": "Sign in",
+            "font": "GothamBold",
+            "font_size": "18",
+            "font_color": "#ffffff",
+            "font_weight": "Bold",
+            "background_transparency": "1",
+            "align_x": "Left",
+            "align_y": "Center"
+          },
+          {
+            "class": "TextBox",
+            "globalid": "userInput",
+            "alias": "Username",
+            "size": "{1,0},{0,40}",
+            "placeholder": "Username",
+            "placeholder_color": "#888888",
+            "background_color": "#1a1a1a",
+            "font_color": "#ffffff",
+            "font_size": "14",
+            "editable": "true",
+            "multiline": "false",
+            "children": [
+              { "class": "UICorner", "globalid": "userCorner", "radius": "0,6" },
+              { "class": "UIStroke", "globalid": "userStroke", "stroke_color": "#444444", "stroke_thickness": "1", "stroke_transparency": "0" },
+              { "class": "UIPadding", "globalid": "userPad", "top": "0,10", "right": "0,10", "bottom": "0,10", "left": "0,10" }
+            ]
+          },
+          {
+            "class": "TextBox",
+            "globalid": "passInput",
+            "alias": "Password",
+            "size": "{1,0},{0,40}",
+            "placeholder": "Password",
+            "placeholder_color": "#888888",
+            "background_color": "#1a1a1a",
+            "font_color": "#ffffff",
+            "font_size": "14",
+            "editable": "true",
+            "multiline": "false",
+            "children": [
+              { "class": "UICorner", "globalid": "passCorner", "radius": "0,6" },
+              { "class": "UIStroke", "globalid": "passStroke", "stroke_color": "#444444", "stroke_thickness": "1", "stroke_transparency": "0" },
+              { "class": "UIPadding", "globalid": "passPad", "top": "0,10", "right": "0,10", "bottom": "0,10", "left": "0,10" }
+            ]
+          },
+          {
+            "class": "TextButton",
+            "globalid": "submit",
+            "alias": "ContinueButton",
+            "size": "{1,0},{0,42}",
+            "text": "Continue",
+            "background_color": "#ff9500",
+            "font_color": "#000000",
+            "font": "GothamBold",
+            "font_weight": "Bold",
+            "font_size": "14",
+            "auto_color": "true",
+            "align_x": "Center",
+            "align_y": "Center",
+            "children": [
+              { "class": "UICorner", "globalid": "btnCorner", "radius": "0,6" }
+            ]
+          },
+          {
+            "class": "TextButton?link",
+            "globalid": "forgot",
+            "alias": "ForgotLink",
+            "size": "{1,0},{0,20}",
+            "text": "Forgot password?",
+            "href": "reset.rbx",
+            "new_tab": "false",
+            "background_transparency": "1",
+            "font_color": "#ff9500",
+            "font_size": "13",
+            "align_x": "Center",
+            "align_y": "Center"
+          }
+        ]
+      }
+    ]
+  }
+]`;
+
+setStatus('Ready. Paste HTML or CatWeb JSON and click a convert button.');
+</script>
+</body>
+</html>

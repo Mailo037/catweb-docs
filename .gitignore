@@ -1,4 +1,13 @@
 *
 !README.md
+!guild/
 !guild/**
-!game/json/**
+!game/
+!game/**
+!skills/
+!skills/**
+!.agents/
+!.agents/**
+!tools/
+!tools/**
+discord.txt

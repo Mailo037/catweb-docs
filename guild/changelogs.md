@@ -2398,3 +2398,304 @@ great (12)
 
 **🔴 Deprecated:**
 - **Legacy Donation** element. If you currently sell passes or developer products within your website, make sure to migrate to the **Donation** or **Avatar Item** element before May 29th.
+
+
+[16.05.2026 17:37] humancat222
+**v2.17.3.1**
+
+**🟡 Changed:**
+- Improved positioning of elements inside a scrollable frame when moved in the Editor
+
+**🔵 Fixed:**
+- After hovering over someone inside a collaboration session, an incorrect icon would sometimes be shown
+- Zooming out on the script editor while it was at maximum zoom sometimes caused the canvas to move
+- When multiple scripts were selected, a Run button would sometimes be shown for one script
+- Inside of a collaboration session, when a collaborator edited a script not currently selected, opening it again would sometimes show old values
+- When copying or exporting both parents and children, they could appear multiple times
+- Fixed irrelevant error messages logged to the Developer Console while in a collaboration session
+- Issues related to creating and importing Uploads inside of a collaboration session
+- Issues related to copying and pasting inside of a collaboration session
+
+
+[22.05.2026 21:51] humancat222
+**v2.17.3.2**
+
+**🔵 Fixed:**
+- Fixed bugs preventing completion of scripting tutorials
+- Fixed an issue that made opening Error Pages difficult when inside of a collaboration session
+- The "Get objects at position" action would return inaccurate results on console
+
+
+[29.05.2026 22:35] humancat222
+**v2.17.3.3**
+
+**🟡 Changed:**
+- Changes for the new Donation policies for passes and developer products, taking place on this day.
+
+
+[06.06.2026 10:41] humancat222
+**v2.17.3.4**
+
+**🟡 Changed:**
+- Added support for Roblox Plus discounts in Ads Portal
+
+**🔵 Fixed:**
+- When searching for a query including "%", results were unable to load
+- When attempting to type a URL including "%", content was unable to load
+- When a 403 error page's URL included "%", text was not displayed properly
+- Fixed text color inconsistencies in Ads Portal
+- Fixed an issue where the selected site's favicon was recolored in Ads Portal
+- Fixed a mobile issue where bookmarks could be pressed when behind the URL bar
+- Fixed a mobile issue where, when first opened, the Roblox topbar could cover CatWeb navigation buttons
+- Fixed an issue where it was sometimes impossible to revert a site using Version History
+- Issues related to the Milestones menu not loading properly when inside a collaboration session
+
+
+[28.06.2026 16:42] humancat222
+**v2.18.0.0**
+
+**🟢 Added:**
+- Script Compilation (This is an experimental flag and only available to some players)
+- Added elements:
+  - **Image Button**
+  - **Image Link**
+  - **Flex Item**
+- Added properties:
+  - **Horizontal Flex**
+  - **Vertical Flex**
+  - **Item Line Alignment**
+  - **Rect Offset**
+  - **Rect Size**
+- Added actions:
+  - **When any key pressed...**
+  - **Set entry <entry> of <table> to <function>**
+- The Editor preview can be expanded and use all of the Editor's space
+- In the Script Editor, while selecting an element, another <object> field can be pressed to copy its value
+- Animations to all dropdown arrows within the Editor
+
+**🟡 Changed:**
+- Updated the introduction experience, as well as all tutorials.
+- Updated the action item in the Script Editor to use a gradient to truncate its content instead. This fixes issues where actions or events were truncated incorrecly or were not adjusted correctly when resizing the event.
+- Help button now has an animation on hover
+- Help button and action group expand buttons can now be shown simultaneously
+- Improved how elements are positioned when moved inside a Scrollable Frame
+- Redesigned tooltips and dropdowns in the Properties panel
+- Typing a URL in the URL bar now preloads it, decreasing load times
+- Updated the editor preview to allow redirects within the same domain
+
+**🔵 Fixed:**
+- Fixed issues related to collaboration
+- Fixed issues related to the script editor
+
+**🔴 Removed:**
+- The old Promote flow
+
+
+[29.06.2026 14:08] humancat222
+**v2.18.0.1**
+
+**🔵 Fixed:**
+- Fixed issues related to scripting localization
+- Fixed an issue related to the new event, "When any key pressed..."
+- Fixed an issue related to the new action, "Set <entry> of <table> to <function>"
+- Fixed issues related to the Width, Height and Robux Amount properties
+- When moving an action within the same event, it could have not been added even while there is enough space
+- Setting the "Text" property in a Donation (new), Avatar Item or Input element could cause it to be reset
+- The "Rect Offset" and "Rect Size" properties were not present under Image Buttons and Image Links
+- The visit count in a website could sometimes be shown in a different language
+- Moving actions in the Script Editor could cause a performance hit (This fix is an experimental flag and only available to some players)
+- Fixed multiple other issues
+
+
+[30.06.2026 13:15] humancat222
+**v2.18.0.2**
+
+**🟡 Changed:**
+- On Script Compilation, setting an entry using Direct Entry Access now logs an error on fail
+
+**🔵 Fixed:**
+- Fixed issues related to saving
+- Script Compilation exclusive issues:
+   - The optional variable field in the "Play audio" action would error if not set
+   - Some actions were incompatible with Direct Entry Access
+   - Fixed issues related to local scope failures when using "Repeat forever"
+
+{Reactions}
+👍 (11)
+
+
+[01.07.2026 13:50] humancat222
+**v2.18.0.3**
+
+**🟡 Changed:**
+- Enabled basic Script Compilation compiler optimizations
+
+**🔵 Fixed:**
+- Icons and text in the Editor preview's overlayed controls were colored after the theme instead of white
+- Redirecting inside of the Editor could sometimes load the published version of the site instead of the saved or collaboration version
+- Copying object variable values in scripts could cause them to dissapear
+- Fixed an issue related to the "Run function protected" action
+- Script Compilation exclusive issues:
+   - "(parent)" could not be used in the "If child of" action
+   - The "Wait <number> seconds" didn't accept empty or non-number values
+   - Fixed Script Compilation issues related to the "Run function protected" action
+   - Websites using old "Run function" and "Run function in background" actions could not be compiled correctly
+   - Fixed an issue that prevented running functions where the name contained a dot
+   - Scripts didn't define functions in them when duplicated via another script
+
+{Reactions}
+👍 (17)
+
+
+[02.07.2026 10:47] humancat222
+**v2.18.0.4**
+
+**🔵 Fixed:**
+- Redirecting inside of the Editor sometimes failed
+- The "Reference" property of Legacy Donations could not be set by a script
+- Script Compilation exclusive issues:
+   - Fixed issues related to compiler optimizations
+   - Fixed issues related to setting cookies
+   - Scripts parented inside other scripts were not compiled by the server, which could lead to unintended behavior
+
+
+[03.07.2026 12:32] humancat222
+**v2.18.0.5**
+
+**🟡 Changed:**
+- Improved Script Compilation's throttling when sites caused framerate to drop below max
+
+**🔵 Fixed:**
+- The "Reference" property of Legacy Donations could not be gotten by a script
+- Script Compilation exclusive issues:
+   - Fixed compiler optimization related issues
+   - Fixed issues related to Direct Entry Access
+
+
+[07.07.2026 11:49] humancat222
+**v2.18.1.0**
+
+**🟡 Changed:**
+- Implemented an updated Settings sidebar (This is an experimental flag and only available to some players)
+- Improved the "Add element under" shortcut inside the Editor for mobile users
+
+**🔵 Fixed:**
+- The audio list in Media Control would scroll incorrectly
+- When changing an element's name, the "Add element under" shortcut would be shown on top
+- Fixed an issue making it impossible to delete pages or subdomains inside a collaboration session
+- Fixed issues related to reverting to the public version
+- Clicking "Manage" in the Site Information popout could redirect to the wrong domain
+
+
+[08.07.2026 09:32] humancat222
+**v2.18.1.1**
+
+**🟡 Changed:**
+- Updated scripting tutorials to be easier to complete on mobile
+
+**🔵 Fixed:**
+- Fixed a Script Compilation exclusive issue where the audio limit was incorrectly calculated after audio was stopped
+- Fixed an issue where, after resuming audio, the tab would no longer be shown as playing sound
+- After publishing, a site could not correctly update in all servers
+
+
+[09.07.2026 09:49] humancat222
+**v2.18.1.2**
+
+**🟡 Changed:**
+- Improved Script Compilation's throttling behavior
+
+**🔵 Fixed:**
+- When setting an <object> field in the Script Editor, it was impossible to cancel by pressing the field again
+- When moving or resizing an element and starting a test at the same time, it was still possible to drag the element
+- Fixed an issue where tooltips inside the properties menu would not show on mobile
+
+
+[10.07.2026 14:10] humancat222
+**v2.18.1.3**
+
+**🟡 Changed:**
+- Made changes and fixed multiple issues in the new user experience / tutorials
+
+
+[13.07.2026 20:59] humancat222
+**v2.18.1.4**
+
+**🔵 Fixed:**
+- Using "Back to public version" could cause all text to be reset
+- Script Compilation exclusive issues:
+  - Compilation could fail when leaving a parameter in a tuple empty
+  - Leaving the position parameter empty in the "Remove entry" action could cause an error to occur
+
+
+[16.07.2026 12:30] humancat222
+**v2.18.1.5**
+
+**🔵 Fixed:**
+- The "Automatic Color" property was missing in the Properties menu for Image Buttons and Image Links
+- Script Compilation exclusive issues:
+  - The Duplicate action could fail if a variable wasn't provided
+  - Iteration could fail if the table was modified during iteration
+  - The "Robux Amount" property for Donations could not be set nor gotten
+  - Objects with certain Global IDs could not be referenced via a script
+
+
+[21.07.2026 15:55] humancat222
+**v2.18.2.0**
+
+**🟡 Changed:**
+- Implemented an updated New Tab page (This is an experimental flag and only available to some players)
+- Implemented an updated context menu (This is an experimental flag and only available to some players)
+
+**🔵 Fixed:**
+- Fixed backwards compatibility issues exclusive to Script Compilation
+
+{Reactions}
+👀 (7)
+
+
+[06.08.2026 16:01] humancat222
+**v2.18.2.1**
+
+**🔵 Fixed:**
+- Donations would no longer function after changing their "Robux Amount" property via a script
+- The "Item ID" property could not be set on Avatar Item objects via a script
+- Typing numbers in the "Font" property would result in text being replaced with a font name, making it impossible to use a Font ID
+- Fixed an issue related to reverting a site using Version History
+- When using the updated context menu, opened sub-menus were unaligned
+- When using the updated context menu, button size would not adjust for touchscreen devices
+- Script Compilation exclusive issues:
+  - Fixed issues related to "Duplicate <object>" and "Run function" actions sometimes not executing
+  - Fixed issues related to using "Break" inside a nested loop
+  - Fixed issues related to local scoped variables
+
+{Reactions}
+👍 (7)
+
+
+[14.08.2026 14:50] humancat222
+**v2.18.2.2**
+
+**🟡 Changed:**
+- When importing using an upload code, trailing and leading spaces are now ignored
+
+**🔵 Fixed:**
+- The Editor would accept page JSON with the "background" property missing, causing a webrenderer crash once imported
+- Script Compilation exclusive issues:
+  - Fixed an issue related to local scoped variables
+  - Fixed other compilation issues
+
+{Reactions}
+sob2k (19)
+
+
+[02.09.2026 15:59] humancat222
+**v2.18.2.3**
+
+**🟡 Changed:**
+- Changed the "Set property" and "Get property" actions to add a proper error message whenever "Title" or "Icon" aren't set or gotten on the Page
+- Redirecting or visiting a site now removes all leading dots from the URL
+
+**🔵 Fixed:**
+- Fixed a mobile issue where bookmarks could be pressed when behind the URL bar
+- Fixed an issue preventing deletion of suspended domains

@@ -1,721 +1,372 @@
-# CatWeb Script JSON Format (v2.17.3.0)
+# CatWeb Script JSON Specification (v2.18.2.3)
 
 ## Overview
 
-This document specifies the JSON structure for CatWeb scripts. For scripting logic and action details, see **CatDocs**. For UI element structure, see the UI JSON Spec.
+This document specifies the exact JSON schema and execution rules for CatWeb's visual block-scripting system.
+Scripts in CatWeb are **not Lua or JavaScript** — they are represented entirely as JSON objects (`"class": "script"`) containing event triggers and sequential action blocks.
 
-**Current Version:** v2.17.3.0
-
----
-
-**Important when setting `strings`:**
-- Roblox moderates each string you set, be it a `text`, `placeholder`, `aliases`, `variable` or generally any content visible to users including strings in scripts, when a string gets tagged it will be replaced with `#`'s.
-- This can not be avoid this. If this happens, consider using numbers for variable names.
-- There is one work around, which is using the `concatenate` in a script when the `site loads` and then `setting` the `object's property` to that `value`.
-Here is an example JSON for that:
-```json
-[
-  {
-    "class": "script",
-    "globalid": "string-setter",
-    "content": [
-      {
-        "id": "0",
-        "globalid": "main-event",
-        "x": "0",
-        "y": "0",
-        "text": ["When website loaded..."],
-        "width": "350",
-        "actions": [
-          {
-            "id": "109",
-            "globalid": "concatenate1",
-            "text": [
-              "Concatenate",
-              { "t": "string", "value": "string 1" },
-              "with",
-              { "t": "string", "value": "string 2" },
-              "→",
-              { "t": "string", "l": "variable", "value": "end string" }
-            ]
-          },
-          {
-            "id": "31",
-            "globalid": "setting-property-of-object",
-            "text": [
-              "Set",
-              { "t": "string", "l": "property", "value": "property" },
-              "of",
-              { "t": "object", "value":"the-globalID-of-the-object-you-want-to-change-the-property-of", },
-              "to",
-              { "t": "any", "value": "{end string}" }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-]
-```
-
-- You can also duplicate the concatenate to stitch multiple strings into one larger string, just make sure that `string 1` matches the previous `end string`
-- If you want to use this across multiple objects, do NOT create a separate script for each one that only adds unnecessary object count, just duplicate the event
+- **Current Version:** v2.18.2.3
+- **Script Compilation:** Scripts are compiled at runtime for native execution speed without legacy interpreter throttling.
 
 ---
 
-## Root Structure
+## 1. Output Contract & Hard Script Invariants
 
-Scripts use a **mandatory array wrapper**:
+Breaking any of these rules causes either a fatal import error (`[INVALIDATED]`) or a silent publish failure:
 
-```json
-[
-  {
-    "class": "script",
-    "content": [...],
-    "globalid": "script_main",
-    "enabled": "true"
-  }
-]
-```
-
-**Requirements:**
-- Root MUST be an array (not an object)
-- Multiple scripts can coexist in the array
-- Each script operates independently but shares global variables
-- **NEVER add comments to JSON** - they break parsing
+1. **Scripts are elements in `webcontent`:** Always write `"class": "script"` as an element in `webcontent`. Never create a top-level root `"script"` key.
+2. **UI and scripts live in ONE JSON file:** Never split scripts and UI into separate imports. Cross-references between scripts and elements rely on `globalid`, which regenerates upon separate import.
+3. **Only confirmed action/event IDs:** Every action or event must use an ID from the authoritative table below (§7). Never invent or guess IDs.
+4. **`text` is always an array:** Never emit a flat string for `text`. It must be an array alternating between literal strings and parameter objects:
+   `"text": ["Set (1)", {"value":"1","t":"string","l":"variable"}, "to (val)", {"value":"val","t":"string","l":"any"}]`
+5. **Control flow is FLAT (no nested `actions`):** Actions like `If` (`18`), `Repeat` (`22`), or `Repeat forever` (`23`) must **never** contain an `actions: [...]` property. Their body is a flat list of sibling actions in the event's `actions` array, terminated by `end` (`25`). Nesting `actions` inside a control action throws `[INVALIDATED SCRIPT CONTENT] invalid entry $actions detected`.
+6. **Functions are top-level `content` entries:** `Define function` (`6`) is a top-level sibling of event blocks in the script's `content` array. Never nest a function inside an event's `actions`.
+7. **Variable names should be numbers:** To prevent Roblox's text filter from moderating variable names into `######`, name variables with integers: `{1}`, `{2}`, `{3}` (global), `{o!1}` (object-scoped), `{l!1}` (local).
+8. **Never bare numbers in `variable_overrides` (§4):** Bare numbers in function `variable_overrides` collide with numeric globals and block publishing. Avoid formal parameters and pass inputs through global variables.
+9. **Object references use `globalid`:** Never use `alias` to reference elements in scripts. Always supply the exact 2–3 character `globalid` (or `"(parent)"`).
+10. **`t` and `l` are FIXED per parameter slot (§5):** Do not infer parameter types from what the value looks like. Each action ID defines an exact `t` and `l` per slot.
 
 ---
 
-## Script Object
+## 2. Two Separate Vocabularies
 
+When writing property manipulation actions (`31` Set Property, `39` Get Property, `88` Tween):
+
+- **Script Display Names (Title Case):** Used inside script action parameters.
+  - Examples: `"Background Color"`, `"Text Color"`, `"Thickness"`, `"Cell Size"`, `"Order"`, `"Text"`, `"Visible"`.
+- **JSON Authoring Keys (snake_case):** Used on element definitions in `webcontent`.
+  - Examples: `background_color`, `font_color`, `stroke_thickness`, `size`, `order`.
+
+> [!CAUTION]
+> Never use JSON authoring keys in scripts (`"background_color"` fails in script actions; use `"Background Color"`).
+
+---
+
+## 3. Script Node & Event Structure
+
+### 3.1 Script Element Container
 ```json
 {
   "class": "script",
-  "content": [event_blocks...],
-  "globalid": "unique_id",
-  "enabled": "true"
+  "globalid": "sc1",
+  "alias": "main_logic",
+  "enabled": "true",
+  "content": [
+    /* Top-level Event blocks and Function Definition blocks */
+  ]
 }
 ```
 
-| Property | Required | Description |
-|----------|----------|-------------|
-| class | Yes | Always `"script"` |
-| content | Yes | Array of event objects |
-| globalid | Yes | Unique identifier |
-| enabled | No | `"true"` or `"false"` (default: `"true"`) |
+- **Limits:** Max 30 events per script, 120 actions per event, 3,600 actions per script total. Multiple scripts share global variables.
+
+### 3.2 Event Block Shape
+```json
+{
+  "id": "1",
+  "text": ["When (btn)", {"value": "btn", "t": "object", "l": "button"}, "pressed..."],
+  "globalid": "ev1",
+  "x": "4900",
+  "y": "4900",
+  "width": "350",
+  "actions": [
+    /* Flat list of action blocks in execution order */
+  ]
+}
+```
+
+- `x`, `y`, `width` define visual positioning on the 9992×9992 canvas in the CatWeb editor.
+- Events run concurrently. When triggered simultaneously, events positioned closer to the canvas center `(5000, 5000)` execute first.
 
 ---
 
-## Event Block Structure
+## 4. Function Definition & Parameter Trap
 
-```json
-{
-  "y": "4695",
-  "x": "4703",
-  "globalid": "+!",
-  "id": "0",
-  "text": ["When website loaded..."],
-  "actions": [action_objects...],
-  "width": "350",
-  "variable_overrides": []
-}
-```
-
-### Event Properties
-
-| Property | Required | Description |
-|----------|----------|-------------|
-| y | Yes | Vertical position (string numeric) |
-| x | Yes | Horizontal position (string numeric) |
-| globalid | Yes | Event unique ID (any string) |
-| id | Yes | Event type identifier (see Event IDs) |
-| text | Yes | Event descriptor with parameters |
-| actions | Yes | Array of action objects |
-| width | Yes | Visual width in editor |
-| variable_overrides | Conditional | Only for function definitions (id: 6) |
-
-### Event Positioning
-
-- **Coordinates:** String-encoded numbers for visual layout
-- **Priority:** Events closer to workspace center execute first
-- **Parallel Execution:** Multiple events run simultaneously
-- **Canvas Size:** 9992×9992 pixels, centered by default
-
-**Best Practice:** Place important events near center (x: ~5000, y: ~5000)
-
-### Function Definition Events
+A function is defined as a top-level block inside `content`:
 
 ```json
 {
   "id": "6",
-  "text": ["Define function", {"value": "funcName", "t": "string", "l": "function"}],
-  "variable_overrides": [
-    {"value": "arg1"},
-    {"value": "arg2"}
-  ],
-  "actions": [...],
-  "width": "722"
+  "text": ["Define function (10)", {"value": "10", "t": "string", "l": "function"}],
+  "globalid": "fn1",
+  "x": "4900",
+  "y": "5200",
+  "width": "350",
+  "actions": [
+    /* function body reading global {70} */
+    {
+      "id": "115",
+      "text": ["Return (0)", {"value": "0", "t": "string", "l": "any"}],
+      "globalid": "ret1"
+    }
+  ]
 }
 ```
 
-Parameters become local variables: `l!arg1`, `l!arg2`
+> [!WARNING]
+> **The Publish-Blocking Trap:**
+> If you add `variable_overrides: [{"value": "1"}]` with numeric names, it creates an unresolvable collision between `{l!1}` and global `{1}`. The site imports fine, but **CatWeb refuses to publish**.
+> 
+> **Best Practice:** Omit `variable_overrides`. Pass function arguments by setting designated global variables (e.g. `{70}`, `{71}`) immediately before calling `87 Run function`, and read those globals inside the function.
 
 ---
 
-## Action Block Structure
+## 5. The Parameter Slot Rule (`t` and `l`)
 
+Every parameter object has a fixed shape determined by CatWeb's internal action schema:
+`{"value": "...", "t": "<type>", "l": "<role>"}`
+
+### 5.1 The Two Different "any" Shapes
+Confusing these two causes fatal publishing failures:
+- **Bare `{"t": "any"}` (No `l` key):**
+  - Action `0` (Log)
+  - Action `1` (Warn)
+  - Action `2` (Error)
+  - Action `31` (Set Property — value slot)
+  - Action `88` (Tween — "to" value slot)
+  - Action `34` (Set Cookie)
+- **`{"t": "string", "l": "any"}` (Has `l: "any"`):**
+  - Action `11` (Set Variable)
+  - Action `55` (Set Table Entry)
+  - Action `89` (Insert At Position)
+  - Action `115` (Return Value)
+  - Both operands of all comparison actions (`18`, `19`, `20`, `21`, `125`, `126`)
+
+### 5.2 Critical Non-Obvious Parameter Slots
+- **`20` vs `21` Direction:** Action `20` is *is greater than*, Action `21` is *is lower than*. Swapping them silently inverts logic.
+- **`27` (Random Number):** The variable parameter takes `{"t": "string", "l": "var"}`, **not** `"l": "variable"`.
+- **`4` (Redirect):** Uses `{"t": "string", "href": "true"}`, not an `"l"` key.
+- **`30` (Get Text from Input):** Object parameter uses `{"t": "object", "l": "input"}`.
+- **`106` (Set Image):** Uses `{"t": "id", "assetbrowser": "image"}`.
+- **Comparisons (`18`–`21`, `125`, `126`):** Both operands are `{"t": "string", "l": "any"}`, even if comparing variables.
+
+---
+
+## 6. Variables & Scoping
+
+| Scope | Syntax in Text | Format in Variable Slot | Description |
+|---|---|---|---|
+| **Global** | `{1}`, `{score}` | `"1"`, `"score"` | Accessible across all scripts on the page |
+| **Object** | `{o!1}`, `{o!myVar}` | `"o!1"`, `"o!myVar"` | Scoped to the current script |
+| **Local** | `{l!1}`, `{l!idx}` | `"l!1"`, `"l!idx"` | Scoped to current event or function execution |
+| **Table Item** | `{table.entry}` | — | Reads property `entry` of table `table` |
+| **Array Item** | `{arr.1}` | — | Reads 1-based index 1 of array `arr` |
+
+> [!TIP]
+> **Anti-Moderation Rule:** Always use pure numbers for variable names (`{1}`, `{2}`, `{10}`). Words like `{count}`, `{player}`, or `{admin}` can trigger Roblox's automated filter and turn into `{######}`.
+
+---
+
+## 7. Authoritative Block Reference
+
+Transcribed directly from CatWeb's confirmed block-palette export (16 Events, 122 Actions).
+
+### 7.1 Events (Top-Level in `content`)
+
+| ID | Event | Exact `text` Array |
+|---|---|---|
+| `0` | When website loaded | `["When website loaded..."]` |
+| `1` | When button pressed | `["When", {"value":"btn","t":"object","l":"button"}, "pressed..."]` |
+| `2` | When key pressed | `["When", {"value":"key","t":"key"}, "pressed..."]` |
+| `3` | When mouse enters | `["When mouse enters", {"value":"obj","t":"object"}, "..."]` |
+| `5` | When mouse leaves | `["When mouse leaves", {"value":"obj","t":"object"}, "..."]` |
+| `6` | Define function | `["Define function", {"value":"fn","t":"string","l":"function"}]` |
+| `7` | When avatar item bought | `["When", {"value":"btn","t":"object","l":"avataritem"}, "bought..."]` |
+| `8` | When input submitted | `["When", {"value":"inp","t":"object","l":"input"}, "submitted..."]` |
+| `9` | When message received | `["When message received..."]` |
+| `10` | When object changed | `["When", {"value":"obj","t":"object"}, "changed..."]` |
+| `11` | When mouse down on | `["When mouse down on", {"value":"btn","t":"object","l":"button"}, "..."]` |
+| `12` | When mouse up on | `["When mouse up on", {"value":"btn","t":"object","l":"button"}, "..."]` |
+| `13` | When button right clicked | `["When", {"value":"btn","t":"object","l":"button"}, "right clicked..."]` |
+| `14` | When cross-site message received | `["When cross-site message received..."]` |
+| `15` | When donation completed | `["When donation completed..."]` |
+| `16` | When any key pressed | `["When any key pressed..."]` |
+
+### 7.2 Actions — Control Flow & Conditionals (Flat Siblings)
+
+| ID | Action | Exact `text` Array |
+|---|---|---|
+| `18` | If equal | `["If", {"value":"a","t":"string","l":"any"}, "is equal to", {"value":"b","t":"string","l":"any"}]` |
+| `19` | If not equal | `["If", {"value":"a","t":"string","l":"any"}, "is not equal to", {"value":"b","t":"string","l":"any"}]` |
+| `20` | If greater than | `["If", {"value":"a","t":"string","l":"any"}, "is greater than", {"value":"b","t":"string","l":"any"}]` |
+| `125` | If greater or equal | `["If", {"value":"a","t":"string","l":"any"}, "is greater or equal to", {"value":"b","t":"string","l":"any"}]` |
+| `21` | If lower than | `["If", {"value":"a","t":"string","l":"any"}, "is lower than", {"value":"b","t":"string","l":"any"}]` |
+| `126` | If lower or equal | `["If", {"value":"a","t":"string","l":"any"}, "is lower or equal to", {"value":"b","t":"string","l":"any"}]` |
+| `37` | If contains | `["If", {"value":"str","t":"string"}, "contains", {"value":"sub","t":"string"}]` |
+| `38` | If doesn't contain | `["If", {"value":"str","t":"string"}, "doesn't contain", {"value":"sub","t":"string"}]` |
+| `92` | If exists | `["If", {"value":"1","t":"string","l":"variable"}, "exists"]` |
+| `93` | If doesn't exist | `["If", {"value":"1","t":"string","l":"variable"}, "doesn't exist"]` |
+| `44` | If AND | `["If", {"value":"1","t":"string","l":"variable"}, "AND", {"value":"2","t":"string","l":"variable"}]` |
+| `45` | If OR | `["If", {"value":"1","t":"string","l":"variable"}, "OR", {"value":"2","t":"string","l":"variable"}]` |
+| `46` | If NOR | `["If", {"value":"1","t":"string","l":"variable"}, "NOR", {"value":"2","t":"string","l":"variable"}]` |
+| `47` | If XOR | `["If", {"value":"1","t":"string","l":"variable"}, "XOR", {"value":"2","t":"string","l":"variable"}]` |
+| `79` | If left mouse down | `["If left mouse button down"]` |
+| `80` | If middle mouse down | `["If middle mouse button down"]` |
+| `81` | If right mouse down | `["If right mouse button down"]` |
+| `82` | If key down | `["If", {"value":"key","t":"key"}, "down"]` |
+| `108` | If dark theme | `["If dark theme enabled"]` |
+| `103` | If is ancestor | `["If", {"value":"o1","t":"object"}, "is ancestor of", {"value":"o2","t":"object"}]` |
+| `104` | If is child | `["If", {"value":"o1","t":"object"}, "is child of", {"value":"o2","t":"object"}]` |
+| `105` | If is descendant | `["If", {"value":"o1","t":"object"}, "is descendant of", {"value":"o2","t":"object"}]` |
+| `112` | else | `["else"]` |
+| `25` | end | `["end"]` |
+| `22` | Repeat n times | `["Repeat", {"value":"5","t":"number"}, "times"]` |
+| `23` | Repeat forever | `["Repeat forever"]` |
+| `24` | Break | `["Break"]` |
+
+### 7.3 Actions — Logging & Timing
+
+| ID | Action | Exact `text` Array |
+|---|---|---|
+| `0` | Log | `["Log", {"value":"msg","t":"any"}]` |
+| `1` | Warn | `["Warn", {"value":"msg","t":"any"}]` |
+| `2` | Error | `["Error", {"value":"msg","t":"any"}]` |
+| `3` | Wait seconds | `["Wait", {"value":"1","t":"number"}, "seconds"]` |
+
+### 7.4 Actions — Variables & Math
+
+| ID | Action | Exact `text` Array |
+|---|---|---|
+| `11` | Set variable | `["Set", {"value":"1","t":"string","l":"variable"}, "to", {"value":"val","t":"string","l":"any"}]` |
+| `96` | Delete variable | `["Delete", {"value":"1","t":"string","l":"variable"}]` |
+| `12` | Increase by | `["Increase", {"value":"1","t":"string","l":"variable"}, "by", {"value":"1","t":"number"}]` |
+| `13` | Decrease by | `["Decrease", {"value":"1","t":"string","l":"variable"}, "by", {"value":"1","t":"number"}]` |
+| `14` | Multiply by | `["Multiply", {"value":"1","t":"string","l":"variable"}, "by", {"value":"2","t":"number"}]` |
+| `15` | Divide by | `["Divide", {"value":"1","t":"string","l":"variable"}, "by", {"value":"2","t":"number"}]` |
+| `40` | Raise to power | `["Raise", {"value":"1","t":"string","l":"variable"}, "to the power of", {"value":"2","t":"number"}]` |
+| `41` | Modulo | `[{"value":"1","t":"string","l":"variable"}, "modulo", {"value":"2","t":"number"}]` |
+| `16` | Round | `["Round", {"value":"1","t":"string","l":"variable"}]` |
+| `17` | Floor | `["Floor", {"value":"1","t":"string","l":"variable"}]` |
+| `78` | Ceil | `["Ceil", {"value":"1","t":"string","l":"variable"}]` |
+| `27` | Random range | `["Set", {"value":"1","t":"string","l":"var"}, "to random", {"value":"1","t":"number","l":"n"}, "-", {"value":"10","t":"number","l":"n"}]` |
+| `114` | Run math function | `["Run math function", {"value":"math.sin","t":"string","l":"function"}, {"value":[],"t":"tuple"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+
+### 7.5 Actions — Strings & Conversions
+
+| ID | Action | Exact `text` Array |
+|---|---|---|
+| `42` | Substring | `["Sub", {"value":"1","t":"string","l":"variable"}, {"value":"1","t":"number","l":"start"}, "-", {"value":"5","t":"number","l":"end"}]` |
+| `43` | Replace string | `["Replace", {"value":"old","t":"string"}, "in", {"value":"1","t":"string","l":"variable"}, "by", {"value":"new","t":"string"}]` |
+| `48` | String length | `["Get length of", {"value":"str","t":"string"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `57` | Split string | `["Split", {"value":"str","t":"string"}, {"value":",","t":"string","l":"separator"}, "→", {"value":"tbl","t":"string","l":"table"}]` |
+| `69` | Lowercase | `["Lower", {"value":"str","t":"string"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `70` | Uppercase | `["Upper", {"value":"str","t":"string"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `109` | Concatenate | `["Concatenate", {"value":"a","t":"string"}, "with", {"value":"b","t":"string"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `119` | Hex to RGB | `["Convert", {"value":"#ffffff","t":"string","l":"hex"}, "to RGB", "→", {"value":"1","t":"string","l":"variable"}]` |
+| `121` | RGB to Hex | `["Convert RGB", {"value":"255,255,255","t":"string","l":"rgb"}, "to hex", "→", {"value":"1","t":"string","l":"variable"}]` |
+
+### 7.6 Actions — Tables & Arrays
+
+| ID | Action | Exact `text` Array |
+|---|---|---|
+| `54` | Create table | `["Create table", {"value":"tbl","t":"string","l":"table"}]` |
+| `55` | Set entry (value) | `["Set entry", {"value":"key","t":"string","l":"entry"}, "of", {"value":"tbl","t":"string","l":"table"}, "to", {"value":"val","t":"string","l":"any"}]` |
+| `66` | Set entry (object) | `["Set entry", {"value":"key","t":"string","l":"entry"}, "of", {"value":"tbl","t":"string","l":"table"}, "to", {"value":"obj","t":"object"}]` |
+| `56` | Get entry | `["Get entry", {"value":"key","t":"string","l":"entry"}, "of", {"value":"tbl","t":"string","l":"table"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `90` | Delete entry | `["Delete entry", {"value":"key","t":"string","l":"entry"}, "of", {"value":"tbl","t":"string","l":"table"}]` |
+| `89` | Insert at position | `["Insert", {"value":"val","t":"string","l":"any"}, "at position", {"value":"1","t":"number","l":"number?"}, "of", {"value":"arr","t":"string","l":"array"}]` |
+| `91` | Remove at position | `["Remove entry at position", {"value":"1","t":"number","l":"number?"}, "of", {"value":"arr","t":"string","l":"array"}]` |
+| `59` | Array length | `["Get length of", {"value":"arr","t":"string","l":"array"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `113` | Iterate through | `["Iterate through", {"value":"tbl","t":"string","l":"table"}, "({l!index},{l!value})"]` |
+| `110` | Join array | `["Join", {"value":"arr","t":"string","l":"array"}, "using", {"value":",","t":"string","l":"string"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+
+### 7.7 Actions — Objects & Display
+
+| ID | Action | Exact `text` Array |
+|---|---|---|
+| `8` | Make invisible | `["Make", {"value":"obj","t":"object"}, "invisible"]` |
+| `9` | Make visible | `["Make", {"value":"obj","t":"object"}, "visible"]` |
+| `10` | Set text | `["Set", {"value":"obj","t":"object"}, "text to", {"value":"Hello","t":"string"}]` |
+| `30` | Get text from input | `["Get text from", {"value":"inp","t":"object","l":"input"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `31` | Set property | `["Set", {"value":"Background Color","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"#ff0000","t":"any"}]` |
+| `39` | Get property | `["Get", {"value":"Text","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `88` | Tween property | `["Tween", {"value":"Position","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"{0,0},{0,100}","t":"any"}, "-", {"value":"0.3","t":"number","l":"time"}, {"value":"Quad","t":"string","l":"style"}, {"value":"Out","t":"string","l":"direction"}]` |
+| `106` | Set image | `["Set", {"value":"img","t":"object"}, "image to", {"value":"16944769468","t":"id","assetbrowser":"image"}]` |
+| `49` | Duplicate object | `["Duplicate", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `50` | Delete object | `["Delete", {"value":"obj","t":"object"}]` |
+| `58` | Parent object | `["Parent", {"value":"child","t":"object"}, "under", {"value":"parent","t":"object"}]` |
+
+### 7.8 Actions — System & Environment
+
+| ID | Action | Exact `text` Array |
+|---|---|---|
+| `4` | Redirect | `["Redirect to", {"value":"home.rbx","t":"string","href":"true"}]` |
+| `32` | Broadcast page | `["Broadcast", {"value":"msg","t":"string"}, "across page"]` |
+| `33` | Broadcast site | `["Broadcast", {"value":"msg","t":"string"}, "across site"]` |
+| `84` | Get viewport size | `["Get viewport size", "→", {"value":"1","t":"string","l":"x"}, {"value":"2","t":"string","l":"y"}]` |
+| `85` | Get cursor position | `["Get cursor position", "→", {"value":"1","t":"string","l":"x"}, {"value":"2","t":"string","l":"y"}]` |
+| `117` | Get URL | `["Get URL", "→", {"value":"1","t":"string","l":"variable"}]` |
+| `34` | Set cookie | `["Set cookie", {"value":"ck","t":"string","l":"cookie"}, "to", {"value":"val","t":"any"}]` |
+| `36` | Get cookie | `["Get cookie", {"value":"ck","t":"string","l":"cookie"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `62` | Delete cookie | `["Delete cookie", {"value":"ck","t":"string","l":"cookie"}]` |
+
+---
+
+## 8. Complete Worked Examples
+
+### 8.1 Button Click Counter with Boundary
 ```json
 {
-  "id": "18",
+  "id": "1",
+  "globalid": "e_btn",
+  "x": "5000",
+  "y": "5000",
+  "width": "350",
+  "text": ["When", {"value": "inc_btn", "t": "object", "l": "button"}, "pressed..."],
+  "actions": [
+    {
+      "id": "93",
+      "globalid": "chk_init",
+      "text": ["If", {"value": "1", "t": "string", "l": "variable"}, "doesn't exist"]
+    },
+    {
+      "id": "11",
+      "globalid": "init_val",
+      "text": ["Set", {"value": "1", "t": "string", "l": "variable"}, "to", {"value": "0", "t": "string", "l": "any"}]
+    },
+    {
+      "id": "25",
+      "globalid": "end_init",
+      "text": ["end"]
+    },
+    {
+      "id": "12",
+      "globalid": "inc_val",
+      "text": ["Increase", {"value": "1", "t": "string", "l": "variable"}, "by", {"value": "1", "t": "number"}]
+    },
+    {
+      "id": "10",
+      "globalid": "update_txt",
+      "text": ["Set", {"value": "count_lbl", "t": "object"}, "text to", {"value": "Count: {1}", "t": "string"}]
+    }
+  ]
+}
+```
+
+### 8.2 Math Function (`114`) Example
+Calling `math.sin` with tuple parameter:
+```json
+{
+  "id": "114",
+  "globalid": "calc_sin",
   "text": [
-    "If ",
-    {"value": "var1", "t": "string", "l": "any"},
-    " is equal to ",
-    {"value": "var2", "t": "string", "l": "any"}
-  ],
-  "globalid": "rU"
-}
-```
-
-### Action Properties
-
-| Property | Required | Description |
-|----------|----------|-------------|
-| id | Yes | Action type identifier |
-| text | Yes | Mixed array of strings and parameters |
-| globalid | Yes | Action unique ID |
-| help | No | **ONLY for comment actions (id: 124)** |
-
-**WARNING:** Using `help` on non-comment actions creates invalid JSON
-
----
-
-## Block Control Actions
-
-### If-Else-End Pattern
-
-```json
-[
-  {
-    "id": "18",
-    "text": ["If", {"value": "x", "l": "any", "t": "string"}, " is equal to ", {"value": "y", "l": "any", "t": "string"}],
-    "globalid": "Fo"
-  },
-  // True condition actions...
-  {
-    "id": "112",
-    "text": ["else"],
-    "globalid": "3Q"
-  },
-  // False condition actions...
-  {
-    "id": "25",
-    "text": ["end"],
-    "globalid": "v5"
-  }
-]
-```
-
-**Note:** `else` blocks consume action slots. For efficiency, consider multiple independent `if` conditions.
-
-### Loop Structures
-
-```json
-[
-  {
-    "id": "22",
-    "text": ["Repeat ", {"value": "5", "t": "number"}, " times"],
-    "globalid": "loop_start"
-  },
-  // Loop body...
-  {
-    "id": "25",
-    "text": ["end"],
-    "globalid": "loop_end"
-  }
-]
-```
-
----
-
-## Parameter Objects
-
-### Type System
-
-| Type | JSON Format | Validation | Example |
-|------|-------------|------------|---------|
-| any | `{"value": "content", "t": "any", "l": "any"}` | Accepts any value | `{"value": "{var}", "t": "any", "l": "any"}` |
-| string | `{"value": "text", "t": "string", "l": "variable"}` | Converts to string | `{"value": "hello", "t": "string"}` |
-| number | `{"value": "123", "t": "number", "l": "any"}` | Non-numeric → 0 | `{"value": "42", "t": "number"}` |
-| object | `{"value": "Button1", "t": "object"}` | Must reference valid element | See Object References below |
-| variable | `{"value": "varName", "t": "string", "l": "variable"}` | Variable existence | `{"value": "counter", "t": "string", "l": "variable"}` |
-| tuple | `{"value": [param1, param2...], "t": "tuple"}` | Max 6 parameters | See Tuple Structure below |
-
-### Optional Types
-
-Add `?` to label for optional parameters:
-
-```json
-{"value": "", "t": "string", "l": "variable?"}
-```
-
-Empty optional fields are safely ignored.
-
-### Types vs Labels
-
-- **Type (`t`)**: Defines accepted data type (strict validation)
-- **Label (`l`)**: Describes what value represents (contextual)
-- Cannot create custom type/label combinations
-
----
-
-## Object References
-
-```json
-// Direct element (uses globalid)
-{"value": "SubmitButton", "t": "object"}
-
-// Script parent
-{"value": "(parent)", "t": "object"}
-
-// Object variable (runtime)
-{"value": "{objVar}", "t": "object"}
-
-// Scoped object variable
-{"value": "{o!scopedObj}", "t": "object"}
-```
-
-**CRITICAL:** Scripts reference objects via **globalid** (not alias). When JSON is imported, globalids regenerate - keep UI + scripts in ONE JSON file.
-
-**Recommended:** Use `(parent)` for scripts operating within their parent element instead of hardcoding globalids.
-
----
-
-## Tuple Parameters
-
-```json
-{
-  "value": [
-    {"value": "firstArg", "t": "string", "l": "any"},
-    {"value": "secondArg", "t": "number", "l": "any"},
-    {"value": "thirdArg", "t": "string", "l": "any"}
-  ],
-  "t": "tuple"
-}
-```
-
-Max 6 parameters per tuple.
-
----
-
-## Variable Scoping
-
-```json
-// Global (any script)
-{"value": "{globalVar}", "t": "any", "l": "any"}
-
-// Object (same script)
-{"value": "{o!objectVar}", "t": "any", "l": "any"}
-
-// Local (same event)
-{"value": "{l!localVar}", "t": "any", "l": "any"}
-```
-
-**Direct Table Entry Access:**
-```json
-// Access table entries directly
-{"value": "{table.entry}", "t": "any", "l": "any"}
-
-// Works with nested tables
-{"value": "{table.entry.subentry}", "t": "any", "l": "any"}
-
-// Works with arrays (use numbers)
-{"value": "{array.1}", "t": "any", "l": "any"}
-```
-
----
-
-## Event & Action IDs
-
-### Events
-
-| ID | Event |
-|----|-------|
-| 0 | When website loaded... |
-| 1 | When `<button>` pressed... |
-| 2 | When `<key>` pressed... |
-| 3 | When mouse enters `<object>`... |
-| 5 | When mouse leaves `<object>`... |
-| 6 | Define function `<function>` |
-| 7 | When `<donation>` bought... |
-| 8 | When `<input>` submitted... |
-| 9 | When message received... |
-| 10 | When `<object>` changed... |
-| 11 | When mouse down on `<button>`... |
-| 12 | When mouse up on `<button>`... |
-| 13 | When `<button>` right clicked... |
-| 14 | When cross-site message received... |
-| 15 | When donation completed... |
-
-### Actions
-
-| ID | Action |
-|----|--------|
-| 0 | Log `<any>` |
-| 1 | Warn `<any>` |
-| 2 | Error `<any>` |
-| 3 | Wait `<number>` seconds |
-| 4 | Redirect to `<string>` |
-| 5 | Play audio `<id>` → `<variable?>` |
-| 8 | Make `<object>` invisible |
-| 9 | Make `<object>` visible |
-| 10 | Set `<object>` text to `<string>` |
-| 11 | Set `<variable>` to `<any>` |
-| 12 | Increase `<variable>` by `<number>` |
-| 13 | Decrease `<variable>` by `<number>` |
-| 14 | Multiply `<variable>` by `<number>` |
-| 15 | Divide `<variable>` by `<number>` |
-| 16 | Round `<variable>` |
-| 17 | Floor `<variable>` |
-| 18 | If `<any>` is equal to `<any>` |
-| 19 | If `<any>` is not equal to `<any>` |
-| 20 | If `<any>` is greater than `<any>` |
-| 21 | If `<any>` is lower than `<any>` |
-| 22 | Repeat `<number>` times |
-| 23 | Repeat forever |
-| 24 | break |
-| 25 | end |
-| 26 | Play looped audio `<id>` → `<variable?>` |
-| 27 | Set `<var>` to random `<n>` - `<n>` |
-| 30 | Get text from `<input>` → `<variable>` |
-| 31 | Set `<property>` of `<object>` to `<any>` |
-| 32 | Broadcast `<message>` across page |
-| 33 | Broadcast `<message>` across site |
-| 34 | Set `<cookie>` to `<any>` |
-| 35 | Increase `<cookie>` by `<number>` |
-| 36 | Get cookie `<cookie>` → `<variable>` |
-| 37 | If `<string>` contains `<string>` |
-| 38 | If `<string>` doesn't contain `<string>` |
-| 39 | Get `<property>` of `<object>` → `<variable>` |
-| 40 | Raise `<variable>` to the power of `<number>` |
-| 41 | `<variable>` modulo `<number>` |
-| 42 | Sub `<variable>` `<start>` - `<end>` |
-| 43 | Replace `<string>` in `<variable>` by `<string>` |
-| 44 | If `<variable>` AND `<variable>` |
-| 45 | If `<variable>` OR `<variable>` |
-| 46 | If `<variable>` NOR `<variable>` |
-| 47 | If `<variable>` XOR `<variable>` |
-| 48 | Get length of `<string>` → `<variable>` |
-| 49 | Duplicate `<object>` → `<variable>` |
-| 50 | Delete `<object>` |
-| 51 | Get local username → `<variable>` |
-| 52 | Get local user ID → `<variable>` |
-| 53 | Get local display name → `<variable>` |
-| 54 | Create table `<table>` |
-| 55 | Set entry `<entry>` of `<table>` to `<any>` |
-| 56 | Get entry `<entry>` of`<table>` → `<variable>` |
-| 57 | Split `<string>` `<separator>` → `<table>` |
-| 58 | Parent `<object>` under `<object>` |
-| 59 | Get length of `<array>` → `<variable>` |
-| 62 | Delete cookie `<cookie>` |´
-| 63 | Run function in background `<function>` `<tuple?>` |
-| 66 | Set entry `<entry>` of `<table>` to `<object>` |
-| 67 | Get query string parameter `<string>` → `<variable>` |
-| 68 | Get unix timestamp → `<variable>` |
-| 69 | Lower `<string>` → `<variable>` |
-| 70 | Upper `<string>` → `<variable>` |
-| 71 | Format current date/time `<format>` → `<variable>` |
-| 72 | Format from unix `<number>` `<format>` → `<variable>` |
-| 73 | Set volume of `<variable>` to `<number>` |
-| 74 | Stop audio `<variable>` |
-| 75 | Pause audio `<variable>` |
-| 76 | Resume audio `<variable>` |
-| 77 | Set speed of `<variable>` to `<number>` |
-| 78 | Ceil `<variable>` |
-| 79 | If left mouse button down |
-| 80 | If middle mouse button down |
-| 81 | If right mouse button down |
-| 82 | If `<key>` down |
-| 83 | Get tick → `<variable>` |
-| 84 | Get viewport size → `<x>` `<y>` |
-| 85 | Get cursor position → `<x>` `<y>` |
-| 87 | Run function `<function>` `<tuple>` → `<variable?>` |
-| 88 | Tween `<property>` of `<object>` to `<any>` - `<time>` `<style>` `<direction>` |
-| 89 | Insert `<any>` at position `<number?>` of `<array>` |
-| 90 | Delete entry `<entry>` of `<table>` |
-| 91 | Remove entry at position `<number?>` of `<array>` |
-| 92 | If `<variable>` exists |
-| 93 | If `<variable>` doesn't exist |
-| 94 | Set `<property>` of `<variable>` to `<any>` |
-| 95 | Get `<property>` of `<variable>` to `<any>` |
-| 96 | Delete `<variable>` |
-| 97 | Get parent of `<object>` → `<variable>` |
-| 98 | Find ancestor named `<string>` in `<object>` → `<variable>` |
-| 99 | Find child named `<string>` in `<object>` → `<variable>` |
-| 100 | Find descendant named `<string>` in `<object>` → `<variable>` |
-| 101 | Get children of `<object>` → `<table>` |
-| 102 | Get descendants of `<object>` → `<table>` |
-| 103 | If `<object>` is ancestor of `<object>` |
-| 104 | If `<object>` is child of `<object>` |
-| 105 | If `<object>` is descendant of `<object>` |
-| 106 | Set `<object>` image to `<id>` |
-| 107 | Set `<object>` image to avatar of `<userid>` `<resolution?>` |
-| 108 | If dark theme enabled |
-| 109 | Concatenate `<string>` with `<string>` → `<variable>` |
-| 110 | Join `<array>` using `<string>` → `<variable?>` |
-| 112 | else |
-| 113 | Iterate through `<table>` ({l!index},{l!value}) |
-| 114 | Run math function `<function>` `<tuple>` → `<variable>` |
-| 115 | Return `<any>` |
-| 116 | Get server unix timestamp → `<variable>` |
-| 117 | Get URL → `<variable>` |
-| 118 | Get timezone → `<variable>` |
-| 119 | Convert `<hex>` to RGB → `<variable>` |
-| 120 | Convert `<hex>` to HSV → `<variable>` |
-| 121 | Convert `<RGB>` to hex → `<variable>` |
-| 122 | Convert `<HSV>` to hex → `<variable>` |
-| 123 | Lerp `<hex>` to `<hex>` by `<alpha>` → `<variable>` |
-| 124 | `<comment>` |
-| 125 | If `<any>` is greater or equal to `<any>` |
-| 126 | If `<any>` is lower or equal to `<any>` |
-| 127 | Get objects at position `<x>` `<y>` → `<array>` |
-| 128 | Run function protected `<function>` `<tuple?>` → `<success_variable>` `<variable?>` |
-| 129 | Get `<info>` of asset `<id>` → `<variable>` |
-| 130 | Broadcast `<message>`cross-site to `<page>` |
-
-**More information:**
-- If you see some missing Ids, its most likely because some actions are deprecated
-- See CatDocs reference
-- The `event` with the id `7` (When `<donation>` bought...), is currently an event for the legacy donation object and will stop detecting purchases for passes and developer products on May 29th. It can be used for both the legacy Donation and Avatar Item elements and will later be repurposed for Avatar Item elements. For new Donations, use `event 15` (When donation completed... )
-
-- Info for `event 15` (When donation completed... ): "This event is for new Donation objects. For legacy Donations, use "When <donation> bought ... ".
-This event changes the following variables:
-- `{l!identifier}`
-- `{lrobuxAmount}`
-- `{l!purchasedNow}`
-
-Note that donations might not complete immediately and may be delayed for up to 7 days as the sender or receiver age-checks or gets parental consent. Make sure to inform the user that they might need to come back in a few days for their donation to complete.
-This event will only fire on the same page the donation was purchased on. {l!purchasedNow} will be true if the donation was processed within the same session."
-
-### ID Collisions
-
-Events and actions have separate ID spaces. Use event IDs for events, action IDs for actions.
-Example collision: ID 0 = "When website loaded" (event) OR "Log `<any>`" (action)
-
----
-
-## Complex Patterns
-
-### Function Call with Tuple
-
-```json
-{
-  "id": "87",
-  "text": [
-    "Run function ",
-    {"value": "calculate", "t": "string", "l": "function"},
-    " ",
+    "Run math function",
+    {"value": "sin", "t": "string", "l": "function"},
     {
       "value": [
-        {"value": "arg1", "t": "string", "l": "any"},
-        {"value": "arg2", "t": "number", "l": "any"}
+        {"value": "1.57079", "t": "number", "l": "any"}
       ],
       "t": "tuple"
     },
-    " → ",
-    {"value": "result", "l": "variable", "t": "string"}
-  ],
-  "globalid": "func_call"
-}
-```
-
-### Table Iteration
-
-```json
-{
-  "id": "113",
-  "text": [
-    "Iterate through ",
-    {"value": "dataTable", "t": "string", "l": "table"},
-    " ({l!index},{l!value})"
-  ],
-  "globalid": "iterate"
-}
-```
-
-`{l!index}` and `{l!value}` are fixed local variables created automatically.
-
-### Property Manipulation
-
-```json
-{
-  "id": "31",
-  "text": [
-    "Set ",
-    {"value": "BackgroundColor", "t": "string", "l": "property"},
-    " of ",
-    {"value": "TargetFrame", "t": "object"},
-    " to ",
-    {"value": "#ff0000", "t": "string", "l": "any"}
-  ],
-  "globalid": "set_prop"
+    "→",
+    {"value": "2", "t": "string", "l": "variable"}
+  ]
 }
 ```
 
 ---
 
-## Comment Actions
+## 9. Cross-References
 
-```json
-{
-  "id": "124",
-  "text": [{"value": "Documentation comment", "t": "string", "l": "comment"}],
-  "globalid": "comment_1",
-  "help": "Optional help text for editor"
-}
-```
-
-**CRITICAL:** `help` key ONLY valid for id: 124. Using elsewhere = invalid JSON.
-
----
-
-## Validation Rules
-
-### Required Fields
-- All objects: `globalid`
-- Events: `y`, `x`, `id`, `text`, `actions`, `width`
-- Actions: `id`, `text`, `globalid`
-- Scripts: `class`, `content`, `globalid`
-
-### Type Constraints
-- Coordinates (`y`, `x`): String-encoded numbers
-- IDs (`id`): String-encoded numbers matching known actions/events
-- `globalid`: Must be unique across entire JSON
-- `width`: String-encoded number
-
-### Forbidden Patterns
-- ❌ `warning` key (does not exist in valid CatWeb JSON)
-- ❌ `help` key (ONLY on comment actions, id: 124)
-- ❌ Invalid type combinations
-- ❌ Comments in JSON
-
-### Block Structure Rules
-- Every block starter (if, repeat, iterate) needs matching `end`
-- `else` (id: 112) must follow conditional and precede `end`
-- Function definitions cannot nest
-- Max 6 tuple parameters
-
----
-
-## Best Practices for AI Generation
-
-### DO ✓
-- **Keep UI + scripts in ONE JSON** - globalid regeneration on import breaks references
-- **Use `(parent)` references** instead of hardcoding globalids when possible
-- **Use clear placeholder names** for object references (e.g., "SubmitButton")
-- **Remind users to link objects** in the explorer
-- **Use short unique globalids** - 2-3 character mix (letters/numbers/symbols)
-- **Increment coordinates logically** - y +100-200 vertical, x +350-400 horizontal
-- **Center important events** - around x: 5000, y: 5000
-- **Balance else blocks** - they consume action slots (120 max per event)
-- **Use comment actions** (id: 124) for documentation
-
-### DON'T ✗
-- **NEVER add comments to JSON** - they break parsing
-- **Don't use `help` on non-comment actions** - invalid JSON
-- **Don't nest functions** - not supported
-- **Don't call functions recursively** without delays
-- **Don't forget globalid uniqueness**
-
----
-
-## Limits
-
-- **Actions per event:** 120
-- **Actions per script:** 3,600 (30 events × 120)
-- **Events per script:** 30
-- **Tuple parameters:** 6 max
-- **Runtime objects:** 1,000 max
-
----
-
-## Example: Complete Function
-
-```json
-[
-  {
-    "class": "script",
-    "globalid": "main_script",
-    "content": [
-      {
-        "id": "6",
-        "text": ["Define function ", {"value": "greetUser", "t": "string", "l": "function"}],
-        "variable_overrides": [
-          {"value": "username"}
-        ],
-        "x": "5000",
-        "y": "5000",
-        "width": "500",
-        "globalid": "func_def",
-        "actions": [
-          {
-            "id": "11",
-            "text": [
-              "Set variable ",
-              {"value": "message", "t": "string", "l": "variable"},
-              " to ",
-              {"value": "Hello, {l!username}!", "t": "any", "l": "any"}
-            ],
-            "globalid": "set_msg"
-          },
-          {
-            "id": "115",
-            "text": ["Return ", {"value": "{message}", "t": "any", "l": "any"}],
-            "globalid": "return"
-          }
-        ]
-      },
-      {
-        "id": "0",
-        "text": ["When website loaded..."],
-        "x": "5000",
-        "y": "5200",
-        "width": "350",
-        "globalid": "on_load",
-        "actions": [
-          {
-            "id": "87",
-            "text": [
-              "Run function ",
-              {"value": "greetUser", "t": "string", "l": "function"},
-              " ",
-              {
-                "value": [
-                  {"value": "Player", "t": "string", "l": "any"}
-                ],
-                "t": "tuple"
-              },
-              " → ",
-              {"value": "greeting", "t": "string", "l": "variable"}
-            ],
-            "globalid": "call_func"
-          },
-          {
-            "id": "0",
-            "text": ["Log ", {"value": "{greeting}", "t": "any", "l": "any"}],
-            "globalid": "log"
-          }
-        ]
-      }
-    ]
-  }
-]
-```
-
----
-
-## Cross-References
-
-- **For action details & logic:** See CatDocs (main reference)
-- **For UI structure:** See CatWeb UI JSON Spec
-- **Usage:** This document pairs with CatDocs for complete scripting knowledge
+- **UI Structure:** See [UIGPT.md](UIGPT.md).
+- **Icons, Sound IDs & Component Templates:** See [Assets.md](Assets.md).
+- **General Game Reference:** See [CatDocs.md](CatDocs.md).
