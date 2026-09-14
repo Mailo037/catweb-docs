@@ -16,59 +16,105 @@ When the user asks for a website in the context of CatWeb, **NEVER** write HTML,
 
 Breaking any of these rules causes immediate import rejection (`[INVALIDATED]`) or silent publish failure:
 
-1. **Top-level full site is a JSON object:** Must contain `favicon`, `title`, `background`, and `webcontent` (array containing exactly one root element).
-2. **Every scalar value is a quoted string:** Numbers, booleans, and nulls must be strings (`"font_size": "16"`, `"visible": "true"`, `"radius": "0,8"`). Never output raw numbers or raw booleans in properties.
-3. **No JSON comments:** `//` and `/* */` break the parser. The output must be 100% valid JSON.
-4. **Hex colors always keep `#`:** Always `"#1a1a1a"`, never `"1a1a1a"`.
-5. **`globalid` format:** Exactly 2–3 alphanumeric characters (`[A-Za-z0-9]{2,3}`), strictly unique across the entire file (e.g. `"rt"`, `"nb"`, `"b1"`, `"sc1"`).
-6. **`alias` format:** Unique, lowercase descriptive identifier (`"navbar"`, `"hero_btn"`, `"counter_lbl"`). Used for readability in the editor; scripts resolve via `globalid`.
-7. **Layout order key is `"order"`:** NEVER `"layout_order"`. Writing `"layout_order"` throws a fatal `[INVALIDATED] default not found for property layout_order` import error.
-8. **Always use `sort: "LayoutOrder"`:** When using `UIListLayout` or `UIGridLayout`, use `sort: "LayoutOrder"` and assign an integer `"order"` string to children (`"1"`, `"2"`, `"3"`). Avoid `sort: "Name"`.
-9. **UI and scripts live in ONE JSON file:** Scripts are elements with `"class": "script"` inside `webcontent`. Never split scripts and UI into separate files (global IDs regenerate upon separate import).
-10. **Two Separate Vocabularies:** Never confuse JSON authoring keys with Script display names:
-    - **JSON Authoring Keys (snake_case):** Used directly on elements in `webcontent` (`background_color`, `font_color`, `stroke_thickness`, `size` for grid cells, `order`).
+1. **Two Supported JSON Formats (Full Site vs. Component Snippet):**
+   - **Full Site (JSON Object):** Contains `favicon`, `title`, `background`, and `webcontent: [...]`. Used when exporting, importing, or publishing an entire website.
+   - **Component / Snippet (Bare JSON Array):** You do **NOT** need the top-level site object (`favicon`, `background`, `webcontent`) if creating modular components, button packs, or snippets! A bare JSON array of elements `[ { ... }, { ... } ]` is completely valid and directly importable in CatWeb.
+2. **Multiple Root Sibling Elements Allowed:**
+   Neither the full site's `webcontent` array nor a snippet array requires a single bundled root `Frame`. You can have multiple direct sibling elements at the root level separated by commas (e.g. `[ { "class": "Frame", ... }, { "class": "ImageLabel", ... }, { "class": "script", ... } ]`).
+3. **Every scalar value is a quoted string:** Numbers, booleans, and nulls must be strings (`"font_size": "16"` or `"scaled"`, `"visible": "true"`, `"radius": "0,8"`, `"rich": "false"`). Never output raw numbers or raw booleans in properties.
+4. **No JSON comments:** `//` and `/* */` break the parser. The output must be 100% valid JSON.
+5. **Hex colors always keep `#`:** Always `"#1a1a1a"`, never `"1a1a1a"`.
+6. **`globalid` format:** 2–3 characters, strictly unique across the entire file (e.g. `"5m"`, `"db"`, `"~O"`, `"d;"`, `"sc1"`).
+7. **`alias` format:** Unique, lowercase descriptive identifier (`"navbar"`, `"hero_btn"`, `"counter_lbl"`). Used for readability in the editor; scripts resolve via `globalid`.
+8. **Layout order key is `"order"`:** NEVER `"layout_order"`. Writing `"layout_order"` throws a fatal `[INVALIDATED] default not found for property layout_order` import error.
+9. **Always use `sort: "LayoutOrder"`:** When using `UIListLayout` or `UIGridLayout`, use `sort: "LayoutOrder"` and assign an integer `"order"` string to children (`"1"`, `"2"`, `"3"`). Avoid `sort: "Name"`.
+10. **UI and scripts live in ONE JSON file:** Scripts are elements with `"class": "script"` inside `webcontent` (or the snippet array). Never split scripts and UI into separate files (global IDs regenerate upon separate import).
+11. **Two Separate Vocabularies:** Never confuse JSON authoring keys with Script display names:
+    - **JSON Authoring Keys (snake_case):** Used directly on elements (`background_color`, `font_color`, `stroke_thickness`, `size` for grid cells, `order`).
     - **Script Display Names (Title Case):** Used ONLY inside script action parameters (`"Background Color"`, `"Text Color"`, `"Thickness"`, `"Cell Size"`, `"Order"`, `"Text"`, `"Visible"`).
-11. **Flat Control Flow in Scripts:** Control flow actions (`If` `18`, `Repeat` `22`, `Repeat forever` `23`) must **NEVER** contain a nested `actions: [...]` property. Their body consists of flat sibling actions in the event's `actions` array, terminated by `end` (`25`).
-12. **Property Action Structure (`<property>` of `<object>`):**
+12. **Flat Control Flow in Scripts:** Control flow actions (`If` `18`, `Repeat` `22`, `Repeat forever` `23`) must **NEVER** contain a nested `actions: [...]` property. Their body consists of flat sibling actions in the event's `actions` array, terminated by `end` (`25`).
+13. **Property Action Structure (`<property>` of `<object>`):**
     Property manipulation blocks are strictly structured with the property BEFORE the object:
     - **Set:** `Set <property> of <object> to <any>` (`["Set", {"value":"Background Color","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"#ff0000","t":"any"}]`)
     - **Get:** `Get <property> of <object> → <variable>` (`["Get", {"value":"Text","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]`)
     - **Tween:** `Tween <property> of <object> to <any> ...` (`["Tween", {"value":"Position","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", ...]`)
     > [!CAUTION]
     > NEVER write `Set <object> property ...` or `Tween <object> property ...`. CatWeb expects `<property> of <object>`.
-13. **`Wait` Block is Action ID `3` (Logic Category):**
+14. **`Wait` Block is Action ID `3` (Logic Category):**
     `Wait <number> seconds` has Action ID **`3`** under the **Logic** category (yellow lightbulb icon: `["Wait", {"value":"1","t":"number"}, "seconds"]`).
-    **NEVER** use Loop action IDs (`22`, `23`, `24`) for waiting! Action ID `24` is `Break` (under Loops with circular arrows). Using `24` causes CatWeb to treat the wait as a Loop break and breaks script execution.
+    **NEVER** use Loop action IDs (`22`, `23`, `24`) for waiting! Action ID `24` is `Break` (under Loops with circular arrows).
 
 ---
 
-## 2. Top-Level Site Architecture
+## 2. Top-Level Structure: Full Site vs. Component Snippet
 
+### Format A: Full Website Object
+Used when creating or publishing an entire site:
 ```json
 {
   "favicon": "16944769468",
   "title": "My CatWeb Site",
   "background": "#0f0f11",
+  "thumbnail_id": "16944769468",
+  "thumbnail": "rbxassetid://16944769468",
   "webcontent": [
     {
       "class": "Frame",
-      "globalid": "rt",
-      "alias": "root",
-      "size": "{1,0},{1,0}",
+      "globalid": "5m",
+      "alias": "card_a",
+      "size": "{0.5,0},{0.5,0}",
       "position": "{0,0},{0,0}",
-      "background_color": "#0f0f11",
+      "background_color": "#18181b",
       "children": []
+    },
+    {
+      "class": "ImageLabel",
+      "globalid": "db",
+      "alias": "logo",
+      "size": "{0.1,0},{0.1,0}",
+      "image_id": "107783162934966",
+      "image": "rbxassetid://107783162934966"
     }
-  ],
-  "thumbnail_id": "16944769468",
-  "thumbnail": "rbxassetid://16944769468"
+  ]
 }
 ```
+*Note: `webcontent` can contain multiple sibling root elements as shown above.*
 
-### Page Root Architecture Patterns
+### Format B: Component / Snippet Array (No Wrapper Object)
+Used when generating reusable components, button packs, cards, or partial UI snippets:
+```json
+[
+  {
+    "class": "Frame",
+    "globalid": "5m",
+    "size": "{0.4,0},{0.3,0}",
+    "background_color": "#1f1f23",
+    "children": [
+      {
+        "class": "TextLabel",
+        "globalid": "KR",
+        "text": "Component Text",
+        "font_size": "scaled",
+        "rich": "false",
+        "align_x": "Center",
+        "align_y": "Center",
+        "size": "{1,0},{0.4,0}"
+      },
+      {
+        "class": "ScrollingFrame",
+        "globalid": "~O",
+        "canvassize": "{0,0},{2,0}",
+        "size": "{1,0},{0.6,0}"
+      }
+    ]
+  }
+]
+```
 
-#### Pattern A: Sites with Sticky Navbar (Standard / Recommended)
-The root element is a non-scrolling `Frame` (`size: "{1,0},{1,0}"`). The navbar and body scroller are **direct siblings**:
+### Page Layout Architecture Patterns
+
+#### Pattern 1: Sticky Navbar + Body Scroller (Recommended for full sites)
+Root non-scrolling container with navbar and scrolling body as siblings:
 ```text
 Root Frame {1,0},{1,0} (background_color: "#0f0f11")
   ├── Navbar Frame {1,0},{0,56} (z_index: "10", stays fixed at top)
@@ -79,10 +125,10 @@ Root Frame {1,0},{1,0} (background_color: "#0f0f11")
             └── Footer
 ```
 > [!CAUTION]
-> Never nest the `ScrollingFrame` inside the navbar `Frame`! If nested, content will be clipped to the navbar's height.
+> Never nest the `ScrollingFrame` inside the navbar `Frame`!
 
-#### Pattern B: Simple Single Scroller
-For sites without fixed UI headers, the root element can be a single `ScrollingFrame` with `canvassize: "auto_y"`.
+#### Pattern 2: Multi-Root Sibling Elements
+Elements placed directly next to each other inside `webcontent` or the root array without a single wrapping parent.
 
 ---
 
@@ -161,12 +207,15 @@ Text display element:
   "font_color": "#ffffff",
   "align_x": "Left",
   "align_y": "Center",
+  "rich": "false",
   "wrap": "true",
   "truncate": "AtEnd",
   "background_transparency": "1"
 }
 ```
 *Valid Fonts:* `"SourceSans"`, `"SourceSansBold"`, `"Gotham"`, `"GothamBold"`, `"GothamBlack"`, `"AmaticSC"`, `"ComicSans"`.
+*`font_size`:* Integer string (e.g. `"16"`, `"24"`) OR `"scaled"` (enables auto-scaling text to fit bounds).
+*`rich`:* `"true"` or `"false"` (Roblox RichText formatting tags support).
 *Align X:* `"Left"`, `"Center"`, `"Right"`. *Align Y:* `"Top"`, `"Center"`, `"Bottom"`.
 
 #### `TextButton`
@@ -279,6 +328,23 @@ Image display:
   "image": "rbxassetid://76297972789266",
   "image_color": "#ffffff",
   "scale_type": "Fit",
+  "background_transparency": "1"
+}
+```
+*`scale_type`:* `"Fit"`, `"Crop"`, `"Stretch"`, `"Tile"`, `"Slice"`.
+
+#### `ImageButton?link` (Image Hyperlink)
+Clickable image navigating to another `.rbx` URL:
+```json
+{
+  "class": "ImageButton?link",
+  "globalid": "il",
+  "alias": "logo_btn",
+  "size": "{0.1,0},{0.1,0}",
+  "image_id": "107783162934966",
+  "image": "rbxassetid://70877710889686",
+  "href": "dashboard.rbx",
+  "new_tab": "false",
   "background_transparency": "1"
 }
 ```

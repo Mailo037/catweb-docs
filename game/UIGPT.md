@@ -11,16 +11,19 @@ CatWeb is a Roblox game where players build 2D websites using JSON-based UI and 
 
 ## Output Contract & Hard Invariants
 
-1. **Top-level full site is a JSON object:** Contains `favicon`, `title`, `background`, and `webcontent` (array containing the root visual element).
-2. **Every scalar value is a quoted string:** No raw numbers, booleans, or nulls (`"font_size": "16"`, `"visible": "true"`, never raw numbers or booleans).
-3. **No comments in JSON:** `//` or `/* */` break the importer completely. All JSON must be strictly valid.
-4. **Hex colors keep `#`:** Always `"#1a1a1a"`, never `"1a1a1a"`.
-5. **`globalid` format:** Exactly 2–3 alphanumeric characters (`[A-Za-z0-9]{2,3}`), strictly unique across the whole file. No spaces, quotes, or punctuation.
-6. **`alias` format:** Unique across the file, lowercase descriptive label (e.g. `navbar`, `hero_btn`, `statcard1`). Used in editor only; scripts resolve by `globalid`.
-7. **Layout order key is `"order"`:** Never `"layout_order"`. Using `"layout_order"` throws a fatal `[INVALIDATED] default not found for property layout_order` import error.
-8. **Always use `sort: "LayoutOrder"`:** When using `UIListLayout` or `UIGridLayout`, use `sort: "LayoutOrder"` and assign an integer `"order"` string to children. Avoid `sort: "Name"`.
-9. **UI and scripts live in ONE file:** Scripts are elements with `"class": "script"` inside `webcontent`. Never split into separate files (globalids regenerate on import).
-10. **Two separate vocabularies:** Never confuse JSON authoring keys (snake_case) with Script display names (Title Case).
+1. **Two Supported JSON Formats (Full Site Object vs. Component Snippet Array):**
+   - **Full Site (JSON Object):** Contains `favicon`, `title`, `background`, and `webcontent` (array containing one or more root elements). Used for publishing/importing whole sites.
+   - **Component / Snippet (Bare JSON Array):** Modular components, UI packs, or snippets do **NOT** require the wrapper object (`favicon`, `background`, `webcontent`). A bare JSON array `[ { ... }, { ... } ]` can be directly imported or shared.
+2. **Multiple Root Elements Allowed:** Neither `webcontent` nor snippet arrays are restricted to a single root container. You can have multiple direct sibling elements at the root level separated by commas.
+3. **Every scalar value is a quoted string:** No raw numbers, booleans, or nulls (`"font_size": "16"` or `"scaled"`, `"visible": "true"`, never raw numbers or booleans).
+4. **No comments in JSON:** `//` or `/* */` break the importer completely. All JSON must be strictly valid.
+5. **Hex colors keep `#`:** Always `"#1a1a1a"`, never `"1a1a1a"`.
+6. **`globalid` format:** 2–3 characters, strictly unique across the whole file. No spaces or quotes.
+7. **`alias` format:** Unique across the file, lowercase descriptive label (e.g. `navbar`, `hero_btn`, `statcard1`). Used in editor only; scripts resolve by `globalid`.
+8. **Layout order key is `"order"`:** Never `"layout_order"`. Using `"layout_order"` throws a fatal `[INVALIDATED] default not found for property layout_order` import error.
+9. **Always use `sort: "LayoutOrder"`:** When using `UIListLayout` or `UIGridLayout`, use `sort: "LayoutOrder"` and assign an integer `"order"` string to children. Avoid `sort: "Name"`.
+10. **UI and scripts live in ONE file:** Scripts are elements with `"class": "script"` inside `webcontent` (or snippet array). Never split into separate files (globalids regenerate on import).
+11. **Two separate vocabularies:** Never confuse JSON authoring keys (snake_case) with Script display names (Title Case).
 
 ---
 
@@ -43,6 +46,7 @@ CatWeb has two independent naming systems that describe properties:
 
 ## 2. Top-Level File Structure
 
+### 2.1 Full Site Object
 When exporting or importing a full website, the root is a JSON **object**:
 
 ```json
@@ -71,12 +75,34 @@ When exporting or importing a full website, the root is a JSON **object**:
 | `favicon` | Yes | Numeric Roblox asset ID (no prefix) |
 | `title` | Yes | Page title shown in the tab |
 | `background` | Yes | Fallback hex background color |
-| `webcontent` | Yes | Array containing exactly **one** root element (Frame or ScrollingFrame) |
+| `webcontent` | Yes | Array containing root elements (single container or multiple siblings) |
 | `thumbnail_id` | No | Numeric asset ID for page thumbnail |
 | `thumbnail` | No | Full `rbxassetid://` URI for page thumbnail |
 
+### 2.2 Component / Snippet Array
+When sharing or importing a component, widget, or button pack without a full site, the root can simply be a JSON **array**:
+
+```json
+[
+  {
+    "class": "Frame",
+    "globalid": "5m",
+    "background_color": "#c8c8c8",
+    "size": "{0.1, 0},{0.1, 0}",
+    "children": []
+  },
+  {
+    "class": "ImageLabel",
+    "globalid": "db",
+    "image_id": "107783162934966",
+    "image": "rbxassetid://70877710889686",
+    "size": "{0.1, 0},{0.1, 0}"
+  }
+]
+```
+
 > [!NOTE]
-> Scripts are placed inside `webcontent` as elements with `"class": "script"`, typically nested under the root Frame or a designated logic container. A top-level root `"script"` key throws `[INVALIDATED] invalid property script`.
+> Scripts are placed inside `webcontent` (or the snippet array) as elements with `"class": "script"`, typically nested under a Frame or alongside sibling elements. A top-level root `"script"` key throws `[INVALIDATED] invalid property script`.
 
 ---
 
