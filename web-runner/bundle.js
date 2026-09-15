@@ -3826,8 +3826,8 @@ class CatWebRuntime {
     for (const sc of this.scripts) {
       for (const evt of (sc.content || [])) {
         const evtId = String(evt.id);
-        if (['1', '2', '3'].includes(evtId)) {
-          const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object'));
+        if (['1', '2', '3', '8'].includes(evtId)) {
+          const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object' || item.l === 'input'));
           const targetGid = targetSlot?.value;
           if (targetGid) {
             if (!targetMap.has(targetGid)) targetMap.set(targetGid, new Set());
@@ -3868,6 +3868,18 @@ class CatWebRuntime {
         domEl.addEventListener('mouseleave', leaveHandler);
         this.domListeners.push({ el: domEl, type: 'mouseleave', handler: leaveHandler });
       }
+
+      if (evtSet.has('8')) {
+        const submitHandler = (e) => {
+          if (!this.isRunning) return;
+          if (e.type === 'keydown' && e.key !== 'Enter') return;
+          this.triggerEvent(gid, 8, e);
+        };
+        domEl.addEventListener('keydown', submitHandler);
+        domEl.addEventListener('change', submitHandler);
+        this.domListeners.push({ el: domEl, type: 'keydown', handler: submitHandler });
+        this.domListeners.push({ el: domEl, type: 'change', handler: submitHandler });
+      }
     }
   }
 
@@ -3885,6 +3897,23 @@ class CatWebRuntime {
   }
 
   /**
+   * Directly executes an event block's actions.
+   *
+   * @param {object} eventNode - The event node with an actions array
+   * @returns {Promise<void>}
+   */
+  async executeEventNode(eventNode) {
+    if (!eventNode || !Array.isArray(eventNode.actions)) return;
+    const wasRunning = this.isRunning;
+    this.isRunning = true;
+    try {
+      await this._executeActions(eventNode.actions, eventNode);
+    } finally {
+      this.isRunning = wasRunning;
+    }
+  }
+
+  /**
    * Triggers an event by ID on an optional target global ID.
    *
    * @param {string|null} targetGlobalId
@@ -3899,9 +3928,9 @@ class CatWebRuntime {
       const content = sc.content || [];
       for (const evt of content) {
         if (String(evt.id) === evtIdStr) {
-          // If targeted event (1: pressed, 2: hover, 3: unhover), check target globalid match
-          if (['1', '2', '3'].includes(evtIdStr)) {
-            const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object'));
+          // If targeted event (1: pressed, 2: hover, 3: unhover, 8: submitted), check target globalid match
+          if (['1', '2', '3', '8'].includes(evtIdStr)) {
+            const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object' || item.l === 'input'));
             if (targetSlot && targetGlobalId && targetSlot.value !== targetGlobalId) {
               continue; // Target does not match
             }
@@ -3961,14 +3990,15 @@ class CatWebRuntime {
         case '12': {
           // Add <any> to <variable>
           // ["Add", {"value":"1","t":"string","l":"any"}, "to", {"value":"1","t":"string","l":"variable"}]
-          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any'));
+          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any' || item.t === 'number' || item.l === 'number'));
           const varSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'variable');
 
           if (varSlot && valSlot) {
+            const varName = String(varSlot.value).replace(/[{}]/g, '');
             const deltaStr = this.resolveTemplate(valSlot.value);
             const delta = Number(deltaStr) || 0;
-            const current = Number(this.getVariable(varSlot.value)) || 0;
-            this.setVariable(varSlot.value, current + delta);
+            const current = Number(this.getVariable(varName)) || 0;
+            this.setVariable(varName, current + delta);
           }
           break;
         }
@@ -3977,8 +4007,8 @@ class CatWebRuntime {
           // Set <property> of <object> to <any>
           // ["Set", {"value":"Text","t":"string","l":"property"}, "of", {"value":"cnt","t":"object"}, "to", {"value":"Count: {1}","t":"any"}]
           const propSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'property');
-          const objSlot = act.text?.find(item => item && typeof item === 'object' && item.t === 'object');
-          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any'));
+          const objSlot = act.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object' || item.l === 'input'));
+          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any' || item.l === 'value'));
 
           if (propSlot && objSlot && valSlot) {
             const propName = propSlot.value;
@@ -4241,6 +4271,441 @@ exports.CatWebRuntime = CatWebRuntime;
 
   },
 
+  './script_blocks.js': function(module, exports, require) {
+/**
+ * CatWeb Visual Script Block Renderer
+ *
+ * Translates CatWeb JSONScript structures (events, conditions, actions, loops,
+ * variables, and control flow) into interactive, authentic Scratch/CatWeb-style
+ * visual blocks with category colors, C-block indentation, and token chips.
+ *
+ * Compatible with modern browsers and Node.js (via Mock DOM).
+ * Zero external dependencies.
+ */
+
+const BLOCK_CATEGORIES = exports.BLOCK_CATEGORIES = {
+  EVENT: {
+    name: 'Event',
+    bg: '#d97706',
+    border: '#b45309',
+    text: '#ffffff',
+    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>'
+  },
+  VARIABLE: {
+    name: 'Variables',
+    bg: '#ea580c',
+    border: '#c2410c',
+    text: '#ffffff',
+    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M9 9l6 6M15 9l-6 6"></path></svg>'
+  },
+  LOOKS: {
+    name: 'Looks',
+    bg: '#7c3aed',
+    border: '#6d28d9',
+    text: '#ffffff',
+    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
+  },
+  LOGIC: {
+    name: 'Logic',
+    bg: '#ca8a04',
+    border: '#a16207',
+    text: '#ffffff',
+    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>'
+  },
+  LOOP: {
+    name: 'Loops',
+    bg: '#0891b2',
+    border: '#0e7490',
+    text: '#ffffff',
+    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>'
+  },
+  AUDIO: {
+    name: 'Audio',
+    bg: '#db2777',
+    border: '#be185d',
+    text: '#ffffff',
+    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>'
+  },
+  STRING: {
+    name: 'Strings',
+    bg: '#059669',
+    border: '#047857',
+    text: '#ffffff',
+    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>'
+  },
+  FUNCTION: {
+    name: 'Functions',
+    bg: '#2563eb',
+    border: '#1d4ed8',
+    text: '#ffffff',
+    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 4l-4 8h-4l-4 8"></path></svg>'
+  },
+  CONTROL: {
+    name: 'Control',
+    bg: '#475569',
+    border: '#334155',
+    text: '#ffffff',
+    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>'
+  }
+};
+
+/**
+ * Maps an action ID to its block category.
+ *
+ * @param {string|number} actionId
+ * @returns {object} Block category descriptor
+ */
+function getActionCategory(actionId) {
+  const idStr = String(actionId);
+  switch (idStr) {
+    case '11': // Set Variable
+    case '12': // Add to Variable
+      return BLOCK_CATEGORIES.VARIABLE;
+
+    case '31': // Set Property
+    case '39': // Get Property
+    case '88': // Tween Property
+      return BLOCK_CATEGORIES.LOOKS;
+
+    case '3':  // Wait
+    case '18': // If equal
+    case '19': // If not equal
+    case '20': // If greater than
+    case '21': // If less than
+    case '125': // If >=
+    case '126': // If <=
+      return BLOCK_CATEGORIES.LOGIC;
+
+    case '22': // Repeat N times
+    case '23': // Repeat forever
+    case '24': // Break
+      return BLOCK_CATEGORIES.LOOP;
+
+    case '25': // end
+      return BLOCK_CATEGORIES.CONTROL;
+
+    case '5':  // Play audio
+    case '26': // Play looped audio
+      return BLOCK_CATEGORIES.AUDIO;
+
+    case '48': // String length
+      return BLOCK_CATEGORIES.STRING;
+
+    case '6':  // Define function
+    case '87': // Run function
+      return BLOCK_CATEGORIES.FUNCTION;
+
+    default:
+      return BLOCK_CATEGORIES.CONTROL;
+  }
+}
+
+/**
+ * Checks if an action opens a C-block indentation scope.
+ *
+ * @param {string|number} actionId
+ * @returns {boolean}
+ */
+function isScopeOpener(actionId) {
+  const idStr = String(actionId);
+  return ['18', '19', '20', '21', '125', '126', '22', '23'].includes(idStr);
+}
+
+/**
+ * Checks if an action closes a C-block indentation scope.
+ *
+ * @param {string|number} actionId
+ * @returns {boolean}
+ */
+function isScopeCloser(actionId) {
+  return String(actionId) === '25';
+}
+
+/**
+ * Renders an array of tokens (strings and slot objects) as HTML elements.
+ *
+ * @param {Array<string|object>} tokens
+ * @param {object} [options={}]
+ * @param {Map} [options.elementAliases] - Map of globalid -> alias for pretty chip display
+ * @returns {string} HTML string of token chips
+ */
+function renderTokensHtml(tokens, options = {}) {
+  if (!Array.isArray(tokens)) return '';
+  const aliases = options.elementAliases || new Map();
+
+  return tokens.map(item => {
+    if (!item) return '';
+
+    // Plain text token keyword
+    if (typeof item === 'string') {
+      return `<span class="cw-token-text">${escapeHtml(item)}</span>`;
+    }
+
+    // Token slot object
+    if (typeof item === 'object') {
+      const val = item.value ?? '';
+      const slotType = item.t || 'string';
+      const slotLabel = item.l || '';
+
+      // Target Object Slot
+      if (slotType === 'object' || slotLabel === 'button' || slotLabel === 'object' || slotLabel === 'input') {
+        const alias = aliases.get(val);
+        const displayLabel = alias ? `#${alias}` : val;
+        return `
+          <span class="cw-chip cw-chip-object" data-target-gid="${escapeHtml(val)}" title="Target Object [${escapeHtml(val)}]">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+            <span>${escapeHtml(displayLabel)}</span>
+          </span>
+        `;
+      }
+
+      // Variable Slot (e.g. {1})
+      if (slotLabel === 'variable' || /^{\d+}$/.test(String(val))) {
+        const varName = String(val).replace(/[{}]/g, '');
+        return `
+          <span class="cw-chip cw-chip-variable" title="Variable {${escapeHtml(varName)}}">
+            <span class="cw-var-prefix">{</span>
+            <span class="cw-var-num">${escapeHtml(varName)}</span>
+            <span class="cw-var-suffix">}</span>
+          </span>
+        `;
+      }
+
+      // Property Name Slot (e.g. Text, Background Color)
+      if (slotLabel === 'property') {
+        return `
+          <span class="cw-chip cw-chip-property" title="Property">
+            <span>${escapeHtml(val)}</span>
+          </span>
+        `;
+      }
+
+      // Audio Asset Slot
+      if (item.assetbrowser === 'audio' || slotLabel === 'id') {
+        return `
+          <span class="cw-chip cw-chip-audio" title="Audio Asset ID ${escapeHtml(val)}">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            <span>${escapeHtml(val)}</span>
+            ${val ? `
+              <button type="button" class="cw-btn-audio-preview" data-audio-id="${escapeHtml(val)}" title="Preview sound">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              </button>
+            ` : ''}
+          </span>
+        `;
+      }
+
+      // Literal Number Slot
+      if (slotType === 'number' || slotLabel === 'time') {
+        return `
+          <span class="cw-chip cw-chip-number">
+            <span>${escapeHtml(val)}</span>
+          </span>
+        `;
+      }
+
+      // General Expression / Any Slot
+      return `
+        <span class="cw-chip cw-chip-any">
+          <span>${escapeHtml(val)}</span>
+        </span>
+      `;
+    }
+
+    return '';
+  }).join(' ');
+}
+
+/**
+ * Renders complete visual block structure for a CatWeb script element.
+ *
+ * Reconstructs nested C-block indentation from flat CatWeb control flow actions
+ * (`If`/`Repeat` ... `end`).
+ *
+ * @param {object} scriptNode - Script element node with `content` array
+ * @param {object} [options={}]
+ * @param {Function} [options.onTriggerEvent] - Callback (scriptNode, eventNode) => void
+ * @param {Function} [options.onHighlightObject] - Callback (gid) => void
+ * @param {Function} [options.onPlayAudio] - Callback (assetId) => void
+ * @param {Map} [options.elementAliases] - Map of globalid -> alias
+ * @returns {HTMLElement} Container DOM element with rendered visual blocks
+ */
+function renderScriptBlocks(scriptNode, options = {}) {
+  const doc = options.document ||
+    (typeof document !== 'undefined' ? document : null) ||
+    (typeof globalThis !== 'undefined' ? globalThis.document : null);
+
+  const container = doc && typeof doc.createElement === 'function'
+    ? doc.createElement('div')
+    : {
+        className: 'cw-script-canvas',
+        classList: { contains: (c) => c === 'cw-script-canvas', value: 'cw-script-canvas' },
+        children: [],
+        style: {},
+        innerHTML: '',
+        appendChild: function(c) { this.children.push(c); return c; },
+        getAttribute: () => null,
+        hasAttribute: () => false,
+        querySelector: () => null,
+        querySelectorAll: () => []
+      };
+  container.className = 'cw-script-canvas';
+
+  const events = scriptNode?.content || [];
+
+  if (events.length === 0) {
+    container.innerHTML = `
+      <div class="cw-script-empty-state">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polyline points="16 18 22 12 16 6"></polyline>
+          <polyline points="8 6 2 12 8 18"></polyline>
+        </svg>
+        <span>No events or actions defined in this script.</span>
+      </div>
+    `;
+    return container;
+  }
+
+  // Render each event stack
+  events.forEach((evt, evtIdx) => {
+    const eventCard = doc && typeof doc.createElement === 'function'
+      ? doc.createElement('div')
+      : {
+          className: 'cw-event-stack',
+          classList: { contains: (c) => c === 'cw-event-stack', value: 'cw-event-stack' },
+          children: [],
+          innerHTML: ''
+        };
+    eventCard.className = 'cw-event-stack';
+
+    // 1. Hat Event Block
+    const hatCategory = BLOCK_CATEGORIES.EVENT;
+    const hatTokensHtml = renderTokensHtml(evt.text || ['When event...'], options);
+    const eventGid = evt.globalid || `evt_${evtIdx}`;
+
+    const hatHtml = `
+      <div class="cw-block cw-block-event" data-event-gid="${escapeHtml(eventGid)}" style="--cw-block-bg: ${hatCategory.bg}; --cw-block-border: ${hatCategory.border};">
+        <div class="cw-hat-notch"></div>
+        <div class="cw-block-content">
+          <span class="cw-block-icon">${hatCategory.icon}</span>
+          <div class="cw-block-tokens">${hatTokensHtml}</div>
+          <button type="button" class="cw-btn-run-event" data-run-evt="${escapeHtml(eventGid)}" title="Run / Test this event">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>Run</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    // 2. Action Stack (with C-block nested indentation)
+    const rawActions = evt.actions || [];
+    let actionsHtml = '';
+    let currentIndent = 0;
+
+    rawActions.forEach((act, actIdx) => {
+      const actId = String(act.id);
+      const cat = getActionCategory(actId);
+      const actGid = act.globalid || `act_${actIdx}`;
+      const isCloser = isScopeCloser(actId);
+      const isOpener = isScopeOpener(actId);
+
+      if (isCloser && currentIndent > 0) {
+        currentIndent--;
+      }
+
+      const tokensHtml = renderTokensHtml(act.text || [], options);
+
+      // Block markup
+      actionsHtml += `
+        <div class="cw-action-row ${isCloser ? 'cw-action-end' : ''}" style="margin-left: ${currentIndent * 18}px;">
+          <div class="cw-block cw-block-action" data-action-gid="${escapeHtml(actGid)}" style="--cw-block-bg: ${cat.bg}; --cw-block-border: ${cat.border};">
+            <div class="cw-block-content">
+              <span class="cw-block-icon">${cat.icon}</span>
+              <div class="cw-block-tokens">${tokensHtml}</div>
+              <span class="cw-block-id-tag">${escapeHtml(actGid)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (isOpener) {
+        currentIndent++;
+      }
+    });
+
+    const fullEventHtml = `
+      ${hatHtml}
+      <div class="cw-actions-stack">
+        ${actionsHtml || '<div class="cw-action-empty-hint">No actions attached to this event</div>'}
+      </div>
+    `;
+
+    if (doc) {
+      eventCard.innerHTML = fullEventHtml;
+      container.appendChild(eventCard);
+    } else {
+      container.innerHTML += `<div class="cw-event-stack">${fullEventHtml}</div>`;
+    }
+  });
+
+  // Attach interactive listeners
+  if (doc && container.querySelectorAll) {
+    // Run Event Button
+    const runBtns = container.querySelectorAll('.cw-btn-run-event');
+    runBtns.forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const evtGid = btn.getAttribute('data-run-evt');
+        const foundEvt = events.find(e => e.globalid === evtGid || `evt_${events.indexOf(e)}` === evtGid);
+        if (typeof options.onTriggerEvent === 'function' && foundEvt) {
+          options.onTriggerEvent(scriptNode, foundEvt);
+        }
+      });
+    });
+
+    // Target Object Chip Click -> Highlight in canvas
+    const objChips = container.querySelectorAll('.cw-chip-object');
+    objChips.forEach(chip => {
+      chip.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const targetGid = chip.getAttribute('data-target-gid');
+        if (typeof options.onHighlightObject === 'function' && targetGid) {
+          options.onHighlightObject(targetGid);
+        }
+      });
+    });
+
+    // Audio Preview Button
+    const audioBtns = container.querySelectorAll('.cw-btn-audio-preview');
+    audioBtns.forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const assetId = btn.getAttribute('data-audio-id');
+        if (typeof options.onPlayAudio === 'function' && assetId) {
+          options.onPlayAudio(assetId);
+        }
+      });
+    });
+  }
+
+  return container;
+}
+
+function escapeHtml(str) {
+  if (typeof str !== 'string') return String(str || '');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* Module Exports */
+exports.getActionCategory = getActionCategory;
+exports.isScopeOpener = isScopeOpener;
+exports.isScopeCloser = isScopeCloser;
+exports.renderTokensHtml = renderTokensHtml;
+exports.renderScriptBlocks = renderScriptBlocks;
+exports.BLOCK_CATEGORIES = BLOCK_CATEGORIES;
+
+  },
+
   './inspector.js': function(module, exports, require) {
 /**
  * CatWeb Element Inspector & Overlay Engine
@@ -4263,6 +4728,7 @@ const {
   applyBackgroundStyling,
   applyTextStyling
 } = require('./styling.js');
+const { renderScriptBlocks } = require('./script_blocks.js');
 
 class CatWebInspector {
   /**
@@ -4482,14 +4948,12 @@ class CatWebInspector {
       if (domRoot.querySelector) {
         domEl = domRoot.querySelector(`[data-globalid="${gid}"]`);
       }
-      if (domEl) {
-        this.registry.set(gid, {
-          globalid: gid,
-          domElement: domEl,
-          jsonNode: node,
-          modifiers
-        });
-      }
+      this.registry.set(gid, {
+        globalid: gid,
+        domElement: domEl || null,
+        jsonNode: node,
+        modifiers
+      });
     }
 
     // Render tree view
@@ -4647,6 +5111,18 @@ class CatWebInspector {
         });
 
         row.appendChild(modBadge);
+      }
+
+      // Script Event Count Badge
+      if (cls === 'script') {
+        const events = node.content || [];
+        const scriptBadge = doc.createElement('span');
+        scriptBadge.className = 'cw-tree-script-badge';
+        scriptBadge.innerHTML = `
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>${events.length} ${events.length === 1 ? 'Event' : 'Events'}</span>
+        `;
+        row.appendChild(scriptBadge);
       }
 
       // Row click: Select element & switch to properties view
@@ -4885,7 +5361,11 @@ class CatWebInspector {
     }
 
     this.selectedGlobalId = globalid;
-    this._positionBox(this.selectOverlay, entry.domElement);
+    if (entry.domElement) {
+      this._positionBox(this.selectOverlay, entry.domElement);
+    } else if (this.selectOverlay) {
+      this.selectOverlay.style.display = 'none';
+    }
 
     // Highlight row in tree
     if (this.treeContainer) {
@@ -5080,6 +5560,133 @@ class CatWebInspector {
   }
 
   /**
+   * Renders dedicated visual script block view for script elements.
+   * @private
+   */
+  _renderScriptDrawer(container, entry) {
+    const node = entry.jsonNode || {};
+    const gid = entry.globalid;
+    const events = node.content || [];
+    const totalActions = events.reduce((acc, evt) => acc + (evt.actions?.length || 0), 0);
+
+    // Build map of globalid -> alias across registry
+    const aliases = new Map();
+    for (const [id, regEntry] of this.registry.entries()) {
+      if (regEntry.jsonNode?.alias) {
+        aliases.set(id, regEntry.jsonNode.alias);
+      }
+    }
+
+    container.innerHTML = `
+      <!-- Script Header -->
+      <div class="cw-inspector-header">
+        <div class="cw-header-meta">
+          <span class="cw-class-tag cw-class-script">script</span>
+          ${node.alias ? `<span class="cw-alias-tag">#${escapeHtml(node.alias)}</span>` : ''}
+        </div>
+        <div class="cw-id-badge" title="Global ID">
+          <span>ID: <strong>${escapeHtml(gid)}</strong></span>
+        </div>
+      </div>
+
+      <!-- Quick Action Navigation -->
+      <div class="cw-inspector-actions-bar">
+        <button type="button" class="cw-btn cw-btn-sm cw-action-back-tree" title="Return to element tree">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Elements Tree</span>
+        </button>
+        <button type="button" class="cw-btn cw-btn-sm cw-action-deselect" title="Deselect element">Deselect</button>
+      </div>
+
+      <!-- Script Meta & Enabled Toggle -->
+      <div class="cw-inspector-section">
+        <div class="cw-section-title">Script Configuration</div>
+        <div class="cw-field-row">
+          <label class="cw-field-lbl">Alias</label>
+          <input type="text" class="cw-input cw-live-field" data-prop="alias" value="${escapeHtml(node.alias || '')}" placeholder="script_alias">
+        </div>
+        <div class="cw-field-row">
+          <label class="cw-field-lbl">Enabled</label>
+          <label class="cw-toggle-switch">
+            <input type="checkbox" class="cw-live-field" data-prop="enabled" ${node.enabled !== 'false' && node.enabled !== false ? 'checked' : ''}>
+            <span class="cw-toggle-track"></span>
+          </label>
+        </div>
+        <div class="cw-metrics-grid">
+          <div class="cw-metric-box">
+            <span class="cw-metric-lbl">Events</span>
+            <span class="cw-metric-num">${events.length}</span>
+          </div>
+          <div class="cw-metric-box">
+            <span class="cw-metric-lbl">Actions</span>
+            <span class="cw-metric-num">${totalActions}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Script Blocks Section -->
+      <div class="cw-inspector-section">
+        <div class="cw-section-title cw-script-blocks-header">
+          <span>Visual Script Blocks</span>
+          <span class="cw-section-count">${events.length} ${events.length === 1 ? 'Stack' : 'Stacks'}</span>
+        </div>
+        <div class="cw-script-canvas-mount"></div>
+      </div>
+    `;
+
+    // Mount Visual Script Blocks
+    const mountEl = container.querySelector('.cw-script-canvas-mount');
+    if (mountEl) {
+      const doc = container.ownerDocument ||
+        (typeof document !== 'undefined' ? document : null) ||
+        (typeof globalThis !== 'undefined' ? globalThis.document : null);
+
+      const blocksDom = renderScriptBlocks(node, {
+        document: doc,
+        elementAliases: aliases,
+        onTriggerEvent: (script, eventNode) => {
+          if (typeof this.options.onTriggerEvent === 'function') {
+            this.options.onTriggerEvent(script, eventNode);
+          }
+        },
+        onHighlightObject: (targetGid) => {
+          const elEntry = this.registry.get(targetGid);
+          if (elEntry?.domElement) {
+            this._positionBox(this.hoverOverlay, elEntry.domElement);
+            setTimeout(() => this.hideHover(), 2000);
+          }
+        },
+        onPlayAudio: (assetId) => {
+          if (typeof this.options.onPlayAudio === 'function') {
+            this.options.onPlayAudio(assetId);
+          }
+        }
+      });
+      mountEl.appendChild(blocksDom);
+    }
+
+    // Attach Action Listeners
+    const backBtn = container.querySelector('.cw-action-back-tree');
+    if (backBtn) backBtn.addEventListener('click', () => this.switchTab('tree'));
+
+    const deselectBtn = container.querySelector('.cw-action-deselect');
+    if (deselectBtn) deselectBtn.addEventListener('click', () => this.clearSelection());
+
+    // Alias & Enabled input listeners
+    const inputs = container.querySelectorAll('.cw-live-field');
+    inputs.forEach(input => {
+      const prop = input.getAttribute('data-prop');
+      const handler = () => {
+        let val = input.value;
+        if (input.type === 'checkbox') val = input.checked ? 'true' : 'false';
+        this.updateElementProperty(gid, prop, val);
+      };
+      input.addEventListener('input', handler);
+      input.addEventListener('change', handler);
+    });
+  }
+
+  /**
    * Renders structured detail view & live visual property editor in propsContainer.
    * @private
    */
@@ -5090,6 +5697,11 @@ class CatWebInspector {
     const node = entry.jsonNode || {};
     const el = entry.domElement || {};
     const gid = entry.globalid;
+
+    if (node.class === 'script') {
+      this._renderScriptDrawer(container, entry);
+      return;
+    }
 
     const computedWidth = el.offsetWidth || Math.round(el.getBoundingClientRect?.().width || 0);
     const computedHeight = el.offsetHeight || Math.round(el.getBoundingClientRect?.().height || 0);
@@ -5533,6 +6145,333 @@ exports.CatWebInspector = CatWebInspector;
 
   },
 
+  './api_protocol.js': function(module, exports, require) {
+/**
+ * CatWeb AI Protocol & Headless Snapshot Engine
+ *
+ * Provides a standardized protocol for AI models, agents, and external tools
+ * to submit CatWeb JSON and receive either:
+ *   1. Validation / diagnostic errors (if invalid), OR
+ *   2. A high-resolution rendered image (PNG / SVG Data URL) of the canvas.
+ *
+ * Supported interfaces:
+ *   - URL Query & Hash Protocol: ?json=... or #data=...
+ *   - Window PostMessage Protocol: { type: 'catweb:render', json: ... }
+ *   - Programmatic API: window.CatWebAPI.render(json) -> Promise<result>
+ *   - Global Result Anchor: window.__CATWEB_RESULT__
+ *
+ * Zero external dependencies.
+ */
+
+const { validateCatWeb } = require('./validator.js');
+
+/**
+ * Captures the preview canvas DOM element into an image data URL.
+ *
+ * In browser environments with HTML5 Canvas:
+ *   Converts the rendered DOM into an SVG <foreignObject>, renders to canvas,
+ *   and outputs a PNG data URL (data:image/png;base64,...).
+ * In Node.js / headless mock environments:
+ *   Outputs an SVG data URL (data:image/svg+xml;charset=utf-8,...).
+ *
+ * @param {HTMLElement} canvasElement - The CatWeb canvas DOM element (1920x1080)
+ * @param {object} [options={}]
+ * @param {number} [options.width=1920]
+ * @param {number} [options.height=1080]
+ * @param {string} [options.format='png'] - 'png' or 'svg'
+ * @returns {Promise<{ mime: string, dataUrl: string, width: number, height: number }>}
+ */
+export async function captureCanvasImage(canvasElement, options = {}) {
+  const width = options.width || 1920;
+  const height = options.height || 1080;
+  const format = options.format || 'png';
+
+  if (!canvasElement) {
+    throw new Error('No canvas element provided for image capture.');
+  }
+
+  // Extract HTML and collect critical CSS styling
+  const rawHtml = canvasElement.innerHTML || '';
+  const bgColor = canvasElement.style?.backgroundColor || '#09090b';
+
+  // Build self-contained SVG foreignObject wrapper
+  const svgData = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <style>
+        * { box-sizing: border-box; }
+        .cw-element { position: absolute; pointer-events: auto; }
+        .cw-class-frame { display: block; }
+        .cw-class-textlabel, .cw-class-textbutton { display: flex; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .cw-class-imagebutton { display: flex; align-items: center; justify-content: center; }
+      </style>
+      <rect width="100%" height="100%" fill="${bgColor}"/>
+      <foreignObject width="${width}" height="${height}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px; height:${height}px; position:relative; overflow:hidden; background-color:${bgColor};">
+          ${rawHtml}
+        </div>
+      </foreignObject>
+    </svg>
+  `.trim();
+
+  const svgBase64 = typeof btoa === 'function'
+    ? btoa(unescape(encodeURIComponent(svgData)))
+    : (typeof Buffer !== 'undefined' ? Buffer.from(svgData).toString('base64') : '');
+
+  const svgDataUrl = `data:image/svg+xml;base64,${svgBase64}`;
+
+  // If running in browser and PNG is requested, rasterize via HTML5 Canvas
+  if (format === 'png' && typeof document !== 'undefined' && typeof Image !== 'undefined') {
+    try {
+      const pngDataUrl = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(svgDataUrl);
+              return;
+            }
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/png'));
+          } catch (canvasErr) {
+            resolve(svgDataUrl);
+          }
+        };
+        img.onerror = () => {
+          resolve(svgDataUrl);
+        };
+        img.src = svgDataUrl;
+      });
+
+      return {
+        mime: 'image/png',
+        dataUrl: pngDataUrl,
+        width,
+        height
+      };
+    } catch {
+      // Fallback to SVG data URL
+    }
+  }
+
+  return {
+    mime: 'image/svg+xml',
+    dataUrl: svgDataUrl,
+    width,
+    height
+  };
+}
+
+/**
+ * Executes an AI render request:
+ *   1. Parses JSON (if string).
+ *   2. Validates against schema (tools/validate.js).
+ *   3. If invalid: returns `{ success: false, errors: [...] }`.
+ *   4. If valid: renders on canvas and captures image:
+ *      returns `{ success: true, image: dataUrl, format: ..., elementCount: ... }`.
+ *
+ * @param {string|object|Array} jsonPayload
+ * @param {object} appInstance - The CatWebRunnerApp instance
+ * @param {object} [options={}]
+ * @returns {Promise<object>} Result payload
+ */
+export async function handleAiRenderRequest(jsonPayload, appInstance, options = {}) {
+  let parsedJson = jsonPayload;
+
+  // 1. JSON String parsing
+  if (typeof jsonPayload === 'string') {
+    try {
+      parsedJson = JSON.parse(jsonPayload);
+    } catch (parseErr) {
+      const result = {
+        success: false,
+        format: null,
+        elementCount: 0,
+        errors: [
+          {
+            code: 'JSON_SYNTAX_ERROR',
+            message: `Malformed JSON: ${parseErr.message}`,
+            path: '$',
+            severity: 'error'
+          }
+        ],
+        warnings: []
+      };
+      if (typeof window !== 'undefined') window.__CATWEB_RESULT__ = result;
+      return result;
+    }
+  }
+
+  // 2. Schema Validation
+  const validation = validateCatWeb(parsedJson);
+
+  if (!validation.valid) {
+    const result = {
+      success: false,
+      format: validation.format || 'unknown',
+      elementCount: validation.stats?.elementCount || 0,
+      errors: validation.errors,
+      warnings: validation.warnings || []
+    };
+    if (typeof window !== 'undefined') window.__CATWEB_RESULT__ = result;
+    return result;
+  }
+
+  // 3. Render in Web Runner Application
+  try {
+    if (appInstance && typeof appInstance.loadDocument === 'function') {
+      appInstance.loadDocument(parsedJson);
+    }
+
+    const canvasEl = appInstance?.previewCanvas || (typeof document !== 'undefined' ? document.getElementById('previewCanvas') : null);
+    const imgResult = await captureCanvasImage(canvasEl, options);
+
+    const result = {
+      success: true,
+      format: validation.format || appInstance?.currentFormat || 'snippet',
+      elementCount: validation.stats?.elementCount || 0,
+      image: imgResult.dataUrl,
+      mime: imgResult.mime,
+      width: imgResult.width,
+      height: imgResult.height,
+      errors: [],
+      warnings: validation.warnings || []
+    };
+
+    if (typeof window !== 'undefined') window.__CATWEB_RESULT__ = result;
+    return result;
+  } catch (renderErr) {
+    const result = {
+      success: false,
+      format: validation.format || 'unknown',
+      elementCount: validation.stats?.elementCount || 0,
+      errors: [
+        {
+          code: 'RENDER_EXCEPTION',
+          message: `Internal rendering error: ${renderErr.message}`,
+          path: '$',
+          severity: 'error'
+        }
+      ],
+      warnings: []
+    };
+    if (typeof window !== 'undefined') window.__CATWEB_RESULT__ = result;
+    return result;
+  }
+}
+
+/**
+ * Initializes AI Protocol listeners (URL params, Hash, postMessage) on the application shell.
+ *
+ * @param {object} appInstance - Active CatWebRunnerApp instance
+ */
+function initAiProtocol(appInstance) {
+  if (typeof window === 'undefined') return;
+
+  // 1. Expose public programmatic API
+  window.CatWebAPI = {
+    render: (json, opts) => handleAiRenderRequest(json, appInstance, opts),
+    captureImage: (opts) => captureCanvasImage(appInstance.previewCanvas, opts),
+    validate: (json) => validateCatWeb(json)
+  };
+
+  // 2. Window PostMessage Listener (for Iframes & Parent Agent Automation)
+  window.addEventListener('message', async (event) => {
+    const data = event.data;
+    if (!data || typeof data !== 'object') return;
+
+    if (data.type === 'catweb:render') {
+      const requestId = data.requestId || null;
+      const result = await handleAiRenderRequest(data.json, appInstance, data.options || {});
+
+      const response = {
+        type: 'catweb:render_result',
+        requestId,
+        ...result
+      };
+
+      // Reply back to source window
+      if (event.source && typeof event.source.postMessage === 'function') {
+        const targetOrigin = event.origin && event.origin !== 'null' ? event.origin : '*';
+        event.source.postMessage(response, targetOrigin);
+      }
+    }
+  });
+
+  // 3. Check URL Query Parameters & Hash on startup
+  setTimeout(() => {
+    checkUrlPayload(appInstance);
+  }, 100);
+}
+
+/**
+ * Inspects location.search and location.hash for incoming JSON payloads.
+ *
+ * @private
+ */
+async function checkUrlPayload(appInstance) {
+  if (typeof window === 'undefined' || !window.location) return;
+
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    let payload = null;
+
+    // Check ?json=<encoded_json>
+    if (urlParams.has('json')) {
+      payload = urlParams.get('json');
+    }
+
+    // Check ?url=<raw_json_url>
+    if (!payload && urlParams.has('url')) {
+      const targetUrl = urlParams.get('url');
+      try {
+        const resp = await fetch(targetUrl);
+        if (resp.ok) payload = await resp.text();
+      } catch (fetchErr) {
+        console.warn('[CatWebAPI] Failed to fetch remote payload URL:', fetchErr);
+      }
+    }
+
+    // Check #json=<encoded_json> or #data=<base64_json>
+    if (!payload && window.location.hash) {
+      const hash = window.location.hash.slice(1);
+      if (hash.startsWith('json=')) {
+        payload = decodeURIComponent(hash.slice(5));
+      } else if (hash.startsWith('data=')) {
+        const b64 = hash.slice(5);
+        payload = decodeURIComponent(escape(atob(b64)));
+      }
+    }
+
+    if (payload) {
+      const shouldExportImage = urlParams.get('render') === 'image' || urlParams.get('export') === 'image';
+      const result = await handleAiRenderRequest(payload, appInstance, { format: 'png' });
+
+      if (shouldExportImage && result.success && result.image) {
+        // Automatically trigger image view or download if requested
+        const viewerLink = document.createElement('a');
+        viewerLink.href = result.image;
+        viewerLink.download = 'catweb_preview.png';
+        viewerLink.title = 'Rendered CatWeb Preview';
+        console.log('[CatWebAPI] Render completed successfully. Result stored in window.__CATWEB_RESULT__');
+      }
+    }
+  } catch (err) {
+    console.warn('[CatWebAPI] URL payload initialization error:', err);
+  }
+}
+
+/* Module Exports */
+exports.initAiProtocol = initAiProtocol;
+
+  },
+
   './app.js': function(module, exports, require) {
 /**
  * CatWeb Web Runner & Renderer — Main Application Controller
@@ -5549,6 +6488,8 @@ const { validateCatWeb } = require('./validator.js');
 const { renderCatWebTree } = require('./elements.js');
 const { CatWebRuntime } = require('./runtime.js');
 const { CatWebInspector } = require('./inspector.js');
+const { playSyntheticAudio } = require('./assets.js');
+const { initAiProtocol, captureCanvasImage, handleAiRenderRequest } = require('./api_protocol.js');
 
 /**
  * Preloaded canonical CatWeb fixtures embedded for 100% offline file:// compatibility.
@@ -6239,6 +7180,16 @@ class CatWebRunnerApp {
             this.inspector?.switchTab('props');
           }
         },
+        onTriggerEvent: (scriptNode, eventNode) => {
+          if (this.runtime && typeof this.runtime.executeEventNode === 'function') {
+            this.runtime.executeEventNode(eventNode);
+          }
+        },
+        onPlayAudio: (assetId) => {
+          if (this.audioEnabled) {
+            playSyntheticAudio(assetId);
+          }
+        },
         onDocumentChange: (updatedTree) => {
           this.currentDocument = updatedTree;
           if (this.editorTextarea) {
@@ -6250,7 +7201,83 @@ class CatWebRunnerApp {
       });
     }
 
-    // 6. Load Initial Document
+    // 6. Initialize AI Protocol & Image Export Modal
+    this.aiApiBtn = this.root.querySelector('#aiApiBtn');
+    this.aiApiModal = this.root.querySelector('#aiApiModal');
+    this.closeAiModalBtn = this.root.querySelector('#closeAiModalBtn');
+    this.downloadPngBtn = this.root.querySelector('#downloadPngBtn');
+    this.copyDataUrlBtn = this.root.querySelector('#copyDataUrlBtn');
+    this.exportStatusHint = this.root.querySelector('#exportStatusHint');
+
+    if (this.aiApiBtn && this.aiApiModal) {
+      this.aiApiBtn.addEventListener('click', () => {
+        if (this.aiApiModal.classList?.remove) {
+          this.aiApiModal.classList.remove('hidden');
+        }
+      });
+    }
+
+    if (this.closeAiModalBtn && this.aiApiModal) {
+      this.closeAiModalBtn.addEventListener('click', () => {
+        if (this.aiApiModal.classList?.add) {
+          this.aiApiModal.classList.add('hidden');
+        }
+      });
+    }
+
+    if (this.aiApiModal) {
+      this.aiApiModal.addEventListener('click', (e) => {
+        if (e.target === this.aiApiModal && this.aiApiModal.classList?.add) {
+          this.aiApiModal.classList.add('hidden');
+        }
+      });
+    }
+
+    if (this.downloadPngBtn) {
+      this.downloadPngBtn.addEventListener('click', async () => {
+        try {
+          if (this.exportStatusHint) this.exportStatusHint.textContent = 'Generating snapshot...';
+          const snap = await captureCanvasImage(this.previewCanvas, { format: 'png' });
+          if (typeof document !== 'undefined') {
+            const a = document.createElement('a');
+            a.href = snap.dataUrl;
+            const fileName = (this.currentDocument?.title || 'catweb_render').toLowerCase().replace(/[^a-z0-9]+/g, '_') + '.png';
+            a.download = fileName;
+            a.click();
+          }
+          if (this.exportStatusHint) {
+            this.exportStatusHint.textContent = 'PNG downloaded!';
+            setTimeout(() => { if (this.exportStatusHint) this.exportStatusHint.textContent = ''; }, 3000);
+          }
+        } catch (err) {
+          if (this.exportStatusHint) this.exportStatusHint.textContent = 'Export error: ' + err.message;
+        }
+      });
+    }
+
+    if (this.copyDataUrlBtn) {
+      this.copyDataUrlBtn.addEventListener('click', async () => {
+        try {
+          if (this.exportStatusHint) this.exportStatusHint.textContent = 'Generating data URL...';
+          const snap = await captureCanvasImage(this.previewCanvas, { format: 'png' });
+          if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(snap.dataUrl);
+            if (this.exportStatusHint) {
+              this.exportStatusHint.textContent = 'Data URL copied to clipboard!';
+              setTimeout(() => { if (this.exportStatusHint) this.exportStatusHint.textContent = ''; }, 3000);
+            }
+          } else if (typeof prompt !== 'undefined') {
+            prompt('Copy Data URL:', snap.dataUrl);
+          }
+        } catch (err) {
+          if (this.exportStatusHint) this.exportStatusHint.textContent = 'Copy failed: ' + err.message;
+        }
+      });
+    }
+
+    initAiProtocol(this);
+
+    // 7. Load Initial Document
     const defaultKey = this.options.defaultSample;
     const initialContent = PRELOADED_SAMPLES[defaultKey] || PRELOADED_SAMPLES.interactive_counter;
     if (initialContent) {

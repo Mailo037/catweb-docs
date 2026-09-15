@@ -19,6 +19,7 @@ import {
   applyBackgroundStyling,
   applyTextStyling
 } from './styling.js';
+import { renderScriptBlocks } from './script_blocks.js';
 
 export class CatWebInspector {
   /**
@@ -238,14 +239,12 @@ export class CatWebInspector {
       if (domRoot.querySelector) {
         domEl = domRoot.querySelector(`[data-globalid="${gid}"]`);
       }
-      if (domEl) {
-        this.registry.set(gid, {
-          globalid: gid,
-          domElement: domEl,
-          jsonNode: node,
-          modifiers
-        });
-      }
+      this.registry.set(gid, {
+        globalid: gid,
+        domElement: domEl || null,
+        jsonNode: node,
+        modifiers
+      });
     }
 
     // Render tree view
@@ -403,6 +402,18 @@ export class CatWebInspector {
         });
 
         row.appendChild(modBadge);
+      }
+
+      // Script Event Count Badge
+      if (cls === 'script') {
+        const events = node.content || [];
+        const scriptBadge = doc.createElement('span');
+        scriptBadge.className = 'cw-tree-script-badge';
+        scriptBadge.innerHTML = `
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>${events.length} ${events.length === 1 ? 'Event' : 'Events'}</span>
+        `;
+        row.appendChild(scriptBadge);
       }
 
       // Row click: Select element & switch to properties view
@@ -641,7 +652,11 @@ export class CatWebInspector {
     }
 
     this.selectedGlobalId = globalid;
-    this._positionBox(this.selectOverlay, entry.domElement);
+    if (entry.domElement) {
+      this._positionBox(this.selectOverlay, entry.domElement);
+    } else if (this.selectOverlay) {
+      this.selectOverlay.style.display = 'none';
+    }
 
     // Highlight row in tree
     if (this.treeContainer) {
@@ -836,6 +851,133 @@ export class CatWebInspector {
   }
 
   /**
+   * Renders dedicated visual script block view for script elements.
+   * @private
+   */
+  _renderScriptDrawer(container, entry) {
+    const node = entry.jsonNode || {};
+    const gid = entry.globalid;
+    const events = node.content || [];
+    const totalActions = events.reduce((acc, evt) => acc + (evt.actions?.length || 0), 0);
+
+    // Build map of globalid -> alias across registry
+    const aliases = new Map();
+    for (const [id, regEntry] of this.registry.entries()) {
+      if (regEntry.jsonNode?.alias) {
+        aliases.set(id, regEntry.jsonNode.alias);
+      }
+    }
+
+    container.innerHTML = `
+      <!-- Script Header -->
+      <div class="cw-inspector-header">
+        <div class="cw-header-meta">
+          <span class="cw-class-tag cw-class-script">script</span>
+          ${node.alias ? `<span class="cw-alias-tag">#${escapeHtml(node.alias)}</span>` : ''}
+        </div>
+        <div class="cw-id-badge" title="Global ID">
+          <span>ID: <strong>${escapeHtml(gid)}</strong></span>
+        </div>
+      </div>
+
+      <!-- Quick Action Navigation -->
+      <div class="cw-inspector-actions-bar">
+        <button type="button" class="cw-btn cw-btn-sm cw-action-back-tree" title="Return to element tree">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Elements Tree</span>
+        </button>
+        <button type="button" class="cw-btn cw-btn-sm cw-action-deselect" title="Deselect element">Deselect</button>
+      </div>
+
+      <!-- Script Meta & Enabled Toggle -->
+      <div class="cw-inspector-section">
+        <div class="cw-section-title">Script Configuration</div>
+        <div class="cw-field-row">
+          <label class="cw-field-lbl">Alias</label>
+          <input type="text" class="cw-input cw-live-field" data-prop="alias" value="${escapeHtml(node.alias || '')}" placeholder="script_alias">
+        </div>
+        <div class="cw-field-row">
+          <label class="cw-field-lbl">Enabled</label>
+          <label class="cw-toggle-switch">
+            <input type="checkbox" class="cw-live-field" data-prop="enabled" ${node.enabled !== 'false' && node.enabled !== false ? 'checked' : ''}>
+            <span class="cw-toggle-track"></span>
+          </label>
+        </div>
+        <div class="cw-metrics-grid">
+          <div class="cw-metric-box">
+            <span class="cw-metric-lbl">Events</span>
+            <span class="cw-metric-num">${events.length}</span>
+          </div>
+          <div class="cw-metric-box">
+            <span class="cw-metric-lbl">Actions</span>
+            <span class="cw-metric-num">${totalActions}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Script Blocks Section -->
+      <div class="cw-inspector-section">
+        <div class="cw-section-title cw-script-blocks-header">
+          <span>Visual Script Blocks</span>
+          <span class="cw-section-count">${events.length} ${events.length === 1 ? 'Stack' : 'Stacks'}</span>
+        </div>
+        <div class="cw-script-canvas-mount"></div>
+      </div>
+    `;
+
+    // Mount Visual Script Blocks
+    const mountEl = container.querySelector('.cw-script-canvas-mount');
+    if (mountEl) {
+      const doc = container.ownerDocument ||
+        (typeof document !== 'undefined' ? document : null) ||
+        (typeof globalThis !== 'undefined' ? globalThis.document : null);
+
+      const blocksDom = renderScriptBlocks(node, {
+        document: doc,
+        elementAliases: aliases,
+        onTriggerEvent: (script, eventNode) => {
+          if (typeof this.options.onTriggerEvent === 'function') {
+            this.options.onTriggerEvent(script, eventNode);
+          }
+        },
+        onHighlightObject: (targetGid) => {
+          const elEntry = this.registry.get(targetGid);
+          if (elEntry?.domElement) {
+            this._positionBox(this.hoverOverlay, elEntry.domElement);
+            setTimeout(() => this.hideHover(), 2000);
+          }
+        },
+        onPlayAudio: (assetId) => {
+          if (typeof this.options.onPlayAudio === 'function') {
+            this.options.onPlayAudio(assetId);
+          }
+        }
+      });
+      mountEl.appendChild(blocksDom);
+    }
+
+    // Attach Action Listeners
+    const backBtn = container.querySelector('.cw-action-back-tree');
+    if (backBtn) backBtn.addEventListener('click', () => this.switchTab('tree'));
+
+    const deselectBtn = container.querySelector('.cw-action-deselect');
+    if (deselectBtn) deselectBtn.addEventListener('click', () => this.clearSelection());
+
+    // Alias & Enabled input listeners
+    const inputs = container.querySelectorAll('.cw-live-field');
+    inputs.forEach(input => {
+      const prop = input.getAttribute('data-prop');
+      const handler = () => {
+        let val = input.value;
+        if (input.type === 'checkbox') val = input.checked ? 'true' : 'false';
+        this.updateElementProperty(gid, prop, val);
+      };
+      input.addEventListener('input', handler);
+      input.addEventListener('change', handler);
+    });
+  }
+
+  /**
    * Renders structured detail view & live visual property editor in propsContainer.
    * @private
    */
@@ -846,6 +988,11 @@ export class CatWebInspector {
     const node = entry.jsonNode || {};
     const el = entry.domElement || {};
     const gid = entry.globalid;
+
+    if (node.class === 'script') {
+      this._renderScriptDrawer(container, entry);
+      return;
+    }
 
     const computedWidth = el.offsetWidth || Math.round(el.getBoundingClientRect?.().width || 0);
     const computedHeight = el.offsetHeight || Math.round(el.getBoundingClientRect?.().height || 0);

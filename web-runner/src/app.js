@@ -13,6 +13,8 @@ import { validateCatWeb } from './validator.js';
 import { renderCatWebTree } from './elements.js';
 import { CatWebRuntime } from './runtime.js';
 import { CatWebInspector } from './inspector.js';
+import { playSyntheticAudio } from './assets.js';
+import { initAiProtocol, captureCanvasImage, handleAiRenderRequest } from './api_protocol.js';
 
 /**
  * Preloaded canonical CatWeb fixtures embedded for 100% offline file:// compatibility.
@@ -703,6 +705,16 @@ export class CatWebRunnerApp {
             this.inspector?.switchTab('props');
           }
         },
+        onTriggerEvent: (scriptNode, eventNode) => {
+          if (this.runtime && typeof this.runtime.executeEventNode === 'function') {
+            this.runtime.executeEventNode(eventNode);
+          }
+        },
+        onPlayAudio: (assetId) => {
+          if (this.audioEnabled) {
+            playSyntheticAudio(assetId);
+          }
+        },
         onDocumentChange: (updatedTree) => {
           this.currentDocument = updatedTree;
           if (this.editorTextarea) {
@@ -714,7 +726,83 @@ export class CatWebRunnerApp {
       });
     }
 
-    // 6. Load Initial Document
+    // 6. Initialize AI Protocol & Image Export Modal
+    this.aiApiBtn = this.root.querySelector('#aiApiBtn');
+    this.aiApiModal = this.root.querySelector('#aiApiModal');
+    this.closeAiModalBtn = this.root.querySelector('#closeAiModalBtn');
+    this.downloadPngBtn = this.root.querySelector('#downloadPngBtn');
+    this.copyDataUrlBtn = this.root.querySelector('#copyDataUrlBtn');
+    this.exportStatusHint = this.root.querySelector('#exportStatusHint');
+
+    if (this.aiApiBtn && this.aiApiModal) {
+      this.aiApiBtn.addEventListener('click', () => {
+        if (this.aiApiModal.classList?.remove) {
+          this.aiApiModal.classList.remove('hidden');
+        }
+      });
+    }
+
+    if (this.closeAiModalBtn && this.aiApiModal) {
+      this.closeAiModalBtn.addEventListener('click', () => {
+        if (this.aiApiModal.classList?.add) {
+          this.aiApiModal.classList.add('hidden');
+        }
+      });
+    }
+
+    if (this.aiApiModal) {
+      this.aiApiModal.addEventListener('click', (e) => {
+        if (e.target === this.aiApiModal && this.aiApiModal.classList?.add) {
+          this.aiApiModal.classList.add('hidden');
+        }
+      });
+    }
+
+    if (this.downloadPngBtn) {
+      this.downloadPngBtn.addEventListener('click', async () => {
+        try {
+          if (this.exportStatusHint) this.exportStatusHint.textContent = 'Generating snapshot...';
+          const snap = await captureCanvasImage(this.previewCanvas, { format: 'png' });
+          if (typeof document !== 'undefined') {
+            const a = document.createElement('a');
+            a.href = snap.dataUrl;
+            const fileName = (this.currentDocument?.title || 'catweb_render').toLowerCase().replace(/[^a-z0-9]+/g, '_') + '.png';
+            a.download = fileName;
+            a.click();
+          }
+          if (this.exportStatusHint) {
+            this.exportStatusHint.textContent = 'PNG downloaded!';
+            setTimeout(() => { if (this.exportStatusHint) this.exportStatusHint.textContent = ''; }, 3000);
+          }
+        } catch (err) {
+          if (this.exportStatusHint) this.exportStatusHint.textContent = 'Export error: ' + err.message;
+        }
+      });
+    }
+
+    if (this.copyDataUrlBtn) {
+      this.copyDataUrlBtn.addEventListener('click', async () => {
+        try {
+          if (this.exportStatusHint) this.exportStatusHint.textContent = 'Generating data URL...';
+          const snap = await captureCanvasImage(this.previewCanvas, { format: 'png' });
+          if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(snap.dataUrl);
+            if (this.exportStatusHint) {
+              this.exportStatusHint.textContent = 'Data URL copied to clipboard!';
+              setTimeout(() => { if (this.exportStatusHint) this.exportStatusHint.textContent = ''; }, 3000);
+            }
+          } else if (typeof prompt !== 'undefined') {
+            prompt('Copy Data URL:', snap.dataUrl);
+          }
+        } catch (err) {
+          if (this.exportStatusHint) this.exportStatusHint.textContent = 'Copy failed: ' + err.message;
+        }
+      });
+    }
+
+    initAiProtocol(this);
+
+    // 7. Load Initial Document
     const defaultKey = this.options.defaultSample;
     const initialContent = PRELOADED_SAMPLES[defaultKey] || PRELOADED_SAMPLES.interactive_counter;
     if (initialContent) {

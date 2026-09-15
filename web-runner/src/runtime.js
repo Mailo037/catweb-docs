@@ -158,8 +158,8 @@ export class CatWebRuntime {
     for (const sc of this.scripts) {
       for (const evt of (sc.content || [])) {
         const evtId = String(evt.id);
-        if (['1', '2', '3'].includes(evtId)) {
-          const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object'));
+        if (['1', '2', '3', '8'].includes(evtId)) {
+          const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object' || item.l === 'input'));
           const targetGid = targetSlot?.value;
           if (targetGid) {
             if (!targetMap.has(targetGid)) targetMap.set(targetGid, new Set());
@@ -200,6 +200,18 @@ export class CatWebRuntime {
         domEl.addEventListener('mouseleave', leaveHandler);
         this.domListeners.push({ el: domEl, type: 'mouseleave', handler: leaveHandler });
       }
+
+      if (evtSet.has('8')) {
+        const submitHandler = (e) => {
+          if (!this.isRunning) return;
+          if (e.type === 'keydown' && e.key !== 'Enter') return;
+          this.triggerEvent(gid, 8, e);
+        };
+        domEl.addEventListener('keydown', submitHandler);
+        domEl.addEventListener('change', submitHandler);
+        this.domListeners.push({ el: domEl, type: 'keydown', handler: submitHandler });
+        this.domListeners.push({ el: domEl, type: 'change', handler: submitHandler });
+      }
     }
   }
 
@@ -217,6 +229,23 @@ export class CatWebRuntime {
   }
 
   /**
+   * Directly executes an event block's actions.
+   *
+   * @param {object} eventNode - The event node with an actions array
+   * @returns {Promise<void>}
+   */
+  async executeEventNode(eventNode) {
+    if (!eventNode || !Array.isArray(eventNode.actions)) return;
+    const wasRunning = this.isRunning;
+    this.isRunning = true;
+    try {
+      await this._executeActions(eventNode.actions, eventNode);
+    } finally {
+      this.isRunning = wasRunning;
+    }
+  }
+
+  /**
    * Triggers an event by ID on an optional target global ID.
    *
    * @param {string|null} targetGlobalId
@@ -231,9 +260,9 @@ export class CatWebRuntime {
       const content = sc.content || [];
       for (const evt of content) {
         if (String(evt.id) === evtIdStr) {
-          // If targeted event (1: pressed, 2: hover, 3: unhover), check target globalid match
-          if (['1', '2', '3'].includes(evtIdStr)) {
-            const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object'));
+          // If targeted event (1: pressed, 2: hover, 3: unhover, 8: submitted), check target globalid match
+          if (['1', '2', '3', '8'].includes(evtIdStr)) {
+            const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object' || item.l === 'input'));
             if (targetSlot && targetGlobalId && targetSlot.value !== targetGlobalId) {
               continue; // Target does not match
             }
@@ -293,14 +322,15 @@ export class CatWebRuntime {
         case '12': {
           // Add <any> to <variable>
           // ["Add", {"value":"1","t":"string","l":"any"}, "to", {"value":"1","t":"string","l":"variable"}]
-          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any'));
+          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any' || item.t === 'number' || item.l === 'number'));
           const varSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'variable');
 
           if (varSlot && valSlot) {
+            const varName = String(varSlot.value).replace(/[{}]/g, '');
             const deltaStr = this.resolveTemplate(valSlot.value);
             const delta = Number(deltaStr) || 0;
-            const current = Number(this.getVariable(varSlot.value)) || 0;
-            this.setVariable(varSlot.value, current + delta);
+            const current = Number(this.getVariable(varName)) || 0;
+            this.setVariable(varName, current + delta);
           }
           break;
         }
@@ -309,8 +339,8 @@ export class CatWebRuntime {
           // Set <property> of <object> to <any>
           // ["Set", {"value":"Text","t":"string","l":"property"}, "of", {"value":"cnt","t":"object"}, "to", {"value":"Count: {1}","t":"any"}]
           const propSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'property');
-          const objSlot = act.text?.find(item => item && typeof item === 'object' && item.t === 'object');
-          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any'));
+          const objSlot = act.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object' || item.l === 'input'));
+          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any' || item.l === 'value'));
 
           if (propSlot && objSlot && valSlot) {
             const propName = propSlot.value;

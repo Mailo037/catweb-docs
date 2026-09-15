@@ -28,6 +28,14 @@ import { CatWebInspector } from '../src/inspector.js';
 import { CatWebRunnerApp, PRELOADED_SAMPLES } from '../src/app.js';
 import { renderCatWebTree } from '../src/elements.js';
 import { validateCatWeb } from '../src/validator.js';
+import {
+  renderScriptBlocks,
+  BLOCK_CATEGORIES,
+  getActionCategory,
+  isScopeOpener,
+  isScopeCloser,
+  renderTokensHtml
+} from '../src/script_blocks.js';
 import { getDocument, MockElement } from './harness.js';
 
 // Test statistics
@@ -582,6 +590,204 @@ async function runTests() {
     assert(!app.diagnosticsPanel.classList.contains('hidden'), 'Opens diagnostics panel');
     app.toggleDiagnostics(false);
     assert(app.diagnosticsPanel.classList.contains('hidden'), 'Closes diagnostics panel');
+  }
+
+  /* ============================================================
+   * 8. VISUAL SCRIPT BLOCKS & ON-DEMAND EXECUTION ENGINE
+   * ============================================================ */
+  console.log('\n--- 8. VISUAL SCRIPT BLOCKS & ON-DEMAND EXECUTION ENGINE ---');
+  {
+    // 8a. Category mapping and indent scope helpers
+    assertEqual(getActionCategory('11').name, 'Variables', 'Action 11 maps to Variables category');
+    assertEqual(getActionCategory('12').name, 'Variables', 'Action 12 maps to Variables category');
+    assertEqual(getActionCategory('31').name, 'Looks', 'Action 31 maps to Looks category');
+    assertEqual(getActionCategory('88').name, 'Looks', 'Action 88 maps to Looks category');
+    assertEqual(getActionCategory('18').name, 'Logic', 'Action 18 maps to Logic category');
+    assertEqual(getActionCategory('22').name, 'Loops', 'Action 22 maps to Loops category');
+    assertEqual(getActionCategory('5').name, 'Audio', 'Action 5 maps to Audio category');
+    assertEqual(getActionCategory('25').name, 'Control', 'Action 25 maps to Control category');
+
+    assert(isScopeOpener('18'), 'Action 18 (If) is recognized as scope opener');
+    assert(isScopeOpener('22'), 'Action 22 (Repeat) is recognized as scope opener');
+    assert(!isScopeOpener('11'), 'Action 11 (Set var) is not a scope opener');
+    assert(isScopeCloser('25'), 'Action 25 (end) is recognized as scope closer');
+    assert(!isScopeCloser('18'), 'Action 18 is not a scope closer');
+
+    // 8b. Token chip HTML generation
+    const aliasMap = new Map([['btn1', 'counter_button']]);
+    const tokens = [
+      'Set',
+      { t: 'property', l: 'property', value: 'Text' },
+      'of',
+      { t: 'object', l: 'button', value: 'btn1' },
+      'to',
+      { t: 'string', l: 'value', value: 'Count: {1}' },
+      'audio',
+      { t: 'string', l: 'id', assetbrowser: 'audio', value: '9114223170' }
+    ];
+    const tokensHtml = renderTokensHtml(tokens, { elementAliases: aliasMap });
+    assert(tokensHtml.includes('cw-token-text'), 'Renders plain keyword tokens');
+    assert(tokensHtml.includes('cw-chip-property'), 'Renders property chip');
+    assert(tokensHtml.includes('#counter_button'), 'Resolves target object alias to #counter_button');
+    assert(tokensHtml.includes('data-target-gid="btn1"'), 'Preserves data-target-gid on object chip');
+    assert(tokensHtml.includes('cw-chip-audio'), 'Renders audio asset chip');
+    assert(tokensHtml.includes('cw-btn-audio-preview'), 'Renders audio preview button');
+
+    // 8c. Script element block canvas rendering & nested indentation
+    const mockScriptNode = {
+      class: 'script',
+      globalid: 'sc1',
+      alias: 'counter_logic',
+      enabled: true,
+      content: [
+        {
+          id: 1, // button pressed
+          globalid: 'evt_press',
+          text: [
+            'When',
+            { t: 'object', l: 'button', value: 'b1' },
+            'is pressed'
+          ],
+          actions: [
+            {
+              id: 12, // add to var
+              globalid: 'act_add',
+              text: [
+                'Add',
+                { t: 'number', l: 'number', value: '1' },
+                'to variable',
+                { t: 'string', l: 'variable', value: '{1}' }
+              ]
+            },
+            {
+              id: 31, // set property
+              globalid: 'act_set_txt',
+              text: [
+                'Set',
+                { t: 'property', l: 'property', value: 'Text' },
+                'of',
+                { t: 'object', l: 'button', value: 'b1' },
+                'to',
+                { t: 'string', l: 'value', value: 'Clicks: {1}' }
+              ]
+            },
+            {
+              id: 18, // if
+              globalid: 'act_if',
+              text: [
+                'If',
+                { t: 'string', l: 'variable', value: '{1}' },
+                '==',
+                { t: 'number', l: 'value', value: '5' }
+              ]
+            },
+            {
+              id: 5, // play audio
+              globalid: 'act_sound',
+              text: [
+                'Play audio',
+                { t: 'string', l: 'id', assetbrowser: 'audio', value: '9114223170' }
+              ]
+            },
+            {
+              id: 25, // end
+              globalid: 'act_end',
+              text: ['end']
+            }
+          ]
+        }
+      ]
+    };
+
+    let triggeredEventNode = null;
+    let highlightedGid = null;
+    let playedAudioId = null;
+
+    const blockCanvas = renderScriptBlocks(mockScriptNode, {
+      elementAliases: new Map([['b1', 'clicker']]),
+      onTriggerEvent: (sNode, eNode) => { triggeredEventNode = eNode; },
+      onHighlightObject: (gid) => { highlightedGid = gid; },
+      onPlayAudio: (id) => { playedAudioId = id; }
+    });
+
+    assert(blockCanvas.innerHTML.includes('cw-block-event'), 'Renders Hat block for event');
+    assert(blockCanvas.innerHTML.includes('cw-btn-run-event'), 'Renders Run button on Hat block');
+    assert(blockCanvas.innerHTML.includes('margin-left: 18px;'), 'Applies 18px C-block indentation inside If block');
+    assert(blockCanvas.innerHTML.includes('margin-left: 0px;'), 'Resets C-block indentation back to 0px on end block');
+
+    // 8d. Empty script block canvas
+    const emptyCanvas = renderScriptBlocks({ class: 'script', content: [] });
+    assert(emptyCanvas.innerHTML.includes('cw-script-empty-state'), 'Renders empty state when script has no events');
+
+    // 8e. Inspector Tree & Script Selection Integration
+    const scriptDoc = [
+      {
+        class: 'Frame',
+        globalid: 'f_root',
+        alias: 'main_frame',
+        children: [
+          {
+            class: 'TextButton',
+            globalid: 'b1',
+            alias: 'clicker',
+            text: 'Clicks: 0'
+          },
+          mockScriptNode
+        ]
+      }
+    ];
+
+    const scriptCanvas = doc.createElement('div');
+    renderCatWebTree(scriptDoc, scriptCanvas);
+
+    const scriptDrawer = doc.createElement('div');
+    const treeElem = doc.createElement('div');
+    const propsElem = doc.createElement('div');
+
+    const scriptInspector = new CatWebInspector(scriptCanvas, scriptDrawer, {
+      treeContainer: treeElem,
+      propsContainer: propsElem,
+      onTriggerEvent: (sNode, eNode) => {
+        runtime.executeEventNode(eNode);
+      }
+    });
+
+    scriptInspector.setTree(scriptDoc, scriptCanvas);
+
+    // Verify script element in registry and tree
+    const scDesc = scriptInspector.getDescriptor('sc1');
+    assert(!!scDesc, 'Script element [sc1] is registered in inspector descriptor registry');
+    assertEqual(scDesc.jsonNode.alias, 'counter_logic', 'Descriptor preserves script alias');
+    assert(scDesc.domElement === null, 'Script element has null domElement (non-visual node)');
+
+    // Tree renders script row with badge
+    assert(treeElem.textContent.includes('counter_logic'), 'Tree contains script row with alias "counter_logic"');
+    assert(treeElem.textContent.includes('1 Event'), 'Tree contains "1 Event" badge for script element');
+
+    // Select script element
+    scriptInspector.selectElement('sc1');
+    assertEqual(scriptInspector.selectedGlobalId, 'sc1', 'Selects script element [sc1]');
+    assert(propsElem.innerHTML.includes('cw-class-script'), 'Drawer renders script class badge cw-class-script');
+    assert(propsElem.innerHTML.includes('counter_logic'), 'Drawer renders script alias header');
+    assert(propsElem.innerHTML.includes('cw-script-canvas'), 'Drawer mounts visual block canvas cw-script-canvas');
+    assert(!!propsElem.querySelector('.cw-btn-run-event'), 'Drawer visual blocks include Run event button');
+
+    // 8f. On-Demand Event Execution via Runtime
+    const runtime = new CatWebRuntime(scriptDoc, scriptCanvas);
+    const b1Element = scriptCanvas.querySelector('[data-globalid="b1"]');
+    assertEqual(b1Element.textContent, 'Clicks: 0', 'Initial button text is "Clicks: 0"');
+
+    // Execute event via runtime.executeEventNode
+    runtime.executeEventNode(mockScriptNode.content[0]);
+    assertEqual(runtime.getVariable('1'), 1, 'Event execution increments variable 1 to 1');
+    assertEqual(b1Element.textContent, 'Clicks: 1', 'Event execution updates button DOM text to "Clicks: 1"');
+
+    // Second execution
+    runtime.executeEventNode(mockScriptNode.content[0]);
+    assertEqual(runtime.getVariable('1'), 2, 'Second event execution increments variable 1 to 2');
+    assertEqual(b1Element.textContent, 'Clicks: 2', 'Second event execution updates button DOM text to "Clicks: 2"');
+
+    scriptInspector.destroy();
   }
 
   /* ============================================================

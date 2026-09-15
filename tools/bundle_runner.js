@@ -17,7 +17,9 @@ const MODULE_FILES = [
   'assets.js',
   'elements.js',
   'runtime.js',
+  'script_blocks.js',
   'inspector.js',
+  'api_protocol.js',
   'app.js'
 ];
 

@@ -291,7 +291,7 @@ export class MockElement {
     // Class match .foo
     if (sel.startsWith('.')) {
       const cls = sel.slice(1);
-      return node.classList.contains(cls);
+      return Boolean(node.classList?.contains(cls));
     }
     // Attribute match [attr="val"] or [attr]
     if (sel.startsWith('[') && sel.endsWith(']')) {

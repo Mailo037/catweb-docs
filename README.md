@@ -57,21 +57,100 @@ node tools/validate.js mysite.json --no-strict
 
 Preview and interact with CatWeb JSON sites directly in your web browser without entering Roblox!
 
-- **Standalone Web App:** Open `web-runner/index.html` directly in any modern browser (or serve locally via `npx serve web-runner`).
+- **Public Live Version:** [**https://mailo037.github.io/catweb-docs/**](https://mailo037.github.io/catweb-docs/) (hosted automatically via GitHub Pages)
+- **Standalone Web App:** Open `web-runner/index.html` or `index.html` directly in any browser (or serve locally via `npx serve web-runner`).
 - **Direct JSON Ingestion:** Paste full site objects (`webcontent`) or raw component snippets, drag-and-drop `.json` files, or pick from official sample presets.
 - **Accurate Roblox GUI Emulation:**
   - Full `UDim2` scaling and pixel offset calculations with anchor points (`"0.5,0.5"`).
-  - Layout modifiers: `UIListLayout` (flex column/row with padding and ordering), `UIGridLayout`, `UIPadding`, and `UIFlexItem` (`grow_ratio`, `shrink_ratio`, `flex_mode`).
+  - Layout modifiers: `UIListLayout` (flex column/row with padding and ordering), `UIGridLayout`, `UIPadding` (4-direction insets), and `UIFlexItem` (`grow_ratio`, `shrink_ratio`, `flex_mode`).
   - Styling modifiers: `UICorner` (border-radius), `UIStroke` (inset borders/outlines), and `UIGradient`.
   - Visual elements: `Frame`, `ScrollingFrame` (canvas scrolling), `TextLabel`, `TextButton`, `TextBox`, `ImageLabel`, `ImageButton` (including `?link`, `?transfer`, `?avataritem`).
   - Roblox asset fallbacks and audio synthesis (`Play Sound` emulation via Web Audio API).
-- **Interactive Script Runtime:** Dispatches button clicks, manages numeric variables (`{1}`..`{9}`), executes flat control flow, and updates DOM properties in real time.
-- **Visual Inspector & Diagnostics:** Click any element to inspect its class, `globalid`, parent hierarchy, and live properties, or view schema validation warnings.
-- **Automated Test Suite:**
+- **Interactive Script Runtime & Visual Block Viewer:** Dispatches button clicks, manages variables, displays authentic Scratch/CatWeb-style visual block stacks with C-block indentation, and allows running events on demand.
+- **Live Visual Inspector & Property Editor:** Click any element to inspect its class, `globalid`, parent hierarchy, and live properties with two-way AST synchronization.
+- **Automated Test Suite (406 Tests):**
   ```bash
-  node web-runner/tests/runner.js
+  node web-runner/tests/runner.js              # 200 unit and integration tests
+  node web-runner/tests/runtime_and_app.test.js # 173 runtime and editor tests
+  node web-runner/tests/api_protocol.test.js    # 33 AI protocol & API server tests
   ```
-  Runs 200 automated unit and integration tests across 4 tiers with 100% pass rate.
+
+---
+
+## AI Render Protocol & Image API (JSON In $\to$ Error or Image Out)
+
+An automated protocol and API designed specifically for AI models and external tools to validate CatWeb JSON and receive **either structured diagnostic errors OR a rendered image (PNG / SVG Data URL)**:
+
+### 1. HTTP API Server (`tools/api_server.js`)
+Zero-dependency Node.js HTTP server:
+```bash
+# Start local API server on port 3000
+node tools/api_server.js
+```
+Send a request:
+```bash
+curl -X POST http://localhost:3000/render \
+  -H "Content-Type: application/json" \
+  -d '{"json": [ {"class": "Frame", "globalid": "cd", "size": "{0,300},{0,300}"} ] }'
+```
+- **If Valid (HTTP 200):**
+  ```json
+  {
+    "success": true,
+    "format": "snippet",
+    "elementCount": 1,
+    "image": "data:image/svg+xml;base64,...",
+    "width": 1920,
+    "height": 1080,
+    "errors": []
+  }
+  ```
+- **If Invalid (HTTP 400):**
+  ```json
+  {
+    "success": false,
+    "format": "snippet",
+    "elementCount": 0,
+    "errors": [
+      {
+        "code": "INVALID_UDIM2",
+        "message": "Invalid UDim2 coordinate format...",
+        "path": "$.webcontent[0].size"
+      }
+    ]
+  }
+  ```
+
+### 2. CLI Tool (`tools/render_image.js`)
+```bash
+# Render to SVG image or exit with code 1 and display diagnostics
+node tools/render_image.js site.json preview.svg
+
+# Output full JSON payload to stdout
+node tools/render_image.js site.json --json
+```
+
+### 3. Web URL Protocol (GitHub Pages)
+```
+https://mailo037.github.io/catweb-docs/?json=<URL_ENCODED_JSON>&render=image
+# or with Base64 hash:
+https://mailo037.github.io/catweb-docs/#data=<BASE64_JSON>
+```
+The result is automatically rendered and accessible in `window.__CATWEB_RESULT__`.
+
+### 4. Window PostMessage (Iframes & Browser Automation)
+```javascript
+window.postMessage({ type: 'catweb:render', json: siteJson }, '*');
+window.addEventListener('message', (e) => {
+  if (e.data.type === 'catweb:render_result') {
+    if (e.data.success) {
+      console.log('Image Data URL:', e.data.image);
+    } else {
+      console.error('Validation errors:', e.data.errors);
+    }
+  }
+});
+```
 
 ---
 

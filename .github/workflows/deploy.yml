@@ -1,0 +1,58 @@
+name: Deploy CatWeb Web Runner to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Standalone Bundle & Run Tests
+        run: |
+          node tools/bundle_runner.js
+          node web-runner/tests/runner.js
+          node web-runner/tests/runtime_and_app.test.js
+
+      - name: Prepare Site Directory
+        run: |
+          mkdir -p _site
+          cp -r web-runner/* _site/
+          mkdir -p _site/skills/catweb/examples
+          cp -r skills/catweb/examples/* _site/skills/catweb/examples/ 2>/dev/null || true
+          mkdir -p _site/tools/test_fixtures
+          cp -r tools/test_fixtures/* _site/tools/test_fixtures/ 2>/dev/null || true
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
