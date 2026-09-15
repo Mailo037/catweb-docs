@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CatWeb Web Runner & Renderer</title>
+  <!-- Engine Baseline Styles -->
+  <link rel="stylesheet" href="css/catweb-engine.css">
+  <!-- Application Shell Styles -->
+  <link rel="stylesheet" href="css/runner.css">
+</head>
+<body>
+  <div id="appContainer">
+    <!-- TOP TOOLBAR -->
+    <header class="cw-toolbar">
+      <div class="cw-toolbar-left">
+        <div class="cw-brand">
+          <div class="cw-brand-icon">🐱</div>
+          <span>CatWeb Runner</span>
+        </div>
+
+        <select id="sampleSelect" class="cw-select" title="Choose preloaded sample">
+          <option value="interactive_counter" selected>Interactive Counter</option>
+          <option value="minimal_site">Minimal CatWeb Site</option>
+          <option value="user_snippet">User Component Snippet</option>
+          <option value="valid_snippet">Valid Snippet</option>
+          <option value="invalid_examples">Invalid Examples (13 Errors)</option>
+        </select>
+
+        <button id="uploadBtn" class="cw-btn" title="Upload CatWeb JSON from disk">
+          <span>📁</span> Upload JSON
+        </button>
+        <input type="file" id="fileInput" accept=".json" style="display:none">
+
+        <button id="rawJsonBtn" class="cw-btn" title="Toggle Raw JSON text editor">
+          <span>📝</span> Raw JSON
+        </button>
+      </div>
+
+      <div class="cw-toolbar-right">
+        <label for="zoomSelect" style="font-size:11px;font-weight:700;color:var(--cw-text-muted);">ZOOM</label>
+        <select id="zoomSelect" class="cw-select" title="Change preview zoom level">
+          <option value="fit" selected>Fit Window</option>
+          <option value="0.5">50%</option>
+          <option value="0.75">75%</option>
+          <option value="1">100%</option>
+          <option value="1.25">125%</option>
+          <option value="1.5">150%</option>
+        </select>
+
+        <button id="inspectorBtn" class="cw-btn" title="Inspect elements and layout properties">
+          <span>🔍</span> Inspect
+        </button>
+
+        <button id="diagnosticsBtn" class="cw-btn" title="View validation diagnostics and error cards">
+          <span>✔</span> Diagnostics
+        </button>
+
+        <button id="audioBtn" class="cw-btn active" title="Toggle UI sound synthesis">
+          🔊 Audio
+        </button>
+      </div>
+    </header>
+
+    <!-- WORKSPACE BODY -->
+    <main class="cw-body">
+      <!-- LEFT PANEL: RAW JSON EDITOR -->
+      <aside id="editorPanel" class="cw-panel left hidden">
+        <div class="cw-panel-header">
+          <span>RAW JSON EDITOR</span>
+          <button id="closeEditorBtn" class="cw-btn" style="height:24px;padding:0 6px;">✕</button>
+        </div>
+        <div class="cw-panel-content">
+          <textarea id="editorTextarea" class="cw-editor-textarea" spellcheck="false" placeholder="Paste or type CatWeb JSON here..."></textarea>
+          <div class="cw-editor-actions">
+            <button id="formatJsonBtn" class="cw-btn" style="flex:1;">Format JSON</button>
+            <button id="applyJsonBtn" class="cw-btn cw-btn-primary" style="flex:1;">Apply &amp; Render</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER AREA: VIEWPORT & SIMULATED BROWSER CANVAS -->
+      <section id="viewportArea" class="cw-viewport-area">
+        <!-- DRAG AND DROP OVERLAY -->
+        <div class="cw-dropzone-overlay">
+          <div style="font-size:48px;">📂</div>
+          <div>Drop CatWeb JSON Here</div>
+          <div style="font-size:13px;color:var(--cw-text-secondary);">Supports Full Site and Component Snippet formats</div>
+        </div>
+
+        <!-- SIMULATED ROBOX BROWSER WINDOW -->
+        <div id="browserWindow" class="cw-browser-window">
+          <!-- TITLEBAR -->
+          <div class="cw-browser-titlebar">
+            <div class="cw-window-dots">
+              <span class="cw-dot red"></span>
+              <span class="cw-dot yellow"></span>
+              <span class="cw-dot green"></span>
+            </div>
+            <div class="cw-browser-urlbar">
+              <span class="cw-url-lock">🔒</span>
+              <span id="urlText" class="cw-url-text">catweb://interactive-counter.rbx</span>
+            </div>
+            <span id="pageTitle" style="font-size:12px;font-weight:600;color:#fff;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              Interactive Counter — CatWeb
+            </span>
+          </div>
+
+          <!-- 16:9 CANVAS STAGE -->
+          <div id="canvasStage" class="cw-canvas-stage">
+            <div id="previewCanvas" style="width:100%;height:100%;position:relative;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL: ELEMENT INSPECTOR -->
+      <aside id="inspectorPanel" class="cw-panel hidden">
+        <div class="cw-panel-header">
+          <span>ELEMENT INSPECTOR</span>
+          <button id="closeInspectorBtn" class="cw-btn" style="height:24px;padding:0 6px;">✕</button>
+        </div>
+        <div id="inspectorDrawer" class="cw-panel-content">
+          <div class="cw-inspector-empty">
+            <div class="cw-empty-icon">🔍</div>
+            <div class="cw-empty-title">No Element Selected</div>
+            <div class="cw-empty-sub">Click any element on the preview canvas or an error card to inspect.</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT PANEL: DIAGNOSTICS & VALIDATION -->
+      <aside id="diagnosticsPanel" class="cw-panel hidden">
+        <div class="cw-panel-header">
+          <span>DIAGNOSTICS &amp; VALIDATION</span>
+          <button id="closeDiagnosticsBtn" class="cw-btn" style="height:24px;padding:0 6px;">✕</button>
+        </div>
+        <div id="diagnosticsDrawer" class="cw-panel-content">
+          <div class="cw-inspector-empty">
+            <div class="cw-empty-icon" style="color:var(--cw-accent-green);">✔</div>
+            <div class="cw-empty-title">Valid CatWeb Document</div>
+            <div class="cw-empty-sub">No schema or semantic errors detected.</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- STATUS BAR -->
+    <footer class="cw-statusbar">
+      <div id="statusInfo" class="cw-status-left">
+        Initializing CatWeb Runner...
+      </div>
+      <div id="statusResolution" class="cw-status-center">
+        1920 × 1080 (Fit)
+      </div>
+      <div id="statusValidation" class="cw-status-right cw-badge-pill success">
+        Ready
+      </div>
+    </footer>
+  </div>
+
+  <!-- APPLICATION ENTRY POINT -->
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

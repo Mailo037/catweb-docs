@@ -622,4 +622,9 @@ Before outputting any CatWeb JSON, verify all 13 checks:
     ```bash
     node tools/validate.js <path-to-json>
     ```
+15. [ ] **Preview in Web Runner (`web-runner/`):** Test visual layout and script interactivity directly in the browser by opening `web-runner/index.html` or running the test suite:
+    ```bash
+    node web-runner/tests/runner.js
+    ```
+
 

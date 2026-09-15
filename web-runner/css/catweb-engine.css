@@ -1,0 +1,283 @@
+/**
+ * CatWeb Engine Baseline Stylesheet (Roblox GUI Emulation)
+ *
+ * Implements the baseline styling, two-tier layout containers,
+ * Roblox font stack fallbacks, scrollbar metrics, and modifier geometry.
+ */
+
+/* ============================================================
+ * 1. RESET & ROOT CANVAS
+ * ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.cw-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #09090b;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cw-root,
+.cw-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0f0f11;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+ * 2. TWO-TIER NODE HIERARCHY
+ * ============================================================ */
+
+/* Outer visual node: handles absolute bounds, position, anchor, rotation */
+.cw-node {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+  line-height: normal;
+  display: block;
+}
+
+/* Children inside UIListLayout or UIGridLayout flow natively in layout */
+.cw-node.cw-node-layout-child {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+}
+
+/* Inner layout host: handles layout flow (flex, grid) and UIPadding insets */
+.cw-layout-host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.cw-layout-host.cw-absolute-layout {
+  position: relative;
+  display: block;
+}
+
+.cw-layout-host.cw-flex-layout {
+  display: flex;
+}
+
+.cw-layout-host.cw-grid-layout {
+  display: grid;
+}
+
+/* ============================================================
+ * 3. VISUAL CONTAINERS & CLIPPING
+ * ============================================================ */
+
+.cw-frame {
+  box-sizing: border-box;
+}
+
+.cw-clips,
+.cw-frame.cw-clips {
+  overflow: hidden !important;
+}
+
+/* ScrollingFrame emulation */
+.cw-scrolling-frame {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+  box-sizing: border-box;
+}
+
+.cw-scrolling-frame::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.cw-scrolling-frame::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cw-scrolling-frame::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+
+.cw-scrolling-frame::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* ============================================================
+ * 4. TYPOGRAPHY & TEXT CONTROLS
+ * ============================================================ */
+
+/* Font Family Fallbacks for Roblox Font Enums */
+.cw-font-gotham,
+.cw-font-gothambold,
+.cw-font-gothamblack {
+  font-family: "Montserrat", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.cw-font-sourcesans,
+.cw-font-sourcesansbold {
+  font-family: "Source Sans 3", "Source Sans Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.cw-font-amaticsc {
+  font-family: "Amatic SC", cursive, sans-serif;
+}
+
+.cw-font-comicsans {
+  font-family: "Comic Sans MS", "Comic Neue", cursive, sans-serif;
+}
+
+.cw-text-element {
+  display: flex;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+/* Text Wrapping and Truncation */
+.cw-text-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.cw-text-nowrap {
+  white-space: nowrap;
+}
+
+.cw-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Alignments inside text container */
+.cw-text-align-x-left   { justify-content: flex-start; text-align: left; }
+.cw-text-align-x-center { justify-content: center;     text-align: center; }
+.cw-text-align-x-right  { justify-content: flex-end;   text-align: right; }
+
+.cw-text-align-y-top    { align-items: flex-start; }
+.cw-text-align-y-center { align-items: center; }
+.cw-text-align-y-bottom { align-items: flex-end; }
+
+/* Text scaled container */
+.cw-text-scaled {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+/* Interactive button controls */
+.cw-interactive {
+  cursor: pointer;
+  transition: filter 0.12s ease-in-out;
+}
+
+.cw-interactive:hover {
+  filter: brightness(1.1);
+}
+
+.cw-interactive:active {
+  filter: brightness(0.92);
+}
+
+/* TextBox inputs */
+.cw-text-box-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.cw-text-box-input::placeholder {
+  color: #71717a;
+}
+
+/* ============================================================
+ * 5. IMAGES & SVG BADGES
+ * ============================================================ */
+
+.cw-image-element {
+  display: block;
+  overflow: hidden;
+}
+
+.cw-image-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.cw-scale-fit     { object-fit: contain; }
+.cw-scale-crop    { object-fit: cover; }
+.cw-scale-stretch { object-fit: fill; }
+.cw-scale-none    { object-fit: none; }
+
+/* Asset placeholder badge */
+.cw-asset-badge {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(39, 39, 42, 0.6);
+  border: 1px dashed rgba(113, 113, 122, 0.4);
+  color: #a1a1aa;
+  font-size: 10px;
+  font-family: monospace;
+  padding: 4px;
+  text-align: center;
+}
+
+/* ============================================================
+ * 6. STYLING MODIFIERS
+ * ============================================================ */
+
+/* UICorner: applied via style="border-radius: ..." */
+.cw-rounded {
+  overflow: hidden;
+}
+
+/* UIStroke: Border mode uses inner box-shadow so geometry is preserved */
+.cw-stroke-border {
+  box-sizing: border-box;
+}
+
+/* UIStroke: Contextual mode on text uses webkit-text-stroke */
+.cw-stroke-text {
+  -webkit-text-stroke: 1px currentColor;
+}

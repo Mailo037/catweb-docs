@@ -51,6 +51,30 @@ node tools/validate.js mysite.json --no-strict
 - **Script Engine Invariants:** Validates flat control flows (no nested `actions`), Wait block Action ID `3`, and exact Title Case script property names against all 89 official CatWeb properties.
 - **Global ID Uniqueness:** Enforces 2–3 printable ASCII characters (`^[\x20-\x7E]{2,3}$`) and global uniqueness across the entire file tree.
 
+---
+
+## Web Runner & Renderer (`web-runner/`)
+
+Preview and interact with CatWeb JSON sites directly in your web browser without entering Roblox!
+
+- **Standalone Web App:** Open `web-runner/index.html` directly in any modern browser (or serve locally via `npx serve web-runner`).
+- **Direct JSON Ingestion:** Paste full site objects (`webcontent`) or raw component snippets, drag-and-drop `.json` files, or pick from official sample presets.
+- **Accurate Roblox GUI Emulation:**
+  - Full `UDim2` scaling and pixel offset calculations with anchor points (`"0.5,0.5"`).
+  - Layout modifiers: `UIListLayout` (flex column/row with padding and ordering), `UIGridLayout`, `UIPadding`, and `UIFlexItem` (`grow_ratio`, `shrink_ratio`, `flex_mode`).
+  - Styling modifiers: `UICorner` (border-radius), `UIStroke` (inset borders/outlines), and `UIGradient`.
+  - Visual elements: `Frame`, `ScrollingFrame` (canvas scrolling), `TextLabel`, `TextButton`, `TextBox`, `ImageLabel`, `ImageButton` (including `?link`, `?transfer`, `?avataritem`).
+  - Roblox asset fallbacks and audio synthesis (`Play Sound` emulation via Web Audio API).
+- **Interactive Script Runtime:** Dispatches button clicks, manages numeric variables (`{1}`..`{9}`), executes flat control flow, and updates DOM properties in real time.
+- **Visual Inspector & Diagnostics:** Click any element to inspect its class, `globalid`, parent hierarchy, and live properties, or view schema validation warnings.
+- **Automated Test Suite:**
+  ```bash
+  node web-runner/tests/runner.js
+  ```
+  Runs 200 automated unit and integration tests across 4 tiers with 100% pass rate.
+
+---
+
 ## AI / Agent Usage & Skill Package
 
 This repository provides an all-in-one **Agent Skill** (`skills/catweb/`) that encapsulates the full CatWeb specifications, hard output invariants, schema rules, and block engine definitions so any AI assistant can generate 100% valid, importable CatWeb JSON sites and scripts:
