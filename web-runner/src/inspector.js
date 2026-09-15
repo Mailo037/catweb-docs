@@ -645,35 +645,54 @@ export class CatWebInspector {
    * @param {string} globalid
    */
   selectElement(globalid) {
-    const entry = this.registry.get(globalid);
-    if (!entry) {
-      this.clearSelection();
-      return;
-    }
-
-    this.selectedGlobalId = globalid;
-    if (entry.domElement) {
-      this._positionBox(this.selectOverlay, entry.domElement);
-    } else if (this.selectOverlay) {
-      this.selectOverlay.style.display = 'none';
-    }
-
-    // Highlight row in tree
-    if (this.treeContainer) {
-      const activeRows = this.treeContainer.querySelectorAll('.cw-tree-row.active');
-      activeRows.forEach(r => r.classList.remove('active'));
-      const targetRow = this.treeContainer.querySelector(`[data-tree-gid="${globalid}"]`);
-      if (targetRow) {
-        targetRow.classList.add('active');
+    if (this._isSelecting) return;
+    this._isSelecting = true;
+    try {
+      const entry = this.registry.get(globalid);
+      if (!entry) {
+        this.clearSelection();
+        return;
       }
-    }
 
-    if (this.drawerElement || this.propsContainer) {
-      this._renderDrawer(entry);
-    }
+      this.selectedGlobalId = globalid;
+      if (entry.domElement) {
+        this._positionBox(this.selectOverlay, entry.domElement);
+      } else if (this.selectOverlay) {
+        this.selectOverlay.style.display = 'none';
+      }
 
-    if (typeof this.options.onSelect === 'function') {
-      this.options.onSelect(entry);
+      // Highlight row in tree
+      if (this.treeContainer) {
+        const activeRows = this.treeContainer.querySelectorAll('.cw-tree-row.active');
+        activeRows.forEach(r => r.classList.remove('active'));
+        const targetRow = this.treeContainer.querySelector(`[data-tree-gid="${globalid}"]`);
+        if (targetRow) {
+          targetRow.classList.add('active');
+        }
+      }
+
+      if (this.drawerElement || this.propsContainer) {
+        this._renderDrawer(entry);
+      }
+
+      if (typeof this.options.onSelect === 'function') {
+        this.options.onSelect(entry);
+      }
+    } finally {
+      this._isSelecting = false;
+    }
+  }
+
+  /**
+   * Repositions selection overlay without rebuilding drawer DOM or firing callbacks.
+   * Used during zoom recalculations to prevent layout thrashing and infinite loops.
+   */
+  repositionOverlays() {
+    if (this.selectedGlobalId) {
+      const entry = this.registry.get(this.selectedGlobalId);
+      if (entry?.domElement) {
+        this._positionBox(this.selectOverlay, entry.domElement);
+      }
     }
   }
 
@@ -725,6 +744,7 @@ export class CatWebInspector {
    */
   _onPointerMove(e) {
     if (!this.enabled) return;
+    if (e && e.pointerType === 'touch') return;
 
     // Find nearest ancestor with data-globalid
     const target = e.target;

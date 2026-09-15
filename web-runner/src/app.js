@@ -720,7 +720,9 @@ export class CatWebRunnerApp {
         tabPropsBtn: this.inspectorTabProps,
         onSelect: (entry) => {
           if (entry) {
-            this.toggleInspector(true);
+            if (this.inspectorPanel?.classList?.contains('hidden')) {
+              this.toggleInspector(true);
+            }
             this.inspector?.switchTab('props');
           }
         },
@@ -1137,7 +1139,7 @@ export class CatWebRunnerApp {
     this.overflowManager?.renderMenuContent();
 
     if (this.inspector && this.inspector.selectedGlobalId) {
-      this.inspector.selectElement(this.inspector.selectedGlobalId);
+      this.inspector.repositionOverlays();
     }
   }
 
@@ -1156,7 +1158,13 @@ export class CatWebRunnerApp {
    * @param {boolean} [enable]
    */
   toggleInspector(enable = null) {
-    const nextState = enable !== null ? enable : !this.inspector?.isEnabled();
+    const isEnabled = Boolean(this.inspector?.isEnabled());
+    const nextState = enable !== null ? enable : !isEnabled;
+    const isVisible = Boolean(this.inspectorPanel && !this.inspectorPanel.classList.contains('hidden'));
+
+    if (nextState === isEnabled && nextState === isVisible) {
+      return;
+    }
 
     if (nextState) {
       this.inspector?.enable();

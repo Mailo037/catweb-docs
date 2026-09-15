@@ -142,6 +142,7 @@ body, html {
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background-color: var(--cw-bg-shell);
 }
@@ -787,7 +788,8 @@ body, html {
 
 .cw-body {
   display: flex;
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
   position: relative;
   overflow: hidden;
   background-color: var(--cw-bg-shell);
@@ -949,6 +951,9 @@ body, html {
   flex-shrink: 0;
   position: relative;
   z-index: 50;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .cw-panel.left {
@@ -1039,7 +1044,7 @@ body, html {
 .cw-editor-textarea {
   flex: 1;
   width: 100%;
-  min-height: 380px;
+  min-height: 120px;
   background-color: #121215;
   color: #e4e4e7;
   border: none;
@@ -1089,7 +1094,10 @@ body, html {
 .cw-editor-actions {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
+  padding: 12px 14px;
+  background-color: var(--cw-bg-toolbar);
+  border-top: 1px solid var(--cw-border-subtle);
+  flex-shrink: 0;
 }
 
 /* ============================================================
@@ -2362,5 +2370,32 @@ body, html {
   }
 }
 
+/* ============================================================
+ * RESPONSIVE PANELS & MOBILE OVERLAYS
+ * ============================================================ */
 
+@media (max-width: 768px) {
+  .cw-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    z-index: 500;
+    border-left: none;
+    border-right: none;
+    box-shadow: 0 0 32px rgba(0, 0, 0, 0.75);
+  }
 
+  .cw-panel-content {
+    padding: 12px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  }
+
+  .cw-editor-actions {
+    padding: 10px 12px max(14px, env(safe-area-inset-bottom, 14px)) 12px;
+  }
+}
