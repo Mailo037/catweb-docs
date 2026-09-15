@@ -22,7 +22,7 @@ export class CatWebInspector {
     this.canvasContainer = canvasContainer;
     this.drawerElement = drawerElement;
     this.options = {
-      highlightColor: '#00f0ff',
+      highlightColor: 'rgba(255, 255, 255, 0.45)',
       selectColor: '#3b82f6',
       onSelect: null,
       ...options
@@ -56,11 +56,12 @@ export class CatWebInspector {
     this.hoverOverlay.style.position = 'absolute';
     this.hoverOverlay.style.pointerEvents = 'none';
     this.hoverOverlay.style.display = 'none';
-    this.hoverOverlay.style.border = '2px dashed ' + this.options.highlightColor;
-    this.hoverOverlay.style.backgroundColor = 'rgba(0, 240, 255, 0.08)';
+    this.hoverOverlay.style.border = '1.5px dashed ' + this.options.highlightColor;
+    this.hoverOverlay.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
     this.hoverOverlay.style.zIndex = '9998';
     this.hoverOverlay.style.transition = 'all 0.05s ease-out';
     this.hoverOverlay.style.boxSizing = 'border-box';
+    this.hoverOverlay.style.borderRadius = '4px';
 
     // Hover tooltip
     this.tooltip = doc.createElement('div');
@@ -69,15 +70,15 @@ export class CatWebInspector {
     this.tooltip.style.top = '-28px';
     this.tooltip.style.left = '0';
     this.tooltip.style.padding = '3px 8px';
-    this.tooltip.style.backgroundColor = '#111318';
-    this.tooltip.style.color = '#00f0ff';
+    this.tooltip.style.backgroundColor = '#18181b';
+    this.tooltip.style.color = '#f4f4f5';
     this.tooltip.style.fontSize = '11px';
-    this.tooltip.style.fontFamily = 'monospace';
-    this.tooltip.style.fontWeight = 'bold';
-    this.tooltip.style.borderRadius = '4px';
+    this.tooltip.style.fontFamily = 'var(--cw-font-mono, monospace)';
+    this.tooltip.style.fontWeight = '500';
+    this.tooltip.style.borderRadius = '6px';
     this.tooltip.style.whiteSpace = 'nowrap';
-    this.tooltip.style.boxShadow = '0 2px 6px rgba(0,0,0,0.6)';
-    this.tooltip.style.border = '1px solid #00f0ff';
+    this.tooltip.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
+    this.tooltip.style.border = '1px solid rgba(255, 255, 255, 0.12)';
     this.hoverOverlay.appendChild(this.tooltip);
 
     // Selection bounding box
@@ -87,9 +88,10 @@ export class CatWebInspector {
     this.selectOverlay.style.pointerEvents = 'none';
     this.selectOverlay.style.display = 'none';
     this.selectOverlay.style.border = '2px solid ' + this.options.selectColor;
-    this.selectOverlay.style.backgroundColor = 'rgba(59, 130, 246, 0.12)';
+    this.selectOverlay.style.backgroundColor = 'rgba(59, 130, 246, 0.08)';
     this.selectOverlay.style.zIndex = '9999';
     this.selectOverlay.style.boxSizing = 'border-box';
+    this.selectOverlay.style.borderRadius = '4px';
 
     if (this.canvasContainer.appendChild) {
       this.canvasContainer.appendChild(this.hoverOverlay);
@@ -485,14 +487,14 @@ export class CatWebInspector {
       </div>
 
       <div class="cw-inspector-section">
-        <div class="cw-section-title">COMPUTED DIMENSIONS</div>
+        <div class="cw-section-title">Computed dimensions</div>
         <div class="cw-metrics-grid">
           <div class="cw-metric-box">
-            <span class="cw-metric-lbl">WIDTH</span>
+            <span class="cw-metric-lbl">Width</span>
             <span class="cw-metric-num">${computedWidth}px</span>
           </div>
           <div class="cw-metric-box">
-            <span class="cw-metric-lbl">HEIGHT</span>
+            <span class="cw-metric-lbl">Height</span>
             <span class="cw-metric-num">${computedHeight}px</span>
           </div>
         </div>
@@ -500,7 +502,7 @@ export class CatWebInspector {
 
       ${modifiersList ? `
         <div class="cw-inspector-section">
-          <div class="cw-section-title">APPLIED MODIFIERS (${entry.modifiers.length})</div>
+          <div class="cw-section-title">Applied modifiers (${entry.modifiers.length})</div>
           <div class="cw-modifiers-list">
             ${modifiersList}
           </div>
@@ -508,7 +510,7 @@ export class CatWebInspector {
       ` : ''}
 
       <div class="cw-inspector-section">
-        <div class="cw-section-title">PROPERTIES</div>
+        <div class="cw-section-title">Properties</div>
         <div class="cw-props-table">
           ${propRows}
         </div>

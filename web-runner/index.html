@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CatWeb Web Runner & Renderer</title>
+  <title>CatWeb Runner &amp; Renderer</title>
   <!-- Engine Baseline Styles -->
   <link rel="stylesheet" href="css/catweb-engine.css">
-  <!-- Application Shell Styles -->
+  <!-- Codex / Vercel Application Shell Styles -->
   <link rel="stylesheet" href="css/runner.css">
 </head>
 <body>
@@ -15,7 +15,13 @@
     <header class="cw-toolbar">
       <div class="cw-toolbar-left">
         <div class="cw-brand">
-          <div class="cw-brand-icon">🐱</div>
+          <div class="cw-brand-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7 .58 8.5 1 1.5 1 4 0 6s-3 3-5 3c-1.5 0-3-.5-4-1.5-1 1-2.5 1.5-4 1.5-2 0-4-1-5-3s-1-4.5 0-6c1-1.5-.82-7.92.58-8.5 1.39-.58 4.64.26 6.42 2.26.65-.17 1.33-.26 2-.26z"></path>
+              <path d="M9 13v.01"></path>
+              <path d="M15 13v.01"></path>
+            </svg>
+          </div>
           <span>CatWeb Runner</span>
         </div>
 
@@ -28,17 +34,26 @@
         </select>
 
         <button id="uploadBtn" class="cw-btn" title="Upload CatWeb JSON from disk">
-          <span>📁</span> Upload JSON
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <span>Upload JSON</span>
         </button>
         <input type="file" id="fileInput" accept=".json" style="display:none">
 
         <button id="rawJsonBtn" class="cw-btn" title="Toggle Raw JSON text editor">
-          <span>📝</span> Raw JSON
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+          <span>Raw JSON</span>
         </button>
       </div>
 
       <div class="cw-toolbar-right">
-        <label for="zoomSelect" style="font-size:11px;font-weight:700;color:var(--cw-text-muted);">ZOOM</label>
+        <label for="zoomSelect" class="cw-label-muted">Zoom</label>
         <select id="zoomSelect" class="cw-select" title="Change preview zoom level">
           <option value="fit" selected>Fit Window</option>
           <option value="0.5">50%</option>
@@ -49,15 +64,26 @@
         </select>
 
         <button id="inspectorBtn" class="cw-btn" title="Inspect elements and layout properties">
-          <span>🔍</span> Inspect
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Inspect</span>
         </button>
 
         <button id="diagnosticsBtn" class="cw-btn" title="View validation diagnostics and error cards">
-          <span>✔</span> Diagnostics
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Diagnostics</span>
         </button>
 
         <button id="audioBtn" class="cw-btn active" title="Toggle UI sound synthesis">
-          🔊 Audio
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <span>Audio</span>
         </button>
       </div>
     </header>
@@ -67,10 +93,12 @@
       <!-- LEFT PANEL: RAW JSON EDITOR -->
       <aside id="editorPanel" class="cw-panel left hidden">
         <div class="cw-panel-header">
-          <span>RAW JSON EDITOR</span>
-          <button id="closeEditorBtn" class="cw-btn" style="height:24px;padding:0 6px;">✕</button>
+          <div class="cw-panel-title-group">
+            <span class="cw-panel-title">Raw JSON Editor</span>
+          </div>
+          <button id="closeEditorBtn" class="cw-panel-close-btn" title="Close editor">✕</button>
         </div>
-        <div class="cw-panel-content">
+        <div class="cw-panel-content cw-fade-y">
           <textarea id="editorTextarea" class="cw-editor-textarea" spellcheck="false" placeholder="Paste or type CatWeb JSON here..."></textarea>
           <div class="cw-editor-actions">
             <button id="formatJsonBtn" class="cw-btn" style="flex:1;">Format JSON</button>
@@ -83,12 +111,12 @@
       <section id="viewportArea" class="cw-viewport-area">
         <!-- DRAG AND DROP OVERLAY -->
         <div class="cw-dropzone-overlay">
-          <div style="font-size:48px;">📂</div>
-          <div>Drop CatWeb JSON Here</div>
-          <div style="font-size:13px;color:var(--cw-text-secondary);">Supports Full Site and Component Snippet formats</div>
+          <div style="font-size:32px;">📂</div>
+          <div style="font-size:15px;font-weight:600;">Drop CatWeb JSON here</div>
+          <div style="font-size:12px;color:var(--cw-text-secondary);">Full site or component snippet</div>
         </div>
 
-        <!-- SIMULATED ROBOX BROWSER WINDOW -->
+        <!-- SIMULATED ROBLOX BROWSER WINDOW -->
         <div id="browserWindow" class="cw-browser-window">
           <!-- TITLEBAR -->
           <div class="cw-browser-titlebar">
@@ -98,10 +126,15 @@
               <span class="cw-dot green"></span>
             </div>
             <div class="cw-browser-urlbar">
-              <span class="cw-url-lock">🔒</span>
-              <span id="urlText" class="cw-url-text">catweb://interactive-counter.rbx</span>
+              <span class="cw-url-lock">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </span>
+              <span id="urlText" class="cw-url-text cw-fade-x">catweb://interactive-counter.rbx</span>
             </div>
-            <span id="pageTitle" style="font-size:12px;font-weight:600;color:#fff;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            <span id="pageTitle" class="cw-titlebar-title cw-fade-x">
               Interactive Counter — CatWeb
             </span>
           </div>
@@ -116,13 +149,20 @@
       <!-- RIGHT PANEL: ELEMENT INSPECTOR -->
       <aside id="inspectorPanel" class="cw-panel hidden">
         <div class="cw-panel-header">
-          <span>ELEMENT INSPECTOR</span>
-          <button id="closeInspectorBtn" class="cw-btn" style="height:24px;padding:0 6px;">✕</button>
+          <div class="cw-panel-title-group">
+            <span class="cw-panel-title">Element Inspector</span>
+          </div>
+          <button id="closeInspectorBtn" class="cw-panel-close-btn" title="Close inspector">✕</button>
         </div>
-        <div id="inspectorDrawer" class="cw-panel-content">
+        <div id="inspectorDrawer" class="cw-panel-content cw-fade-y">
           <div class="cw-inspector-empty">
-            <div class="cw-empty-icon">🔍</div>
-            <div class="cw-empty-title">No Element Selected</div>
+            <div class="cw-empty-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+            <div class="cw-empty-title">No element selected</div>
             <div class="cw-empty-sub">Click any element on the preview canvas or an error card to inspect.</div>
           </div>
         </div>
@@ -131,13 +171,19 @@
       <!-- RIGHT PANEL: DIAGNOSTICS & VALIDATION -->
       <aside id="diagnosticsPanel" class="cw-panel hidden">
         <div class="cw-panel-header">
-          <span>DIAGNOSTICS &amp; VALIDATION</span>
-          <button id="closeDiagnosticsBtn" class="cw-btn" style="height:24px;padding:0 6px;">✕</button>
+          <div class="cw-panel-title-group">
+            <span class="cw-panel-title">Diagnostics &amp; Validation</span>
+          </div>
+          <button id="closeDiagnosticsBtn" class="cw-panel-close-btn" title="Close diagnostics">✕</button>
         </div>
-        <div id="diagnosticsDrawer" class="cw-panel-content">
+        <div id="diagnosticsDrawer" class="cw-panel-content cw-fade-y">
           <div class="cw-inspector-empty">
-            <div class="cw-empty-icon" style="color:var(--cw-accent-green);">✔</div>
-            <div class="cw-empty-title">Valid CatWeb Document</div>
+            <div class="cw-empty-icon" style="color:var(--cw-status-success);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="cw-empty-title">Valid CatWeb document</div>
             <div class="cw-empty-sub">No schema or semantic errors detected.</div>
           </div>
         </div>
@@ -146,19 +192,19 @@
 
     <!-- STATUS BAR -->
     <footer class="cw-statusbar">
-      <div id="statusInfo" class="cw-status-left">
-        Initializing CatWeb Runner...
+      <div id="statusInfo" class="cw-status-left cw-fade-x">
+        Initializing CatWeb runner...
       </div>
       <div id="statusResolution" class="cw-status-center">
         1920 × 1080 (Fit)
       </div>
       <div id="statusValidation" class="cw-status-right cw-badge-pill success">
-        Ready
+        <span class="cw-status-dot"></span> Ready
       </div>
     </footer>
   </div>
 
-  <!-- APPLICATION ENTRY POINT -->
-  <script type="module" src="src/app.js"></script>
+  <!-- APPLICATION SCRIPT (Self-contained, CORS-free for file:// and HTTP) -->
+  <script src="bundle.js"></script>
 </body>
 </html>

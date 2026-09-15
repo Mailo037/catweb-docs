@@ -594,11 +594,11 @@ export class CatWebRunnerApp {
     if (this.statusValidation) {
       if (validation.valid) {
         this.statusValidation.className = 'cw-badge-pill success';
-        this.statusValidation.textContent = '✔ Valid CatWeb JSON';
+        this.statusValidation.innerHTML = '<span class="cw-status-dot"></span> Valid';
       } else {
         const errLen = validation.errors?.length || 0;
         this.statusValidation.className = 'cw-badge-pill error';
-        this.statusValidation.textContent = `✖ ${errLen} Error${errLen === 1 ? '' : 's'}`;
+        this.statusValidation.innerHTML = `<span class="cw-status-dot error"></span> ${errLen} error${errLen === 1 ? '' : 's'}`;
       }
     }
   }
@@ -630,10 +630,10 @@ export class CatWebRunnerApp {
     // Update toolbar button badge
     if (this.diagnosticsBtn) {
       if (errors.length === 0) {
-        this.diagnosticsBtn.innerHTML = '✔ Diagnostics';
+        this.diagnosticsBtn.innerHTML = '<span>✔</span> Diagnostics';
         this.diagnosticsBtn.classList.remove('error');
       } else {
-        this.diagnosticsBtn.innerHTML = `⚠ Diagnostics <span class="cw-badge-pill error">${errors.length}</span>`;
+        this.diagnosticsBtn.innerHTML = `<span>⚠</span> Diagnostics <span class="cw-count-pill">${errors.length}</span>`;
         this.diagnosticsBtn.classList.add('error');
       }
     }
@@ -716,6 +716,7 @@ export class CatWebRunnerApp {
     let label = '';
 
     if (zoom === 'fit') {
+      this.viewportArea.classList.remove('cw-scrollable');
       const areaW = Math.max(320, (this.viewportArea.clientWidth || 1000) - 48);
       const areaH = Math.max(240, (this.viewportArea.clientHeight || 700) - 48);
 
@@ -727,6 +728,7 @@ export class CatWebRunnerApp {
       scale = Math.min(scaleX, scaleY);
       label = `${targetW} × ${this.options.canvasHeight} (Fit ${Math.round(scale * 100)}%)`;
     } else {
+      this.viewportArea.classList.add('cw-scrollable');
       scale = parseFloat(zoom) || 1.0;
       label = `${this.options.canvasWidth} × ${this.options.canvasHeight} (${Math.round(scale * 100)}%)`;
     }
@@ -842,9 +844,17 @@ function escapeHtml(str) {
 
 // Auto-bootstrap in browser environment if index.html is loaded
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-  window.addEventListener('DOMContentLoaded', () => {
-    const app = new CatWebRunnerApp(document.body);
-    app.init();
-    window.__CATWEB_APP__ = app;
-  });
+  const startApp = () => {
+    if (!window.__CATWEB_APP__) {
+      const app = new CatWebRunnerApp(document.body);
+      app.init();
+      window.__CATWEB_APP__ = app;
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', startApp);
+  } else {
+    startApp();
+  }
 }
