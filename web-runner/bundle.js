@@ -6181,7 +6181,7 @@ const { validateCatWeb } = require('./validator.js');
  * @param {string} [options.format='png'] - 'png' or 'svg'
  * @returns {Promise<{ mime: string, dataUrl: string, width: number, height: number }>}
  */
-export async function captureCanvasImage(canvasElement, options = {}) {
+async function captureCanvasImage(canvasElement, options = {}) {
   const width = options.width || 1920;
   const height = options.height || 1080;
   const format = options.format || 'png';
@@ -6281,7 +6281,7 @@ export async function captureCanvasImage(canvasElement, options = {}) {
  * @param {object} [options={}]
  * @returns {Promise<object>} Result payload
  */
-export async function handleAiRenderRequest(jsonPayload, appInstance, options = {}) {
+async function handleAiRenderRequest(jsonPayload, appInstance, options = {}) {
   let parsedJson = jsonPayload;
 
   // 1. JSON String parsing
@@ -6468,6 +6468,8 @@ async function checkUrlPayload(appInstance) {
 }
 
 /* Module Exports */
+exports.captureCanvasImage = captureCanvasImage;
+exports.handleAiRenderRequest = handleAiRenderRequest;
 exports.initAiProtocol = initAiProtocol;
 
   },

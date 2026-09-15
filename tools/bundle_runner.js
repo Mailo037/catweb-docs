@@ -44,10 +44,10 @@ function transformModule(fileName, code) {
   // 3. Collect named function and class exports to attach to exports object
   const exportedIdentifiers = [];
 
-  // Transform export function name(...) -> function name(...) + record name
-  transformed = transformed.replace(/export\s+function\s+([A-Za-z0-9_$]+)/g, (match, fnName) => {
+  // Transform export (async) function name(...) -> (async) function name(...) + record name
+  transformed = transformed.replace(/export\s+(async\s+)?function\s+([A-Za-z0-9_$]+)/g, (match, asyncKw, fnName) => {
     exportedIdentifiers.push(fnName);
-    return `function ${fnName}`;
+    return `${asyncKw || ''}function ${fnName}`;
   });
 
   // Transform export class Name -> class Name + record name
