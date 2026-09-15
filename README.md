@@ -12,7 +12,8 @@ Everything you need to know about building in **CatWeb** (Roblox) — the Roblox
 2. [JSONScript - Guide for scripting & authoritative block shapes](game/JSONScript.md)
 3. [UIGPT - Guide on how to use the custom JSON format & element schema](game/UIGPT.md)
 4. [Assets & Patterns - Icons, sounds, reusable components & string decoder](game/Assets.md)
-5. [Documents regarding CatWeb development and the Discord group](guild/)
+5. [AI Agent API & Headless Render Protocol](docs/AI_API.md) — How AI models can validate and render via GitHub Pages
+6. [Documents regarding CatWeb development and the Discord group](guild/)
 
 
 If you are asked to make a site with CatWeb in the context, assume a CatWeb JSON site object is required (with `favicon`, `title`, `background`, and `webcontent`), and not real-life HTML code — refer to the [UIGPT documentation](game/UIGPT.md) and [Assets & Patterns](game/Assets.md).
@@ -80,6 +81,8 @@ Preview and interact with CatWeb JSON sites directly in your web browser without
 ## AI Render Protocol & Image API (JSON In $\to$ Error or Image Out)
 
 An automated protocol and API designed specifically for AI models and external tools to validate CatWeb JSON and receive **either structured diagnostic errors OR a rendered image (PNG / SVG Data URL)**:
+
+> 📖 **Full AI Agent Documentation:** See [**`docs/AI_API.md`**](docs/AI_API.md) for complete guide on how AI models (Playwright, Python, Node.js, URL hash fragments, and postMessage) can use the live GitHub Pages site.
 
 ### 1. HTTP API Server (`tools/api_server.js`)
 Zero-dependency Node.js HTTP server:

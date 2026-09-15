@@ -327,14 +327,16 @@ export function initCustomSelect(selectEl, options = {}) {
         if (e && e.stopPropagation) e.stopPropagation();
         if (selectEl.value !== val) {
           selectEl.value = val;
+          closeMenu();
+          syncSelected();
           if (typeof Event !== 'undefined') {
             selectEl.dispatchEvent(new Event('change', { bubbles: true }));
           } else if (typeof selectEl.dispatchEvent === 'function') {
             selectEl.dispatchEvent({ type: 'change', bubbles: true });
           }
+        } else {
+          closeMenu();
         }
-        closeMenu();
-        syncSelected();
       });
 
       menu.appendChild(item);
@@ -590,6 +592,10 @@ export class CatWebRunnerApp {
         const sampleKey = this.sampleSelect.value;
         if (PRELOADED_SAMPLES[sampleKey]) {
           this.loadDocument(PRELOADED_SAMPLES[sampleKey]);
+        }
+        if (this.overflowManager) {
+          this.overflowManager.measureIntrinsicWidths();
+          this.overflowManager.updateLayout();
         }
       });
     }

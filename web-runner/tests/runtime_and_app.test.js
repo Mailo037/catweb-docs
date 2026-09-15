@@ -907,6 +907,21 @@ async function runTests() {
     assertEqual(mgr.container.style.display, 'none', 'Hides overflow container when restored');
     assert(!root.querySelector('#aiApiBtn').classList.contains('is-overflowed'), 'Removes is-overflowed class from aiApiBtn');
 
+    // 7. Dynamic Sample Template Changes & Overflow Stability on Narrow Screens
+    mgr.toolbar.clientWidth = 400;
+    mgr.updateLayout();
+    assertEqual(mgr.container.style.display, 'flex', 'Shows overflow container on 400px mobile viewport');
+    assert(mgr.overflowedItemIds.has('inspector'), 'Secondary item inspector is overflowed on mobile');
+    assert(!mgr.overflowedItemIds.has('sample'), 'Sample selector remains on toolbar');
+
+    // Change sample select to long label and verify layout stability
+    app.sampleSelect.value = 'invalid_examples';
+    app.sampleSelect._syncCustomSelect?.();
+    app.sampleSelect.dispatchEvent('change');
+    assertEqual(mgr.container.style.display, 'flex', 'Overflow container remains visible after selecting long template name');
+    assert(mgr.overflowedItemIds.has('inspector'), 'Inspector remains cleanly collapsed without erratic popping');
+    assert(!mgr.overflowedItemIds.has('sample'), 'Sample selector remains visible and stable');
+
     app.destroy();
   }
 

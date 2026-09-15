@@ -6728,6 +6728,15 @@ class CatWebOverflowManager {
     const gap = this.options.gap;
     const overflowBtnWidth = this.options.overflowBtnWidth;
 
+    // Refresh live width of dynamic elements (e.g. #sampleItem whose label changes with template selection)
+    const sampleEl = this.root.querySelector?.('#sampleItem');
+    if (sampleEl) {
+      const w = sampleEl.offsetWidth || (typeof window !== 'undefined' && sampleEl.getBoundingClientRect ? sampleEl.getBoundingClientRect().width : 0);
+      if (w > 0) {
+        this.intrinsicWidths.set('sample', w);
+      }
+    }
+
     // Available width for items if NO overflow button is present
     const maxAvailable = toolbarWidth - brandWidth - 32; // 32px padding
 
@@ -6741,7 +6750,15 @@ class CatWebOverflowManager {
     // Determine how many items must be overflowed
     const newlyOverflowed = new Set();
 
-    if (totalItemsWidth > maxAvailable) {
+    // On narrow viewports (<= 600px), lock secondary actions into context menu
+    // to keep toolbar clean and prevent '···' button from shifting or bouncing on sample label changes
+    if (toolbarWidth <= 600) {
+      for (const config of OVERFLOW_CONFIG) {
+        if (config.id !== 'sample') {
+          newlyOverflowed.add(config.id);
+        }
+      }
+    } else if (totalItemsWidth > maxAvailable) {
       // Space is exceeded. Reserve space for overflow button
       const availableWithOverflowBtn = maxAvailable - overflowBtnWidth - gap;
       let remainingCapacity = availableWithOverflowBtn;
@@ -7466,14 +7483,16 @@ function initCustomSelect(selectEl, options = {}) {
         if (e && e.stopPropagation) e.stopPropagation();
         if (selectEl.value !== val) {
           selectEl.value = val;
+          closeMenu();
+          syncSelected();
           if (typeof Event !== 'undefined') {
             selectEl.dispatchEvent(new Event('change', { bubbles: true }));
           } else if (typeof selectEl.dispatchEvent === 'function') {
             selectEl.dispatchEvent({ type: 'change', bubbles: true });
           }
+        } else {
+          closeMenu();
         }
-        closeMenu();
-        syncSelected();
       });
 
       menu.appendChild(item);
@@ -7729,6 +7748,10 @@ class CatWebRunnerApp {
         const sampleKey = this.sampleSelect.value;
         if (PRELOADED_SAMPLES[sampleKey]) {
           this.loadDocument(PRELOADED_SAMPLES[sampleKey]);
+        }
+        if (this.overflowManager) {
+          this.overflowManager.measureIntrinsicWidths();
+          this.overflowManager.updateLayout();
         }
       });
     }
