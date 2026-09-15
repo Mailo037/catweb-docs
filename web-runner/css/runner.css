@@ -268,7 +268,8 @@ body, html {
   gap: 2px;
 }
 
-.cw-context-item-wrapper {
+.cw-context-item-wrapper,
+.cw-context-item.has-submenu {
   position: relative;
 }
 
@@ -403,18 +404,68 @@ body, html {
   justify-content: center;
 }
 
-/* Mobile responsive adjustments for submenus */
-@media (max-width: 480px) {
-  .cw-context-submenu {
-    position: static;
-    right: auto;
-    top: auto;
-    min-width: 100%;
-    margin-top: 4px;
-    margin-bottom: 4px;
-    background-color: rgba(18, 18, 20, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+/* Drilldown Submenu View (Non-inline mobile / nested menu navigation) */
+.cw-context-subview {
+  animation: cwContextDrillIn 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cwContextDrillIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
   }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.cw-context-back-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--cw-radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+  user-select: none;
+}
+
+.cw-context-back-header:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.cw-context-back-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--cw-text-secondary);
+}
+
+.cw-context-back-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.cw-context-divider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.08);
+  margin: 3px 0 4px 0;
+}
+
+.cw-context-subitems-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 /* Border-less ghost buttons (Codex style) */

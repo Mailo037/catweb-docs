@@ -865,13 +865,40 @@ async function runTests() {
     assert(!app.diagnosticsPanel.classList.contains('hidden'), 'Clicking diagnostics item in menu opens diagnostics panel');
     assert(!mgr.isOpen, 'Menu closes after executing action');
 
-    // 5. Submenu Selection (e.g. Zoom or Sample)
+    // 5. Desktop Floating Flyout Submenu Selection (e.g. Zoom)
     mgr.openMenu();
     const zoomSubItem = mgr.dropdown.querySelector('[data-sub-value="0.5"]');
     if (zoomSubItem) {
       zoomSubItem.dispatchEvent('click');
       assertEqual(app.currentZoom, '0.5', 'Selecting submenu option 50% updates app zoom');
     }
+
+    // 5b. Non-Inline Drilldown Submenu View (Mobile / Narrow mode)
+    mgr.forceDrilldownMode = true;
+    mgr.openMenu();
+    assert(!mgr.dropdown.innerHTML.includes('cw-context-submenu'), 'Main menu in drilldown mode does NOT render inline cw-context-submenu');
+
+    const zoomTrigger = mgr.dropdown.querySelector('[data-action="toggle-sub"][data-id="zoom"]');
+    assert(zoomTrigger !== null, 'Finds zoom trigger in drilldown mode');
+    zoomTrigger.dispatchEvent('click');
+
+    assert(mgr.dropdown.innerHTML.includes('cw-context-subview'), 'Navigates to dedicated drilldown subview');
+    const backBtn = mgr.dropdown.querySelector('[data-action="back-to-main"]');
+    assert(backBtn !== null, 'Submenu view contains Back to Main header button');
+    assert(mgr.dropdown.querySelector('[data-id="diagnostics"]') === null, 'Main actions are not rendered in subview (not inline)');
+
+    // Test Back button
+    backBtn.dispatchEvent('click');
+    assert(mgr.dropdown.querySelector('[data-id="diagnostics"]') !== null, 'Back button successfully returns to main menu');
+
+    // Re-enter and select option
+    mgr.dropdown.querySelector('[data-action="toggle-sub"][data-id="zoom"]').dispatchEvent('click');
+    const zoom75 = mgr.dropdown.querySelector('[data-sub-value="0.75"]');
+    assert(zoom75 !== null, 'Finds 75% option in drilldown subview');
+    zoom75.dispatchEvent('click');
+    assertEqual(app.currentZoom, '0.75', 'Selecting option in drilldown mode updates zoom to 75%');
+    assert(!mgr.isOpen, 'Selecting option in drilldown mode closes menu');
+    mgr.forceDrilldownMode = false;
 
     // 6. Restoring space (1400px): all items restore, container hidden
     mgr.toolbar.clientWidth = 1400;

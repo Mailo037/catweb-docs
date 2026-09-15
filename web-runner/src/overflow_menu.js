@@ -326,6 +326,22 @@ export class CatWebOverflowManager {
   }
 
   /**
+   * Determines if the context menu should operate in drilldown mode
+   * (used on mobile / narrow viewports so submenus never open inline or clip offscreen).
+   * @returns {boolean}
+   */
+  isDrilldownMode() {
+    if (this.forceDrilldownMode !== undefined) {
+      return Boolean(this.forceDrilldownMode);
+    }
+    if (typeof window === 'undefined') return false;
+    return (
+      window.innerWidth <= 540 ||
+      Boolean(window.matchMedia?.('(pointer: coarse)').matches && window.innerWidth <= 768)
+    );
+  }
+
+  /**
    * Renders the items inside the overflow context menu based on overflowed items.
    */
   renderMenuContent() {
@@ -339,6 +355,49 @@ export class CatWebOverflowManager {
       return;
     }
 
+    // DRILLDOWN SUBMENU VIEW:
+    // If in drilldown mode and a submenu is active, render ONLY the dedicated submenu view with Back button.
+    // This guarantees that submenus NEVER expand inline between items of the main context menu.
+    if (this.isDrilldownMode() && this.activeSubmenuId) {
+      const subConfig = activeConfigs.find((c) => c.id === this.activeSubmenuId);
+      if (subConfig && subConfig.type === 'submenu') {
+        const subLabel = typeof subConfig.getLabel === 'function' ? subConfig.getLabel(this.app) : subConfig.label;
+        const subItems = subConfig.getSubmenuItems?.(this.app) || [];
+        const currentVal = subConfig.getCurrentValue?.(this.app);
+
+        let html = `
+          <div class="cw-context-menu-inner cw-context-subview">
+            <div class="cw-context-back-header" data-action="back-to-main" title="Zurück">
+              <span class="cw-context-back-arrow">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </span>
+              <span class="cw-context-back-title">${escapeHtml(subLabel)}</span>
+            </div>
+            <div class="cw-context-divider"></div>
+            <div class="cw-context-subitems-list">
+              ${subItems
+                .map((sub) => {
+                  const isSelected = sub.value === currentVal;
+                  return `
+                    <div class="cw-context-subitem ${isSelected ? 'selected' : ''}" data-sub-value="${escapeHtml(sub.value)}" data-parent-id="${subConfig.id}">
+                      <span class="cw-context-check">${isSelected ? '✓' : ''}</span>
+                      <span class="cw-context-label">${escapeHtml(sub.label)}</span>
+                    </div>
+                  `;
+                })
+                .join('')}
+            </div>
+          </div>
+        `;
+        this.dropdown.innerHTML = html;
+        this._attachMenuListeners();
+        return;
+      }
+    }
+
+    // MAIN CONTEXT MENU VIEW
     let html = '<div class="cw-context-menu-inner">';
 
     for (const config of activeConfigs) {
@@ -352,20 +411,19 @@ export class CatWebOverflowManager {
         const currentItem = subItems.find((s) => s.value === currentVal);
         const currentLabel = currentItem ? currentItem.label : currentVal;
 
-        const isSubmenuOpen = this.activeSubmenuId === config.id;
+        const isSubmenuOpen = !this.isDrilldownMode() && this.activeSubmenuId === config.id;
 
         html += `
-          <div class="cw-context-item-wrapper" data-item-id="${config.id}">
-            <div class="cw-context-item has-submenu ${isSubmenuOpen ? 'submenu-open' : ''}" data-action="toggle-sub" data-id="${config.id}">
-              <span class="cw-context-icon">${icon}</span>
-              <span class="cw-context-label">${escapeHtml(label)}</span>
-              <span class="cw-context-badge">${escapeHtml(currentLabel)}</span>
-              <span class="cw-context-arrow">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </span>
-            </div>
+          <div class="cw-context-item has-submenu ${isSubmenuOpen ? 'submenu-open' : ''}" data-action="toggle-sub" data-id="${config.id}">
+            <span class="cw-context-icon">${icon}</span>
+            <span class="cw-context-label">${escapeHtml(label)}</span>
+            <span class="cw-context-badge">${escapeHtml(currentLabel)}</span>
+            <span class="cw-context-arrow">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+            ${!this.isDrilldownMode() ? `
             <div class="cw-context-submenu ${isSubmenuOpen ? 'open' : 'hidden'}" data-submenu-for="${config.id}">
               ${subItems
                 .map((sub) => {
@@ -379,6 +437,7 @@ export class CatWebOverflowManager {
                 })
                 .join('')}
             </div>
+            ` : ''}
           </div>
         `;
       } else {
@@ -406,6 +465,16 @@ export class CatWebOverflowManager {
   _attachMenuListeners() {
     if (!this.dropdown) return;
 
+    // Back to main menu header (drilldown mode)
+    const backBtn = this.dropdown.querySelector('[data-action="back-to-main"]');
+    if (backBtn) {
+      backBtn.addEventListener('click', (e) => {
+        e.stopPropagation?.();
+        this.activeSubmenuId = null;
+        this.renderMenuContent();
+      });
+    }
+
     // Standard action items
     const actionItems = this.dropdown.querySelectorAll('[data-action="exec"]');
     for (const item of actionItems) {
@@ -418,42 +487,59 @@ export class CatWebOverflowManager {
         }
         this.closeMenu();
       });
+
+      // Hover on action item closes desktop floating flyout submenu
+      item.addEventListener('mouseenter', () => {
+        if (!this.isDrilldownMode()) {
+          this.activeSubmenuId = null;
+          this.dropdown.querySelectorAll('.cw-context-submenu').forEach((el) => {
+            el.classList.add('hidden');
+            el.classList.remove('open');
+          });
+          this.dropdown.querySelectorAll('[data-action="toggle-sub"]').forEach((el) => {
+            el.classList.remove('submenu-open');
+          });
+        }
+      });
     }
 
     // Submenu triggers
     const subTriggers = this.dropdown.querySelectorAll('[data-action="toggle-sub"]');
     for (const trigger of subTriggers) {
       const id = trigger.getAttribute('data-id');
-      const wrapper = trigger.closest('.cw-context-item-wrapper');
-      const submenu = wrapper?.querySelector('.cw-context-submenu');
+      const submenu = trigger.querySelector('.cw-context-submenu');
 
-      // Click toggle for touch / click
+      // Click: Drilldown view on mobile / narrow screen; toggle floating flyout on desktop
       trigger.addEventListener('click', (e) => {
         e.stopPropagation?.();
-        if (this.activeSubmenuId === id) {
-          this.activeSubmenuId = null;
-          submenu?.classList.add('hidden');
-          submenu?.classList.remove('open');
-          trigger.classList.remove('submenu-open');
-        } else {
+        if (this.isDrilldownMode()) {
           this.activeSubmenuId = id;
-          // Hide all other submenus
-          this.dropdown.querySelectorAll('.cw-context-submenu').forEach((el) => {
-            el.classList.add('hidden');
-            el.classList.remove('open');
-          });
-          this.dropdown.querySelectorAll('[data-action="toggle-sub"]').forEach((el) => {
-            el.classList.remove('submenu-open');
-          });
-          submenu?.classList.remove('hidden');
-          submenu?.classList.add('open');
-          trigger.classList.add('submenu-open');
+          this.renderMenuContent();
+        } else {
+          if (this.activeSubmenuId === id) {
+            this.activeSubmenuId = null;
+            submenu?.classList.add('hidden');
+            submenu?.classList.remove('open');
+            trigger.classList.remove('submenu-open');
+          } else {
+            this.activeSubmenuId = id;
+            this.dropdown.querySelectorAll('.cw-context-submenu').forEach((el) => {
+              el.classList.add('hidden');
+              el.classList.remove('open');
+            });
+            this.dropdown.querySelectorAll('[data-action="toggle-sub"]').forEach((el) => {
+              el.classList.remove('submenu-open');
+            });
+            submenu?.classList.remove('hidden');
+            submenu?.classList.add('open');
+            trigger.classList.add('submenu-open');
+          }
         }
       });
 
-      // Hover open on desktop pointer
-      wrapper?.addEventListener('mouseenter', () => {
-        if (typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches) {
+      // Hover open on desktop pointer (flyout panel to the left)
+      trigger.addEventListener('mouseenter', () => {
+        if (!this.isDrilldownMode() && typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches) {
           this.activeSubmenuId = id;
           this.dropdown.querySelectorAll('.cw-context-submenu').forEach((el) => {
             el.classList.add('hidden');
@@ -469,7 +555,7 @@ export class CatWebOverflowManager {
       });
     }
 
-    // Submenu item selection
+    // Submenu item selection (both in desktop flyout and mobile drilldown)
     const subItems = this.dropdown.querySelectorAll('.cw-context-subitem');
     for (const subItem of subItems) {
       subItem.addEventListener('click', (e) => {
@@ -501,6 +587,7 @@ export class CatWebOverflowManager {
    */
   openMenu() {
     if (!this.dropdown || !this.overflowBtn) return;
+    this.activeSubmenuId = null;
     this.renderMenuContent();
     this.dropdown.classList.remove('hidden');
     this.dropdown.classList.add('open');

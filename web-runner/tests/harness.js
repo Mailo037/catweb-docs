@@ -160,7 +160,13 @@ export class MockElement {
       const child = new MockElement(tagName);
       child.ownerDocument = this.ownerDocument;
       child.parentNode = this;
-      if (text) child.textContent = text;
+      if (text) {
+        if (text.includes('<')) {
+          child.innerHTML = text;
+        } else {
+          child.textContent = text;
+        }
+      }
 
       if (attrStr) {
         const attrRegex = /([a-zA-Z0-9_-]+)(?:=["']([^"']*)["'])?/g;
@@ -293,19 +299,24 @@ export class MockElement {
       const cls = sel.slice(1);
       return Boolean(node.classList?.contains(cls));
     }
-    // Attribute match [attr="val"] or [attr]
-    if (sel.startsWith('[') && sel.endsWith(']')) {
-      const inner = sel.slice(1, -1);
-      const eqIdx = inner.indexOf('=');
-      if (eqIdx === -1) {
-        return node.hasAttribute(inner.trim());
+    // Attribute match [attr="val"] or [attr], supports compound like [data-action="toggle-sub"][data-id="zoom"]
+    if (sel.includes('[')) {
+      const attrMatches = sel.match(/\[([^\]]+)\]/g);
+      if (attrMatches && attrMatches.join('') === sel) {
+        return attrMatches.every((bracket) => {
+          const inner = bracket.slice(1, -1);
+          const eqIdx = inner.indexOf('=');
+          if (eqIdx === -1) {
+            return node.hasAttribute(inner.trim());
+          }
+          const attrName = inner.slice(0, eqIdx).trim();
+          let attrVal = inner.slice(eqIdx + 1).trim();
+          if ((attrVal.startsWith('"') && attrVal.endsWith('"')) || (attrVal.startsWith("'") && attrVal.endsWith("'"))) {
+            attrVal = attrVal.slice(1, -1);
+          }
+          return node.getAttribute(attrName) === attrVal;
+        });
       }
-      const attrName = inner.slice(0, eqIdx).trim();
-      let attrVal = inner.slice(eqIdx + 1).trim();
-      if ((attrVal.startsWith('"') && attrVal.endsWith('"')) || (attrVal.startsWith("'") && attrVal.endsWith("'"))) {
-        attrVal = attrVal.slice(1, -1);
-      }
-      return node.getAttribute(attrName) === attrVal;
     }
     return false;
   }
