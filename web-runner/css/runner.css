@@ -200,7 +200,7 @@ body, html {
   color: var(--cw-status-error);
 }
 
-/* Select Dropdowns (Outline-free flat pill) */
+/* Select Dropdowns (Outline-free flat pill fallback) */
 .cw-select {
   height: 30px;
   padding: 0 28px 0 10px;
@@ -221,6 +221,157 @@ body, html {
 
 .cw-select:hover, .cw-select:focus {
   background-color: rgba(255, 255, 255, 0.09);
+}
+
+/* ============================================================
+ * CUSTOM DROPDOWN MENUS (Codex / Vercel flyout card style)
+ * ============================================================ */
+
+.cw-select-native-hidden {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+.cw-custom-select {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.cw-custom-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--cw-text-primary);
+  border: none;
+  border-radius: var(--cw-radius-md);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.cw-custom-select-trigger:hover {
+  background-color: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+.cw-custom-select-trigger.active {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.cw-custom-select-label {
+  max-width: 210px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.cw-custom-select-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cw-text-secondary);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.cw-custom-select-trigger.active .cw-custom-select-arrow {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu Card */
+.cw-custom-select-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  min-width: 210px;
+  max-height: 280px;
+  overflow-y: auto;
+  background-color: #1e1e22;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.35);
+  padding: 5px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cw-custom-select-menu::-webkit-scrollbar {
+  width: 5px;
+}
+
+.cw-custom-select-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+}
+
+.cw-custom-select.cw-align-right .cw-custom-select-menu {
+  left: auto;
+  right: 0;
+  min-width: 130px;
+}
+
+.cw-custom-select-menu.hidden {
+  display: none !important;
+}
+
+/* Dropdown Item */
+.cw-custom-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--cw-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  user-select: none;
+}
+
+.cw-custom-select-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.cw-custom-select-item.active {
+  color: #ffffff;
+}
+
+.cw-custom-select-item-text {
+  flex: 1;
+}
+
+.cw-custom-select-check {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.cw-custom-select-item.active .cw-custom-select-check {
+  display: flex;
 }
 
 /* Status Indicator Dot & Pill */

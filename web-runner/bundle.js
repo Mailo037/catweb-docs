@@ -4918,6 +4918,250 @@ const PRELOADED_SAMPLES = exports.PRELOADED_SAMPLES = {
   ]
 };
 
+/**
+ * Transforms a native <select> element into a sleek, accessible Codex/Vercel-style
+ * custom dropdown menu while keeping the native element fully synced for tests and events.
+ *
+ * @param {HTMLSelectElement} selectEl
+ * @param {object} [options={}]
+ * @param {boolean} [options.alignRight=false] - Right-aligns dropdown menu card
+ * @returns {object|null} Controller with sync() and destroy() methods
+ */
+function initCustomSelect(selectEl, options = {}) {
+  if (!selectEl || !selectEl.parentNode) return null;
+  if (selectEl._customSelect) return selectEl._customSelect;
+
+  const doc = selectEl.ownerDocument || (typeof document !== 'undefined' ? document : null);
+  if (!doc) return null;
+
+  // Hide the native select visually while keeping it active in DOM for test harness/events
+  if (selectEl.classList?.add) {
+    selectEl.classList.add('cw-select-native-hidden');
+  }
+  if (selectEl.setAttribute) {
+    selectEl.setAttribute('tabindex', '-1');
+    selectEl.setAttribute('aria-hidden', 'true');
+  }
+
+  const container = doc.createElement('div');
+  container.className = 'cw-custom-select' + (options.alignRight ? ' cw-align-right' : '');
+
+  const trigger = doc.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'cw-custom-select-trigger';
+  if (trigger.setAttribute) {
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  const labelSpan = doc.createElement('span');
+  labelSpan.className = 'cw-custom-select-label';
+
+  const arrowSpan = doc.createElement('span');
+  arrowSpan.className = 'cw-custom-select-arrow';
+  arrowSpan.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+  trigger.appendChild(labelSpan);
+  trigger.appendChild(arrowSpan);
+  container.appendChild(trigger);
+
+  const menu = doc.createElement('div');
+  menu.className = 'cw-custom-select-menu hidden';
+  if (menu.setAttribute) {
+    menu.setAttribute('role', 'listbox');
+  }
+  container.appendChild(menu);
+
+  // Insert container directly after selectEl in DOM
+  if (selectEl.parentNode.insertBefore) {
+    selectEl.parentNode.insertBefore(container, selectEl.nextSibling);
+  } else if (selectEl.parentNode.appendChild) {
+    selectEl.parentNode.appendChild(container);
+  }
+
+  const checkSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+  function syncOptions() {
+    menu.innerHTML = '';
+    const opts = selectEl.options ? Array.from(selectEl.options) : (selectEl.children || []).filter(c => c.tagName === 'OPTION');
+    const curVal = selectEl.value;
+    let selectedText = '';
+
+    for (const opt of opts) {
+      const val = opt.value !== undefined ? opt.value : (opt.getAttribute ? opt.getAttribute('value') : '') || '';
+      const text = opt.textContent || opt.innerText || val;
+      const isSelected = (val === curVal) || (!curVal && opt.selected);
+
+      if (isSelected || !selectedText) {
+        selectedText = text;
+      }
+
+      const item = doc.createElement('div');
+      item.className = 'cw-custom-select-item' + (isSelected ? ' active' : '');
+      if (item.setAttribute) {
+        item.setAttribute('role', 'option');
+        item.setAttribute('data-value', val);
+        item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+      }
+
+      const itemText = doc.createElement('span');
+      itemText.className = 'cw-custom-select-item-text';
+      itemText.textContent = text;
+      item.appendChild(itemText);
+
+      const itemCheck = doc.createElement('span');
+      itemCheck.className = 'cw-custom-select-check';
+      itemCheck.innerHTML = checkSvg;
+      item.appendChild(itemCheck);
+
+      item.addEventListener('click', (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (selectEl.value !== val) {
+          selectEl.value = val;
+          if (typeof Event !== 'undefined') {
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+          } else if (typeof selectEl.dispatchEvent === 'function') {
+            selectEl.dispatchEvent({ type: 'change', bubbles: true });
+          }
+        }
+        closeMenu();
+        syncSelected();
+      });
+
+      menu.appendChild(item);
+    }
+
+    labelSpan.textContent = selectedText;
+  }
+
+  function syncSelected() {
+    const curVal = selectEl.value;
+    const items = menu.querySelectorAll ? menu.querySelectorAll('.cw-custom-select-item') : (menu.children || []);
+    let selectedText = '';
+
+    for (const item of items) {
+      const val = item.getAttribute ? item.getAttribute('data-value') : item.dataset?.value;
+      const textEl = item.querySelector ? item.querySelector('.cw-custom-select-item-text') : null;
+      const text = textEl ? textEl.textContent : (item.textContent || '');
+      const isSelected = (val === curVal);
+
+      if (isSelected) {
+        if (item.classList?.add) item.classList.add('active');
+        if (item.setAttribute) item.setAttribute('aria-selected', 'true');
+        selectedText = text;
+      } else {
+        if (item.classList?.remove) item.classList.remove('active');
+        if (item.setAttribute) item.setAttribute('aria-selected', 'false');
+      }
+    }
+
+    if (selectedText) {
+      labelSpan.textContent = selectedText;
+    }
+  }
+
+  function openMenu() {
+    if (doc.querySelectorAll) {
+      const allMenus = doc.querySelectorAll('.cw-custom-select-menu:not(.hidden)');
+      for (const m of allMenus) {
+        if (m !== menu) {
+          if (m.classList?.add) m.classList.add('hidden');
+          const p = m.parentNode?.querySelector?.('.cw-custom-select-trigger');
+          if (p?.classList?.remove) p.classList.remove('active');
+        }
+      }
+    }
+    syncOptions();
+    if (menu.classList?.remove) menu.classList.remove('hidden');
+    if (trigger.classList?.add) trigger.classList.add('active');
+    if (trigger.setAttribute) trigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMenu() {
+    if (menu.classList?.add) menu.classList.add('hidden');
+    if (trigger.classList?.remove) trigger.classList.remove('active');
+    if (trigger.setAttribute) trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleMenu(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const isHidden = menu.classList?.contains ? menu.classList.contains('hidden') : true;
+    if (isHidden) {
+      openMenu();
+    } else {
+      closeMenu();
+    }
+  }
+
+  trigger.addEventListener('click', toggleMenu);
+
+  const onNativeChange = () => {
+    syncSelected();
+  };
+  selectEl.addEventListener('change', onNativeChange);
+
+  const onDocClick = (e) => {
+    let cur = e?.target;
+    let inside = false;
+    while (cur) {
+      if (cur === container) {
+        inside = true;
+        break;
+      }
+      cur = cur.parentNode;
+    }
+    if (!inside) {
+      closeMenu();
+    }
+  };
+
+  const onDocKeydown = (e) => {
+    if (e?.key === 'Escape' || e?.keyCode === 27) {
+      closeMenu();
+    }
+  };
+
+  if (typeof doc.addEventListener === 'function') {
+    doc.addEventListener('click', onDocClick);
+    doc.addEventListener('keydown', onDocKeydown);
+  }
+
+  syncOptions();
+
+  const controller = {
+    container,
+    trigger,
+    menu,
+    sync: syncSelected,
+    syncOptions,
+    destroy() {
+      if (typeof doc.removeEventListener === 'function') {
+        doc.removeEventListener('click', onDocClick);
+        doc.removeEventListener('keydown', onDocKeydown);
+      }
+      if (typeof selectEl.removeEventListener === 'function') {
+        selectEl.removeEventListener('change', onNativeChange);
+      }
+      if (selectEl.classList?.remove) {
+        selectEl.classList.remove('cw-select-native-hidden');
+      }
+      if (selectEl.removeAttribute) {
+        selectEl.removeAttribute('tabindex');
+        selectEl.removeAttribute('aria-hidden');
+      }
+      delete selectEl._customSelect;
+      delete selectEl._syncCustomSelect;
+      if (container.parentNode && container.parentNode.removeChild) {
+        container.parentNode.removeChild(container);
+      }
+    }
+  };
+
+  selectEl._customSelect = controller;
+  selectEl._syncCustomSelect = syncSelected;
+  return controller;
+}
+
 class CatWebRunnerApp {
   /**
    * @param {HTMLElement} [rootContainer] - Root DOM container of the application shell
@@ -4942,12 +5186,14 @@ class CatWebRunnerApp {
 
     // DOM element references
     this.sampleSelect = null;
+    this.sampleSelectCtrl = null;
     this.fileInput = null;
     this.uploadBtn = null;
     this.rawJsonBtn = null;
     this.inspectorBtn = null;
     this.diagnosticsBtn = null;
     this.zoomSelect = null;
+    this.zoomSelectCtrl = null;
     this.audioBtn = null;
 
     this.editorPanel = null;
@@ -5021,6 +5267,7 @@ class CatWebRunnerApp {
 
     // 2. Bind Toolbar Events
     if (this.sampleSelect) {
+      this.sampleSelectCtrl = initCustomSelect(this.sampleSelect);
       this.sampleSelect.addEventListener('change', () => {
         const sampleKey = this.sampleSelect.value;
         if (PRELOADED_SAMPLES[sampleKey]) {
@@ -5081,6 +5328,7 @@ class CatWebRunnerApp {
     }
 
     if (this.zoomSelect) {
+      this.zoomSelectCtrl = initCustomSelect(this.zoomSelect, { alignRight: true });
       this.zoomSelect.addEventListener('change', () => {
         this.setZoom(this.zoomSelect.value);
       });
@@ -5441,6 +5689,7 @@ class CatWebRunnerApp {
 
     if (this.zoomSelect && this.zoomSelect.value !== String(zoom)) {
       this.zoomSelect.value = String(zoom);
+      this.zoomSelect._syncCustomSelect?.();
     }
   }
 
@@ -5526,6 +5775,14 @@ class CatWebRunnerApp {
     if (typeof window !== 'undefined') {
       window.removeEventListener('resize', this._boundOnResize);
     }
+    if (this.sampleSelectCtrl) {
+      this.sampleSelectCtrl.destroy();
+      this.sampleSelectCtrl = null;
+    }
+    if (this.zoomSelectCtrl) {
+      this.zoomSelectCtrl.destroy();
+      this.zoomSelectCtrl = null;
+    }
     if (this.runtime) {
       this.runtime.destroy();
       this.runtime = null;
@@ -5560,6 +5817,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 }
 
 /* Module Exports */
+exports.initCustomSelect = initCustomSelect;
 exports.CatWebRunnerApp = CatWebRunnerApp;
 exports.PRELOADED_SAMPLES = PRELOADED_SAMPLES;
 
