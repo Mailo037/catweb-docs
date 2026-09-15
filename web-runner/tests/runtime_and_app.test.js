@@ -537,6 +537,7 @@ async function runTests() {
       <div id="diagnosticsDrawer"></div>
       <button id="closeDiagnosticsBtn"></button>
       <div id="viewportArea"></div>
+      <div id="canvasZoomWrapper"></div>
       <div id="browserWindow"></div>
       <div id="pageTitle"></div>
       <div id="urlText"></div>
@@ -574,10 +575,15 @@ async function runTests() {
     // 4. Zoom Controls
     app.setZoom(0.5);
     assertEqual(app.browserWindow.style.transform, 'scale(0.5)', 'Sets zoom to 50% scale');
+    assertEqual(app.canvasZoomWrapper.style.width, '960px', 'Sets zoom wrapper width to 960px at 50%');
+    assertEqual(app.canvasZoomWrapper.style.height, '558px', 'Sets zoom wrapper height to 558px at 50%');
+    assertEqual(app.browserWindow.style.transformOrigin, '0 0', 'Sets transformOrigin to 0 0 for wrapper alignment');
     assertEqual(app.statusResolution.textContent, '1920 × 1080 (50%)', 'Updates status resolution text to 50%');
 
     app.setZoom(1);
     assertEqual(app.browserWindow.style.transform, 'scale(1)', 'Sets zoom to 100% scale');
+    assertEqual(app.canvasZoomWrapper.style.width, '1920px', 'Sets zoom wrapper width to 1920px at 100%');
+    assertEqual(app.canvasZoomWrapper.style.height, '1116px', 'Sets zoom wrapper height to 1116px at 100%');
     assertEqual(app.statusResolution.textContent, '1920 × 1080 (100%)', 'Updates status resolution text to 100%');
 
     // 5. Drawer toggles

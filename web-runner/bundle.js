@@ -6996,6 +6996,7 @@ class CatWebRunnerApp {
     this.closeDiagnosticsBtn = null;
 
     this.viewportArea = null;
+    this.canvasZoomWrapper = null;
     this.browserWindow = null;
     this.pageTitle = null;
     this.urlText = null;
@@ -7007,6 +7008,7 @@ class CatWebRunnerApp {
     this.statusValidation = null;
 
     this._boundOnResize = this._onResize.bind(this);
+    this._resizeObserver = null;
   }
 
   /**
@@ -7044,6 +7046,7 @@ class CatWebRunnerApp {
     this.closeDiagnosticsBtn = this.root.querySelector('#closeDiagnosticsBtn');
 
     this.viewportArea = this.root.querySelector('#viewportArea');
+    this.canvasZoomWrapper = this.root.querySelector('#canvasZoomWrapper');
     this.browserWindow = this.root.querySelector('#browserWindow');
     this.pageTitle = this.root.querySelector('#pageTitle');
     this.urlText = this.root.querySelector('#urlText');
@@ -7164,9 +7167,15 @@ class CatWebRunnerApp {
       });
     }
 
-    // 4. Window Resize Listener
+    // 4. Window & Viewport Resize Listeners
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', this._boundOnResize);
+    }
+    if (typeof ResizeObserver !== 'undefined' && this.viewportArea) {
+      this._resizeObserver = new ResizeObserver(() => {
+        this._onResize();
+      });
+      this._resizeObserver.observe(this.viewportArea);
     }
 
     // 5. Initialize Inspector
@@ -7551,13 +7560,13 @@ class CatWebRunnerApp {
     let scale = 1.0;
     let label = '';
 
+    const targetW = this.options.canvasWidth;
+    const targetH = this.options.canvasHeight + 36; // include titlebar
+
     if (zoom === 'fit') {
       this.viewportArea.classList.remove('cw-scrollable');
       const areaW = Math.max(320, (this.viewportArea.clientWidth || 1000) - 48);
       const areaH = Math.max(240, (this.viewportArea.clientHeight || 700) - 48);
-
-      const targetW = this.options.canvasWidth;
-      const targetH = this.options.canvasHeight + 36; // include titlebar
 
       const scaleX = areaW / targetW;
       const scaleY = areaH / targetH;
@@ -7567,6 +7576,14 @@ class CatWebRunnerApp {
       this.viewportArea.classList.add('cw-scrollable');
       scale = parseFloat(zoom) || 1.0;
       label = `${this.options.canvasWidth} × ${this.options.canvasHeight} (${Math.round(scale * 100)}%)`;
+    }
+
+    if (this.canvasZoomWrapper) {
+      this.canvasZoomWrapper.style.width = `${Math.round(targetW * scale)}px`;
+      this.canvasZoomWrapper.style.height = `${Math.round(targetH * scale)}px`;
+      this.browserWindow.style.transformOrigin = '0 0';
+    } else {
+      this.browserWindow.style.transformOrigin = 'center center';
     }
 
     this.browserWindow.style.transform = `scale(${scale})`;
@@ -7614,6 +7631,10 @@ class CatWebRunnerApp {
       if (this.inspectorPanel) this.inspectorPanel.classList.add('hidden');
       if (this.inspectorBtn) this.inspectorBtn.classList.remove('active');
     }
+
+    if (this.currentZoom === 'fit') {
+      this.setZoom('fit');
+    }
   }
 
   /**
@@ -7632,6 +7653,10 @@ class CatWebRunnerApp {
       this.diagnosticsPanel.classList.add('hidden');
       if (this.diagnosticsBtn) this.diagnosticsBtn.classList.remove('active');
     }
+
+    if (this.currentZoom === 'fit') {
+      this.setZoom('fit');
+    }
   }
 
   /**
@@ -7649,6 +7674,10 @@ class CatWebRunnerApp {
     } else {
       this.editorPanel.classList.add('hidden');
       if (this.rawJsonBtn) this.rawJsonBtn.classList.remove('active');
+    }
+
+    if (this.currentZoom === 'fit') {
+      this.setZoom('fit');
     }
   }
 
@@ -7669,6 +7698,10 @@ class CatWebRunnerApp {
   destroy() {
     if (typeof window !== 'undefined') {
       window.removeEventListener('resize', this._boundOnResize);
+    }
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
     }
     if (this.sampleSelectCtrl) {
       this.sampleSelectCtrl.destroy();

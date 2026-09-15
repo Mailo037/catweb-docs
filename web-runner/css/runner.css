@@ -515,6 +515,14 @@ body, html {
   overflow: auto;
 }
 
+/* Zoom Scaling Wrapper: Accurately sizes the bounding box of the scaled canvas */
+.cw-zoom-wrapper {
+  position: relative;
+  flex-shrink: 0;
+  margin: auto;
+  display: block;
+}
+
 /* Simulated Roblox Browser Window */
 .cw-browser-window {
   display: flex;
@@ -524,10 +532,19 @@ body, html {
   background-color: #121214;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
   transition: transform 0.1s ease-out;
-  transform-origin: center center;
+  transform-origin: top left;
   position: relative;
   flex-shrink: 0;
   margin: auto;
+  width: 1920px;
+  height: 1116px;
+}
+
+.cw-zoom-wrapper > .cw-browser-window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
 }
 
 /* Simulated Browser Titlebar */
