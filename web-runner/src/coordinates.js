@@ -303,3 +303,23 @@ export function computePixelBounds(posInput, sizeInput, parentBounds, anchorInpu
     bottom: top + height
   };
 }
+
+/**
+ * Formats a UDim scale and offset into a CSS calc() expression.
+ *
+ * @param {number|string} scale
+ * @param {number|string} offset
+ * @returns {string} CSS calc() expression
+ */
+export function formatUDimCss(scale, offset) {
+  const s = parseFloat(scale) || 0;
+  const o = parseFloat(offset) || 0;
+  if (o === 0) {
+    return `calc(${s * 100}% + 0px)`;
+  }
+  if (o > 0) {
+    return `calc(${s * 100}% + ${o}px)`;
+  }
+  return `calc(${s * 100}% - ${Math.abs(o)}px)`;
+}
+

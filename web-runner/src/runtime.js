@@ -12,6 +12,7 @@
 
 import { playSyntheticAudio } from './assets.js';
 import { udim2ToCss } from './coordinates.js';
+import { applyBackgroundStyling, applyTextStyling } from './styling.js';
 
 export class CatWebRuntime {
   /**
@@ -489,14 +490,19 @@ export class CatWebRuntime {
       }
     }
     // 2. Text Color / TextColor3
-    else if (normalizedProp === 'textcolor' || normalizedProp === 'textcolor3') {
+    else if (normalizedProp === 'textcolor' || normalizedProp === 'textcolor3' || normalizedProp === 'fontcolor') {
       if (targetNode) targetNode.font_color = resolvedVal;
-      if (domEl && domEl.style) domEl.style.color = resolvedVal;
+      if (domEl && domEl.style) {
+        const trans = targetNode ? (targetNode.font_transparency ?? targetNode.text_transparency) : undefined;
+        applyTextStyling(domEl, resolvedVal, trans);
+      }
     }
     // 3. Background Color / BackgroundColor3
     else if (normalizedProp === 'backgroundcolor' || normalizedProp === 'backgroundcolor3') {
       if (targetNode) targetNode.background_color = resolvedVal;
-      if (domEl && domEl.style) domEl.style.backgroundColor = resolvedVal;
+      if (domEl && domEl.style) {
+        applyBackgroundStyling(domEl, resolvedVal, targetNode ? targetNode.background_transparency : undefined);
+      }
     }
     // 4. Visible
     else if (normalizedProp === 'visible') {
@@ -536,11 +542,21 @@ export class CatWebRuntime {
     else if (normalizedProp === 'backgroundtransparency' || normalizedProp === 'transparency') {
       if (targetNode) targetNode.background_transparency = resolvedVal;
       if (domEl && domEl.style) {
-        const trans = parseFloat(resolvedVal) || 0;
-        domEl.style.opacity = String(Math.max(0, Math.min(1, 1 - trans)));
+        applyBackgroundStyling(domEl, targetNode ? targetNode.background_color : undefined, resolvedVal);
+        if (domEl.style.opacity) domEl.style.opacity = '';
       }
     }
-    // 8. Order / LayoutOrder
+    // 8. Text Transparency / Font Transparency
+    else if (normalizedProp === 'texttransparency' || normalizedProp === 'fonttransparency') {
+      if (targetNode) {
+        targetNode.font_transparency = resolvedVal;
+        targetNode.text_transparency = resolvedVal;
+      }
+      if (domEl && domEl.style) {
+        applyTextStyling(domEl, targetNode ? targetNode.font_color : undefined, resolvedVal);
+      }
+    }
+    // 9. Order / LayoutOrder
     else if (normalizedProp === 'order' || normalizedProp === 'layoutorder') {
       if (targetNode) targetNode.order = String(resolvedVal);
       if (domEl && domEl.style) domEl.style.order = String(resolvedVal);

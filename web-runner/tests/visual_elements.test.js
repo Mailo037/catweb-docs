@@ -252,8 +252,8 @@ assertEqual(frameEl.style.width, 'calc(0% + 300px)', 'UDim2 size width calc');
 assertEqual(frameEl.style.height, 'calc(0% + 200px)', 'UDim2 size height calc');
 assertEqual(frameEl.style.left, 'calc(50% - 150px)', 'UDim2 position left calc');
 assertEqual(frameEl.style.top, 'calc(50% - 100px)', 'UDim2 position top calc');
-assertEqual(frameEl.style.backgroundColor, '#18181b', 'Background color applied');
-assertEqual(parseFloat(frameEl.style.opacity), 0.8, 'Background transparency 0.2 -> opacity 0.8');
+assertEqual(frameEl.style.backgroundColor, 'rgba(24, 24, 27, 0.8)', 'Background transparency 0.2 applied as rgba');
+assertEqual(frameEl.style.opacity, '', 'Frame opacity is untouched so children remain opaque');
 assertEqual(frameEl.style.overflow, 'hidden', 'canvas="true" maps to overflow: hidden');
 assertEqual(frameEl.style.zIndex, '5', 'z_index applied');
 
@@ -271,7 +271,8 @@ assertEqual(scrollEl.style.overflowY, 'auto', 'ScrollingFrame overflow-y is auto
 assertEqual(scrollEl.style.overflowX, 'hidden', 'ScrollingFrame overflow-x is hidden');
 assertEqual(scrollEl.style.scrollbarWidth, '8px', 'Scrollbar thickness applied');
 assertEqual(scrollEl.getAttribute('data-canvassize'), 'auto_y', 'canvassize metadata preserved');
-assertEqual(parseFloat(scrollEl.style.opacity), 0, 'background_transparency "1" -> opacity 0');
+assertEqual(scrollEl.style.backgroundColor, 'transparent', 'background_transparency "1" -> backgroundColor transparent');
+assertEqual(scrollEl.style.opacity, '', 'ScrollingFrame opacity is untouched so children remain opaque');
 
 // TextLabel
 const textEl = renderElement({

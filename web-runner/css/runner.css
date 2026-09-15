@@ -966,6 +966,533 @@ body, html {
 }
 
 /* ============================================================
+ * INSPECTOR TAB SWITCH & VIEWS
+ * ============================================================ */
+
+.cw-tab-switch {
+  display: inline-flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.04);
+  border-radius: var(--cw-radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+
+.cw-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--cw-text-secondary);
+  font-size: 11.5px;
+  font-weight: 500;
+  font-family: inherit;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  user-select: none;
+}
+
+.cw-tab-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.cw-tab-btn.active {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.12);
+  font-weight: 600;
+}
+
+.cw-inspector-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cw-inspector-view.hidden {
+  display: none !important;
+}
+
+/* ============================================================
+ * ELEMENT HIERARCHY TREE VIEW
+ * ============================================================ */
+
+.cw-tree-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: var(--cw-radius-md);
+  font-size: 11px;
+  color: var(--cw-text-secondary);
+}
+
+.cw-tree-stat strong {
+  color: var(--cw-text-primary);
+  font-weight: 600;
+}
+
+.cw-tree-stat.muted {
+  color: var(--cw-text-muted);
+}
+
+.cw-tree-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cw-tree-item-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.cw-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding-right: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  user-select: none;
+}
+
+.cw-tree-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.cw-tree-row.active {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+.cw-tree-row.active .cw-tree-name {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.cw-tree-arrow {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cw-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.cw-tree-arrow.collapsed {
+  transform: rotate(-90deg);
+}
+
+.cw-tree-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+.cw-tree-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cw-text-secondary);
+  flex-shrink: 0;
+}
+
+.cw-tree-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cw-tree-name {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--cw-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cw-tree-cls-tag {
+  font-size: 10px;
+  color: var(--cw-text-muted);
+  background-color: rgba(255, 255, 255, 0.04);
+  padding: 1px 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.cw-tree-id-tag {
+  font-family: var(--cw-font-mono);
+  font-size: 9.5px;
+  color: var(--cw-text-muted);
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 1px 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Compact Styling Modifier Badge ("nicht der Länge nach") */
+.cw-tree-mod-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--cw-text-secondary);
+  cursor: help;
+  flex-shrink: 0;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.cw-tree-mod-badge:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.cw-tree-children {
+  display: flex;
+  flex-direction: column;
+}
+
+.cw-tree-children.collapsed {
+  display: none;
+}
+
+/* ============================================================
+ * KASTENTIPP POPUP (Floating modifier card tooltip)
+ * ============================================================ */
+
+.cw-kastentipp-popup {
+  position: fixed;
+  z-index: 100000;
+  background-color: #1a1a1e;
+  border-radius: 10px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 4px 12px rgba(0, 0, 0, 0.4);
+  padding: 10px 12px;
+  min-width: 200px;
+  max-width: 320px;
+  pointer-events: none;
+  font-family: inherit;
+  border: none;
+  outline: none;
+  animation: cwFadeIn 0.1s ease-out;
+}
+
+@keyframes cwFadeIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cw-kastentipp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cw-kt-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.cw-kt-count {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--cw-text-secondary);
+  background-color: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.cw-kastentipp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cw-kastentipp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.cw-kt-name {
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.cw-kt-val code {
+  font-family: var(--cw-font-mono);
+  color: var(--cw-text-secondary);
+  font-size: 10px;
+  background-color: rgba(255, 255, 255, 0.04);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* ============================================================
+ * LIVE PROPERTY EDITOR CONTROLS
+ * ============================================================ */
+
+.cw-inspector-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cw-btn-sm {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--cw-text-secondary);
+  border: none;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.cw-btn-sm:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.cw-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cw-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.cw-field-row-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cw-half-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cw-field-lbl {
+  font-size: 11px;
+  color: var(--cw-text-secondary);
+  flex-shrink: 0;
+}
+
+.cw-input {
+  height: 28px;
+  background-color: #141417;
+  color: #f4f4f5;
+  border: none;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  font-family: var(--cw-font-mono);
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: box-shadow 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cw-input:focus {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.cw-input-sm {
+  height: 24px;
+  padding: 0 6px;
+  font-size: 10.5px;
+}
+
+.cw-color-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cw-color-picker {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+  outline: none;
+}
+
+.cw-color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.cw-color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.cw-hex-input {
+  width: 80px;
+  font-size: 11px;
+}
+
+.cw-number-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cw-number-input-wrap .cw-input {
+  width: 70px;
+}
+
+.cw-unit-lbl {
+  font-size: 10px;
+  color: var(--cw-text-muted);
+}
+
+.cw-slider-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cw-range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 110px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  outline: none;
+}
+
+.cw-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.cw-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.cw-slider-val {
+  font-family: var(--cw-font-mono);
+  font-size: 11px;
+  color: var(--cw-text-secondary);
+  min-width: 28px;
+  text-align: right;
+}
+
+.cw-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.cw-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cw-toggle-track {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  transition: background-color 0.15s ease;
+}
+
+.cw-toggle-track::before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+
+.cw-toggle-switch input:checked + .cw-toggle-track {
+  background-color: #3b82f6;
+}
+
+.cw-toggle-switch input:checked + .cw-toggle-track::before {
+  transform: translateX(14px);
+}
+
+.cw-drawer-mod-card {
+  background-color: rgba(255, 255, 255, 0.035);
+  border-radius: var(--cw-radius-md);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cw-mod-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cw-mod-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================================
  * DIAGNOSTICS DRAWER & CARDS (Outline-free)
  * ============================================================ */
 

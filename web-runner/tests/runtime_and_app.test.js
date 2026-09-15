@@ -348,12 +348,137 @@ async function runTests() {
 
     inspector.toggle();
     assert(!inspector.isEnabled(), 'Toggles inspector state off');
+
+    // 5b. Element Tree & Live Property Editor
+    const treeContainer = doc.createElement('div');
+    const propsContainer = doc.createElement('div');
+    let docChangeFired = false;
+
+    const editorInspector = new CatWebInspector(canvasContainer, null, {
+      treeContainer,
+      propsContainer,
+      onDocumentChange: () => {
+        docChangeFired = true;
+      }
+    });
+    editorInspector.setTree(sampleDoc, canvasContainer);
+
+    // Verify tree rendering
+    assert(treeContainer.textContent.includes('main_card'), 'Tree contains root card alias "main_card"');
+    assert(treeContainer.textContent.includes('2 Styling-Elemente'), 'Tree displays compact badge "2 Styling-Elemente" instead of expanding modifiers');
+    assert(!treeContainer.textContent.includes('UICorner'), 'Tree does not expand UICorner as a child row (compact styling badge)');
+
+    // Select and live-edit element
+    editorInspector.selectElement('b1');
+    assertEqual(editorInspector.selectedGlobalId, 'b1', 'Selects button [b1] in editor');
+    assert(propsContainer.innerHTML.includes('Visit Docs'), 'Live editor displays input with button text');
+
+    // Live update property
+    editorInspector.updateElementProperty('b1', 'text', 'Explore API');
+    assertEqual(b1Desc.jsonNode.text, 'Explore API', 'Mutates JSON AST node text to "Explore API"');
+    const b1Dom = canvasContainer.querySelector('[data-globalid="b1"]');
+    assert(b1Dom.textContent.includes('Explore API'), 'Updates live DOM element text to "Explore API"');
+    assert(docChangeFired, 'Fires onDocumentChange callback on property edit');
+
+    // Live update background color
+    editorInspector.updateElementProperty('f1', 'background_color', '#10b981');
+    const f1Dom = canvasContainer.querySelector('[data-globalid="f1"]');
+    assertEqual(f1Dom.style.backgroundColor, '#10b981', 'Updates DOM background-color live');
+
+    // Live update modifier radius
+    editorInspector.updateModifierProperty('f1', 0, 'radius', '0,24');
+    assertEqual(f1Desc.modifiers[0].radius, '0,24', 'Updates modifier radius in AST');
+    assertEqual(f1Dom.style.borderRadius, '24px', 'Updates DOM border-radius live through modifier update');
+
+    editorInspector.destroy();
   }
 
   /* ============================================================
-   * 6. APPLICATION CONTROLLER & WORKLOAD INGESTION
+   * 6. ROBLOX GUI TRANSPARENCY ISOLATION
+   * Background & text transparency MUST NOT make child elements transparent
    * ============================================================ */
-  console.log('\n--- 6. APPLICATION CONTROLLER & WORKLOAD INGESTION ---');
+  console.log('\n--- 6. ROBLOX GUI TRANSPARENCY ISOLATION ---');
+  {
+    const isolationDoc = [
+      {
+        class: "Frame",
+        globalid: "iso_card",
+        alias: "parent_card",
+        background_color: "#18181b",
+        background_transparency: "0.5",
+        children: [
+          {
+            class: "TextLabel",
+            globalid: "iso_title",
+            alias: "child_title",
+            text: "Opaque Child Inside Transparent Frame",
+            font_color: "#ffffff",
+            font_transparency: "0",
+            background_transparency: "1"
+          },
+          {
+            class: "TextButton",
+            globalid: "iso_btn",
+            alias: "child_button",
+            text: "Click Me",
+            background_color: "#3b82f6",
+            background_transparency: "0",
+            font_color: "#ffffff"
+          }
+        ]
+      }
+    ];
+
+    const canvas = doc.createElement('div');
+    renderCatWebTree(isolationDoc, canvas);
+
+    const cardEl = canvas.querySelector('[data-globalid="iso_card"]');
+    const titleEl = canvas.querySelector('[data-globalid="iso_title"]');
+    const btnEl = canvas.querySelector('[data-globalid="iso_btn"]');
+
+    // 1. Initial Render Verification
+    assertEqual(cardEl.style.backgroundColor, 'rgba(24, 24, 27, 0.5)', 'Parent Frame background is rgba with 0.5 alpha');
+    assertEqual(cardEl.style.opacity || '', '', 'Parent Frame CSS opacity is untouched (not 0.5)');
+    assertEqual(titleEl.style.opacity || '', '', 'Child TextLabel CSS opacity is untouched');
+    assertEqual(titleEl.style.color, '#ffffff', 'Child TextLabel text color remains fully opaque #ffffff');
+    assertEqual(titleEl.style.backgroundColor, 'transparent', 'Child TextLabel background_transparency 1 maps to transparent background');
+    assertEqual(btnEl.style.backgroundColor, '#3b82f6', 'Child TextButton background is fully opaque blue');
+    assertEqual(btnEl.style.opacity || '', '', 'Child TextButton CSS opacity is untouched');
+
+    // 2. Live Inspector Property Update: Changing Parent Background Transparency
+    const drawer = doc.createElement('div');
+    const inspector = new CatWebInspector(canvas, drawer);
+    inspector.setTree(isolationDoc, canvas);
+
+    inspector.updateElementProperty('iso_card', 'background_transparency', '0.8');
+    assertEqual(cardEl.style.backgroundColor, 'rgba(24, 24, 27, 0.2)', 'Parent Frame background updates to rgba with 0.2 alpha (1 - 0.8)');
+    assertEqual(cardEl.style.opacity || '', '', 'Parent Frame CSS opacity remains untouched');
+    assertEqual(titleEl.style.opacity || '', '', 'Child TextLabel remains completely opaque when parent transparency changes');
+    assertEqual(btnEl.style.backgroundColor, '#3b82f6', 'Child TextButton background remains completely opaque');
+
+    // 3. Live Inspector Property Update: Changing Text Transparency
+    inspector.updateElementProperty('iso_title', 'font_transparency', '0.3');
+    assertEqual(titleEl.style.color, 'rgba(255, 255, 255, 0.7)', 'Child TextLabel text updates to rgba with 0.7 alpha (1 - 0.3)');
+    assertEqual(titleEl.style.opacity || '', '', 'Child TextLabel CSS opacity remains untouched');
+    assertEqual(cardEl.style.backgroundColor, 'rgba(24, 24, 27, 0.2)', 'Parent Frame background is unaffected by text transparency');
+
+    // 4. Runtime SetProperty Verification
+    const runtime = new CatWebRuntime(isolationDoc, canvas);
+    runtime._applyPropertyToElement('iso_card', 'backgroundtransparency', '1');
+    assertEqual(cardEl.style.backgroundColor, 'transparent', 'Runtime sets parent background to transparent');
+    assertEqual(cardEl.style.opacity || '', '', 'Runtime does NOT set CSS opacity on parent');
+    assertEqual(btnEl.style.backgroundColor, '#3b82f6', 'Children inside parent remain completely opaque after runtime set');
+
+    runtime._applyPropertyToElement('iso_title', 'texttransparency', '0.5');
+    assertEqual(titleEl.style.color, 'rgba(255, 255, 255, 0.5)', 'Runtime sets text transparency via rgba without touching container or siblings');
+
+    inspector.destroy();
+  }
+
+  /* ============================================================
+   * 7. APPLICATION CONTROLLER & WORKLOAD INGESTION
+   * ============================================================ */
+  console.log('\n--- 7. APPLICATION CONTROLLER & WORKLOAD INGESTION ---');
   {
     const root = doc.createElement('div');
     root.innerHTML = `
@@ -407,10 +532,10 @@ async function runTests() {
     assert(app.validationResult.valid, 'Validates user_snippet as 100% schema compliant');
     assertEqual(app.urlText.textContent, 'catweb://snippet.rbx', 'Sets snippet.rbx for snippet format');
 
-    // 3. Ingest Invalid Examples (13 Schema Errors)
+    // 3. Ingest Invalid Examples (12 Schema Errors)
     app.loadDocument(PRELOADED_SAMPLES.invalid_examples);
     assert(!app.validationResult.valid, 'Identifies invalid_examples as non-compliant');
-    assertEqual(app.validationResult.errors.length, 13, 'Generates exactly 13 diagnostic errors for invalid_examples');
+    assertEqual(app.validationResult.errors.length, 12, 'Generates exactly 12 diagnostic errors for invalid_examples');
     assert(app.diagnosticsDrawer.innerHTML.includes('INVALID_UDIM2'), 'Diagnostics drawer renders INVALID_UDIM2 card');
     assert(app.diagnosticsDrawer.innerHTML.includes('DUPLICATE_GLOBALID'), 'Diagnostics drawer renders DUPLICATE_GLOBALID card');
     assert(app.diagnosticsDrawer.innerHTML.includes('NESTED_CONTROL_FLOW_ACTIONS'), 'Diagnostics drawer renders NESTED_CONTROL_FLOW_ACTIONS card');

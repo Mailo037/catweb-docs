@@ -198,3 +198,59 @@ export function applyUIGradient(domElement, gradientNode) {
     domElement.style.backgroundImage = gradientCss;
   } catch { /* ignore styling error gracefully */ }
 }
+
+/**
+ * Applies background color and background transparency according to Roblox GUI semantics.
+ * In Roblox GUI, BackgroundTransparency (0 = fully opaque, 1 = fully invisible) controls ONLY
+ * the background fill of the specific GuiObject. It NEVER applies CSS opacity or affects
+ * any child elements or child text.
+ *
+ * @param {HTMLElement} domElement
+ * @param {string|undefined} bgColor - Hex or CSS color string
+ * @param {string|number|undefined} bgTrans - Transparency scalar (0.0 = opaque, 1.0 = invisible)
+ */
+export function applyBackgroundStyling(domElement, bgColor, bgTrans) {
+  if (!domElement || !domElement.style) return;
+
+  if (bgTrans !== undefined && bgTrans !== null && bgTrans !== '') {
+    const trans = Math.max(0, Math.min(1, parseFloat(bgTrans) || 0));
+    if (trans >= 1) {
+      domElement.style.backgroundColor = 'transparent';
+    } else if (trans <= 0) {
+      domElement.style.backgroundColor = bgColor || '';
+    } else {
+      const baseColor = bgColor || '#ffffff';
+      domElement.style.backgroundColor = hexToRgba(baseColor, 1 - trans);
+    }
+  } else if (bgColor) {
+    domElement.style.backgroundColor = bgColor;
+  }
+}
+
+/**
+ * Applies text/font color and text transparency according to Roblox GUI semantics.
+ * In Roblox GUI, TextTransparency (0 = fully opaque, 1 = fully invisible) controls ONLY
+ * the text color of the specific element. It NEVER affects child elements or backgrounds.
+ *
+ * @param {HTMLElement} domElement
+ * @param {string|undefined} fontColor - Hex or CSS color string
+ * @param {string|number|undefined} fontTrans - Transparency scalar (0.0 = opaque, 1.0 = invisible)
+ */
+export function applyTextStyling(domElement, fontColor, fontTrans) {
+  if (!domElement || !domElement.style) return;
+
+  if (fontTrans !== undefined && fontTrans !== null && fontTrans !== '') {
+    const trans = Math.max(0, Math.min(1, parseFloat(fontTrans) || 0));
+    if (trans >= 1) {
+      domElement.style.color = 'transparent';
+    } else if (trans <= 0) {
+      domElement.style.color = fontColor || '';
+    } else {
+      const baseColor = fontColor || '#000000';
+      domElement.style.color = hexToRgba(baseColor, 1 - trans);
+    }
+  } else if (fontColor) {
+    domElement.style.color = fontColor;
+  }
+}
+

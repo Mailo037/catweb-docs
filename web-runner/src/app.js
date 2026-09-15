@@ -38,7 +38,7 @@ export const PRELOADED_SAMPLES = {
           { "class": "UIStroke", "globalid": "ns", "stroke_color": "#27272a", "stroke_thickness": "1", "stroke_transparency": "0" },
           { "class": "UIPadding", "globalid": "np", "top": "0,0", "bottom": "0,0", "left": "0,20", "right": "0,20" },
           { "class": "UIListLayout", "globalid": "nl", "direction": "Horizontal", "alignment_vertical": "Center", "padding": "0,16", "sort": "LayoutOrder" },
-          { "class": "ImageLabel", "globalid": "nl_ico", "alias": "nav_logo", "size": "{0,32},{0,32}", "order": "1", "image_id": "128490289676597", "image": "rbxassetid://128490289676597", "image_color": "#ffffff", "background_transparency": "1" },
+          { "class": "ImageLabel", "globalid": "nlo", "alias": "nav_logo", "size": "{0,32},{0,32}", "order": "1", "image_id": "128490289676597", "image": "rbxassetid://128490289676597", "image_color": "#ffffff", "background_transparency": "1" },
           { "class": "TextLabel", "globalid": "nt", "alias": "nav_title", "size": "{0,120},{1,0}", "order": "2", "text": "CatWeb", "font": "GothamBold", "font_size": "18", "font_color": "#ffffff", "align_x": "Left", "align_y": "Center", "background_transparency": "1" },
           { "class": "Frame", "globalid": "nsp", "alias": "nav_spacer", "size": "{0,0},{0,0}", "order": "3", "background_transparency": "1", "children": [{ "class": "UIFlexItem", "globalid": "nfi", "flex_mode": "Fill", "grow_ratio": "1" }] },
           { "class": "TextButton?link", "globalid": "nbl", "alias": "nav_docs_btn", "size": "{0,80},{0,36}", "order": "4", "text": "Docs", "font": "Gotham", "font_size": "14", "font_color": "#a1a1aa", "background_color": "#27272a", "auto_color": "true", "href": "docs.rbx", "children": [{ "class": "UICorner", "globalid": "nbc", "radius": "0,6" }] }
@@ -554,6 +554,10 @@ export class CatWebRunnerApp {
 
     this.inspectorPanel = this.root.querySelector('#inspectorPanel');
     this.inspectorDrawer = this.root.querySelector('#inspectorDrawer');
+    this.inspectorTabTree = this.root.querySelector('#inspectorTabTree');
+    this.inspectorTabProps = this.root.querySelector('#inspectorTabProps');
+    this.inspectorTreeView = this.root.querySelector('#inspectorTreeView');
+    this.inspectorPropsView = this.root.querySelector('#inspectorPropsView');
     this.closeInspectorBtn = this.root.querySelector('#closeInspectorBtn');
 
     this.diagnosticsPanel = this.root.querySelector('#diagnosticsPanel');
@@ -689,9 +693,22 @@ export class CatWebRunnerApp {
     // 5. Initialize Inspector
     if (this.canvasStage) {
       this.inspector = new CatWebInspector(this.canvasStage, this.inspectorDrawer, {
+        treeContainer: this.inspectorTreeView,
+        propsContainer: this.inspectorPropsView,
+        tabTreeBtn: this.inspectorTabTree,
+        tabPropsBtn: this.inspectorTabProps,
         onSelect: (entry) => {
           if (entry) {
             this.toggleInspector(true);
+            this.inspector?.switchTab('props');
+          }
+        },
+        onDocumentChange: (updatedTree) => {
+          this.currentDocument = updatedTree;
+          if (this.editorTextarea) {
+            try {
+              this.editorTextarea.value = JSON.stringify(updatedTree, null, 2);
+            } catch {}
           }
         }
       });
@@ -1024,6 +1041,9 @@ export class CatWebRunnerApp {
       this.inspector?.enable();
       if (this.inspectorPanel) this.inspectorPanel.classList.remove('hidden');
       if (this.inspectorBtn) this.inspectorBtn.classList.add('active');
+      if (!this.inspector?.selectedGlobalId) {
+        this.inspector?.switchTab('tree');
+      }
     } else {
       this.inspector?.disable();
       if (this.inspectorPanel) this.inspectorPanel.classList.add('hidden');

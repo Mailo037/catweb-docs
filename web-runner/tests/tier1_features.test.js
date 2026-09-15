@@ -483,9 +483,10 @@ describe('Tier 1: Feature Coverage', () => {
       expect(el.style.backgroundColor).toBe('#18181b');
     });
 
-    test('10.3 applies background_transparency as CSS opacity = 1 - trans', () => {
-      const el = renderElement({ class: "Frame", globalid: "f3", background_transparency: "0.2" });
-      expect(parseFloat(el.style.opacity)).toBe(0.8);
+    test('10.3 applies background_transparency to background color without affecting opacity or children', () => {
+      const el = renderElement({ class: "Frame", globalid: "f3", background_color: "#18181b", background_transparency: "0.2" });
+      expect(el.style.backgroundColor).toBe('rgba(24, 24, 27, 0.8)');
+      expect(el.style.opacity).toBe('');
     });
 
     test('10.4 applies overflow: hidden when canvas is "true"', () => {
@@ -530,7 +531,8 @@ describe('Tier 1: Feature Coverage', () => {
 
     test('11.5 supports full transparency on ScrollingFrame background', () => {
       const el = renderElement({ class: "ScrollingFrame", globalid: "sf5", background_transparency: "1" });
-      expect(parseFloat(el.style.opacity)).toBe(0);
+      expect(el.style.backgroundColor).toBe('transparent');
+      expect(el.style.opacity).toBe('');
     });
   });
 
@@ -681,7 +683,8 @@ describe('Tier 1: Feature Coverage', () => {
 
     test('15.5 applies background_transparency: "1" to render transparent container', () => {
       const el = renderElement({ class: "ImageLabel", globalid: "im5", background_transparency: "1" });
-      expect(parseFloat(el.style.opacity)).toBe(0);
+      expect(el.style.backgroundColor).toBe('transparent');
+      expect(el.style.opacity).toBe('');
     });
   });
 

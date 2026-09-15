@@ -92,10 +92,23 @@ export class MockElement {
     this.classList = this._createClassList();
     this._textContent = '';
     this._value = '';
+    this._ownerDocument = null;
+  }
+
+  get ownerDocument() {
+    return this._ownerDocument || (this.parentNode ? this.parentNode.ownerDocument : null);
+  }
+
+  set ownerDocument(doc) {
+    this._ownerDocument = doc;
   }
 
   get textContent() {
-    if (this.children.length === 0) return this._textContent;
+    if (this.children.length === 0) {
+      if (this._textContent) return this._textContent;
+      if (this._innerHTML) return this._innerHTML.replace(/<[^>]+>/g, '').trim();
+      return '';
+    }
     return this.children.map(c => c.textContent).join('');
   }
 
@@ -126,6 +139,41 @@ export class MockElement {
 
   set className(val) {
     this.classList.value = String(val);
+  }
+
+  get innerHTML() {
+    return this._innerHTML || '';
+  }
+
+  set innerHTML(html) {
+    this._innerHTML = String(html || '');
+    this.children = [];
+    if (!html) return;
+
+    // Parse child tags into MockElement instances
+    const tagRegex = /<([a-zA-Z0-9_-]+)([^>]*)>(?:([\s\S]*?)<\/\1>)?/g;
+    let match;
+    while ((match = tagRegex.exec(html)) !== null) {
+      const tagName = match[1];
+      const attrStr = match[2];
+      const text = match[3] || '';
+      const child = new MockElement(tagName);
+      child.ownerDocument = this.ownerDocument;
+      child.parentNode = this;
+      if (text) child.textContent = text;
+
+      if (attrStr) {
+        const attrRegex = /([a-zA-Z0-9_-]+)(?:=["']([^"']*)["'])?/g;
+        let attrMatch;
+        while ((attrMatch = attrRegex.exec(attrStr)) !== null) {
+          const name = attrMatch[1];
+          const val = attrMatch[2] !== undefined ? attrMatch[2] : '';
+          child.setAttribute(name, val);
+          if (name === 'id') child.attributes['id'] = val;
+        }
+      }
+      this.children.push(child);
+    }
   }
 
   setAttribute(name, value) {
@@ -233,6 +281,11 @@ export class MockElement {
 
   _matchesSelector(node, sel) {
     if (!sel || !node) return false;
+    // ID match #id
+    if (sel.startsWith('#')) {
+      const id = sel.slice(1);
+      return node.getAttribute('id') === id;
+    }
     // Tag match
     if (sel.toUpperCase() === node.tagName) return true;
     // Class match .foo
@@ -330,7 +383,9 @@ export class MockDocument {
   }
 
   createElement(tagName) {
-    return new MockElement(tagName);
+    const el = new MockElement(tagName);
+    el.ownerDocument = this;
+    return el;
   }
 
   getElementById(id) {

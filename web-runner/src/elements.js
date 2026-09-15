@@ -18,6 +18,7 @@ import {
   parseUDim2,
   parseVector2,
   udim2ToCss,
+  formatUDimCss,
   resolveElementSizeCss,
   anchorToCss,
   zIndexToCss
@@ -39,6 +40,8 @@ import {
   applyUICorner,
   applyUIStroke,
   applyUIGradient,
+  applyBackgroundStyling,
+  applyTextStyling,
   hexToRgba
 } from './styling.js';
 
@@ -287,18 +290,6 @@ export function computeTextScaledFontSize(text, containerWidth, containerHeight,
   return optimal;
 }
 
-function formatUDimCss(scale, offset) {
-  const s = parseFloat(scale) || 0;
-  const o = parseFloat(offset) || 0;
-  if (o === 0) {
-    return `calc(${s * 100}% + 0px)`;
-  }
-  if (o > 0) {
-    return `calc(${s * 100}% + ${o}px)`;
-  }
-  return `calc(${s * 100}% - ${Math.abs(o)}px)`;
-}
-
 /**
  * Factory and renderer for a single CatWeb element node into DOM.
  *
@@ -393,14 +384,8 @@ export function renderElement(elementNode, parentDomElement = null, context = {}
     el.style.transform = a.transform;
   }
 
-  // Background color & transparency
-  if (elementNode.background_color) {
-    el.style.backgroundColor = elementNode.background_color;
-  }
-  if (elementNode.background_transparency !== undefined) {
-    const trans = parseFloat(elementNode.background_transparency) || 0;
-    el.style.opacity = String(1 - trans);
-  }
+  // Background color & transparency (Roblox GUI semantics: affects ONLY this element, NEVER children)
+  applyBackgroundStyling(el, elementNode.background_color, elementNode.background_transparency);
 
   // Visibility & Z-Index
   if (elementNode.visible === 'false') {
@@ -430,9 +415,9 @@ export function renderElement(elementNode, parentDomElement = null, context = {}
       el.textContent = elementNode.text;
       el.value = elementNode.text;
     }
-    if (elementNode.font_color) {
-      el.style.color = elementNode.font_color;
-    }
+    const fontTrans = elementNode.font_transparency !== undefined ? elementNode.font_transparency : elementNode.text_transparency;
+    applyTextStyling(el, elementNode.font_color, fontTrans);
+
     if (elementNode.font_size) {
       if (elementNode.font_size === 'scaled') {
         el.setAttribute('data-text-scaled', 'true');
@@ -493,9 +478,14 @@ export function renderElement(elementNode, parentDomElement = null, context = {}
       el.style.color = elementNode.image_color;
     }
 
-    if (elementNode.image_transparency !== undefined && elementNode.background_transparency === undefined) {
-      const itrans = parseFloat(elementNode.image_transparency) || 0;
-      el.style.opacity = String(1 - itrans);
+    if (elementNode.image_transparency !== undefined) {
+      const itrans = Math.max(0, Math.min(1, parseFloat(elementNode.image_transparency) || 0));
+      const innerImg = el.querySelector?.('svg, img, .cw-asset-badge');
+      if (innerImg && innerImg.style) {
+        innerImg.style.opacity = String(1 - itrans);
+      } else {
+        el.style.opacity = String(1 - itrans);
+      }
     }
 
     if (baseClass === 'ImageButton') {

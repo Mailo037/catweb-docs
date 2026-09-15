@@ -6,6 +6,7 @@
 
 import { validateCatWeb, VALID_CLASSES, VALID_SCRIPT_PROPERTIES, VALID_VALUES } from '../../tools/validate.js';
 import { getDocument, MockElement } from './harness.js';
+import { applyBackgroundStyling, applyTextStyling } from '../src/styling.js';
 
 // Curated 84 Lucide icon asset IDs from game/Assets.md
 export const KNOWN_LUCIDE_ICONS = new Map([
@@ -473,14 +474,8 @@ export function renderElement(elementNode, parentDomElement = null, context = {}
     el.style.transform = a.transform;
   }
 
-  // Background & Transparency
-  if (elementNode.background_color) {
-    el.style.backgroundColor = elementNode.background_color;
-  }
-  if (elementNode.background_transparency !== undefined) {
-    const trans = parseFloat(elementNode.background_transparency) || 0;
-    el.style.opacity = String(1 - trans);
-  }
+  // Background & Transparency (Roblox semantics: affects ONLY background, NEVER children)
+  applyBackgroundStyling(el, elementNode.background_color, elementNode.background_transparency);
 
   // Visibility & Z-Index
   if (elementNode.visible === 'false') {
@@ -515,9 +510,8 @@ export function renderElement(elementNode, parentDomElement = null, context = {}
     if (elementNode.text !== undefined) {
       el.textContent = elementNode.text;
     }
-    if (elementNode.font_color) {
-      el.style.color = elementNode.font_color;
-    }
+    const fontTrans = elementNode.font_transparency !== undefined ? elementNode.font_transparency : elementNode.text_transparency;
+    applyTextStyling(el, elementNode.font_color, fontTrans);
     if (elementNode.font_size) {
       if (elementNode.font_size === 'scaled') {
         el.setAttribute('data-text-scaled', 'true');
