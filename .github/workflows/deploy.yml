@@ -28,13 +28,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Build Standalone Bundle & Run Tests
         run: |
           node tools/bundle_runner.js
           node web-runner/tests/runner.js
           node web-runner/tests/runtime_and_app.test.js
+          node web-runner/tests/api_protocol.test.js
 
       - name: Prepare Site Directory
         run: |
@@ -47,6 +48,8 @@ jobs:
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
