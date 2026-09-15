@@ -20,6 +20,7 @@ const MODULE_FILES = [
   'script_blocks.js',
   'inspector.js',
   'api_protocol.js',
+  'overflow_menu.js',
   'app.js'
 ];
 

@@ -199,6 +199,224 @@ body, html {
   margin-left: 4px;
 }
 
+.cw-zoom-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cw-toolbar-item.is-overflowed {
+  display: none !important;
+}
+
+/* Overflow Menu Container & Trigger Button */
+.cw-overflow-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cw-overflow-btn {
+  width: 32px;
+  height: 30px;
+  padding: 0;
+  color: var(--cw-text-secondary);
+}
+
+.cw-overflow-btn:hover,
+.cw-overflow-btn.active {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* Floating Context Menu (Vercel / Codex dark theme) */
+.cw-context-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 215px;
+  background-color: rgba(24, 24, 27, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--cw-border-subtle);
+  border-radius: var(--cw-radius-lg);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  padding: 5px;
+  z-index: 1000;
+  user-select: none;
+  animation: cwContextMenuIn 0.14s ease-out;
+}
+
+.cw-context-menu.hidden {
+  display: none !important;
+}
+
+@keyframes cwContextMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cw-context-menu-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cw-context-item-wrapper {
+  position: relative;
+}
+
+.cw-context-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--cw-radius-md);
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--cw-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+
+.cw-context-item:hover,
+.cw-context-item.submenu-open {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.cw-context-item.active {
+  color: var(--cw-accent-solid, #fff);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.cw-context-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.cw-context-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cw-context-badge {
+  font-size: 10.5px;
+  color: var(--cw-text-muted);
+  background-color: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: var(--cw-radius-sm);
+  margin-left: 4px;
+}
+
+.cw-context-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--cw-status-success, #10b981);
+  margin-left: 4px;
+}
+
+.cw-context-arrow {
+  display: flex;
+  align-items: center;
+  opacity: 0.6;
+  margin-left: 2px;
+  transition: transform 0.15s ease;
+}
+
+.cw-context-item.submenu-open .cw-context-arrow {
+  opacity: 1;
+  transform: translateX(1px);
+}
+
+/* Nested Submenu ("Menu in Menu") */
+.cw-context-submenu {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 4px);
+  min-width: 185px;
+  background-color: rgba(24, 24, 27, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--cw-border-subtle);
+  border-radius: var(--cw-radius-lg);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  padding: 5px;
+  z-index: 1010;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: cwContextMenuIn 0.12s ease-out;
+}
+
+.cw-context-submenu.hidden {
+  display: none !important;
+}
+
+.cw-context-subitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--cw-radius-md);
+  font-size: 11.5px;
+  color: var(--cw-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+
+.cw-context-subitem:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.cw-context-subitem.selected {
+  color: #fff;
+  font-weight: 500;
+  background-color: rgba(59, 130, 246, 0.14);
+}
+
+.cw-context-check {
+  width: 14px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile responsive adjustments for submenus */
+@media (max-width: 480px) {
+  .cw-context-submenu {
+    position: static;
+    right: auto;
+    top: auto;
+    min-width: 100%;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    background-color: rgba(18, 18, 20, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
 /* Border-less ghost buttons (Codex style) */
 .cw-btn {
   display: inline-flex;

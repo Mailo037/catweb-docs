@@ -15,6 +15,7 @@ import { CatWebRuntime } from './runtime.js';
 import { CatWebInspector } from './inspector.js';
 import { playSyntheticAudio } from './assets.js';
 import { initAiProtocol, captureCanvasImage, handleAiRenderRequest } from './api_protocol.js';
+import { CatWebOverflowManager } from './overflow_menu.js';
 
 /**
  * Preloaded canonical CatWeb fixtures embedded for 100% offline file:// compatibility.
@@ -530,6 +531,8 @@ export class CatWebRunnerApp {
     this.statusResolution = null;
     this.statusValidation = null;
 
+    this.overflowManager = null;
+
     this._boundOnResize = this._onResize.bind(this);
     this._resizeObserver = null;
   }
@@ -658,6 +661,7 @@ export class CatWebRunnerApp {
         if (this.runtime) this.runtime.options.audioEnabled = this.audioEnabled;
         this.audioBtn.innerHTML = `${this.audioEnabled ? audioIconOn : audioIconOff}<span>${this.audioEnabled ? 'Audio' : 'Muted'}</span>`;
         this.audioBtn.classList.toggle('active', this.audioEnabled);
+        this.overflowManager?.renderMenuContent();
       });
     }
 
@@ -811,7 +815,11 @@ export class CatWebRunnerApp {
 
     initAiProtocol(this);
 
-    // 7. Load Initial Document
+    // 7. Initialize Responsive Toolbar Overflow Manager
+    this.overflowManager = new CatWebOverflowManager(this);
+    this.overflowManager.init();
+
+    // 8. Load Initial Document
     const defaultKey = this.options.defaultSample;
     const initialContent = PRELOADED_SAMPLES[defaultKey] || PRELOADED_SAMPLES.interactive_counter;
     if (initialContent) {
@@ -1120,6 +1128,8 @@ export class CatWebRunnerApp {
       this.zoomSelect._syncCustomSelect?.();
     }
 
+    this.overflowManager?.renderMenuContent();
+
     if (this.inspector && this.inspector.selectedGlobalId) {
       this.inspector.selectElement(this.inspector.selectedGlobalId);
     }
@@ -1155,6 +1165,8 @@ export class CatWebRunnerApp {
       if (this.inspectorBtn) this.inspectorBtn.classList.remove('active');
     }
 
+    this.overflowManager?.renderMenuContent();
+
     if (this.currentZoom === 'fit') {
       this.setZoom('fit');
     }
@@ -1177,6 +1189,8 @@ export class CatWebRunnerApp {
       if (this.diagnosticsBtn) this.diagnosticsBtn.classList.remove('active');
     }
 
+    this.overflowManager?.renderMenuContent();
+
     if (this.currentZoom === 'fit') {
       this.setZoom('fit');
     }
@@ -1198,6 +1212,8 @@ export class CatWebRunnerApp {
       this.editorPanel.classList.add('hidden');
       if (this.rawJsonBtn) this.rawJsonBtn.classList.remove('active');
     }
+
+    this.overflowManager?.renderMenuContent();
 
     if (this.currentZoom === 'fit') {
       this.setZoom('fit');
@@ -1225,6 +1241,10 @@ export class CatWebRunnerApp {
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
       this._resizeObserver = null;
+    }
+    if (this.overflowManager) {
+      this.overflowManager.destroy();
+      this.overflowManager = null;
     }
     if (this.sampleSelectCtrl) {
       this.sampleSelectCtrl.destroy();

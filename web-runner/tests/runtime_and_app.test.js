@@ -36,6 +36,7 @@ import {
   isScopeCloser,
   renderTokensHtml
 } from '../src/script_blocks.js';
+import { CatWebOverflowManager, OVERFLOW_CONFIG } from '../src/overflow_menu.js';
 import { getDocument, MockElement } from './harness.js';
 
 // Test statistics
@@ -794,6 +795,92 @@ async function runTests() {
     assertEqual(b1Element.textContent, 'Clicks: 2', 'Second event execution updates button DOM text to "Clicks: 2"');
 
     scriptInspector.destroy();
+  }
+
+  /* ============================================================
+   * 9. RESPONSIVE TOOLBAR OVERFLOW & CONTEXT MENU (MENU IN MENU)
+   * ============================================================ */
+  console.log('\n--- 9. RESPONSIVE TOOLBAR OVERFLOW & CONTEXT MENU ---');
+  {
+    const root = doc.createElement('div');
+    root.innerHTML = `
+      <div class="cw-toolbar"></div>
+      <div class="cw-brand"><span>CatWeb</span></div>
+      <div id="sampleItem" class="cw-toolbar-item"><select id="sampleSelect"><option value="interactive_counter">Counter</option><option value="minimal_site">Minimal</option></select></div>
+      <button id="uploadBtn" class="cw-toolbar-item"></button>
+      <button id="rawJsonBtn" class="cw-toolbar-item"></button>
+      <div id="zoomItem" class="cw-toolbar-item"><select id="zoomSelect"><option value="fit">Fit</option><option value="0.5">50%</option></select></div>
+      <button id="inspectorBtn" class="cw-toolbar-item"></button>
+      <button id="diagnosticsBtn" class="cw-toolbar-item"></button>
+      <button id="audioBtn" class="cw-toolbar-item active"></button>
+      <button id="aiApiBtn" class="cw-toolbar-item"></button>
+      <div id="overflowMenuContainer" style="display:none;"></div>
+      <button id="overflowMenuBtn"></button>
+      <div id="overflowMenuDropdown" class="hidden"></div>
+      <div id="editorPanel" class="hidden"></div>
+      <div id="inspectorPanel" class="hidden"></div>
+      <div id="diagnosticsPanel" class="hidden"></div>
+      <div id="viewportArea"></div>
+      <div id="canvasZoomWrapper"></div>
+      <div id="browserWindow"></div>
+      <div id="statusResolution"></div>
+      <div id="previewCanvas"></div>
+    `;
+
+    const app = new CatWebRunnerApp(root);
+    app.init();
+
+    const mgr = app.overflowManager;
+    assert(mgr !== null, 'Initializes CatWebOverflowManager on app');
+    assert(mgr.toolbar !== null, 'Locates toolbar element');
+    assert(mgr.overflowBtn !== null, 'Locates overflowMenuBtn');
+    assert(mgr.dropdown !== null, 'Locates overflowMenuDropdown');
+
+    // 1. Wide toolbar (1400px): all items fit, overflow button hidden
+    mgr.toolbar.clientWidth = 1400;
+    mgr.updateLayout();
+    assertEqual(mgr.overflowedItemIds.size, 0, 'No items overflow when width is 1400px');
+    assertEqual(mgr.container.style.display, 'none', 'Hides overflow container when all items fit');
+
+    // 2. Narrow toolbar (480px): lower priority items collapse
+    mgr.toolbar.clientWidth = 480;
+    mgr.updateLayout();
+    assert(mgr.overflowedItemIds.size > 0, 'Items overflow when width is constrained to 480px');
+    assert(mgr.overflowedItemIds.has('aiApi'), 'Priority 1 aiApi overflows');
+    assert(mgr.overflowedItemIds.has('audio'), 'Priority 2 audio overflows');
+    assert(mgr.overflowedItemIds.has('diagnostics'), 'Priority 3 diagnostics overflows');
+    assertEqual(mgr.container.style.display, 'flex', 'Shows overflow container when items overflow');
+
+    // 3. Dropdown Menu Rendering & Submenu Support ("Menu in Menu")
+    mgr.openMenu();
+    assert(mgr.isOpen, 'Opens overflow context menu');
+    assert(!mgr.dropdown.classList.contains('hidden'), 'Dropdown element is visible');
+    assert(mgr.dropdown.innerHTML.includes('cw-context-menu-inner'), 'Renders context menu inner container');
+    assert(mgr.dropdown.innerHTML.includes('cw-context-item'), 'Renders context menu items');
+
+    // 4. Action Execution from Context Menu
+    const diagItem = mgr.dropdown.querySelector('[data-id="diagnostics"]');
+    assert(diagItem !== null, 'Finds diagnostics item in context menu');
+    diagItem.dispatchEvent('click');
+    assert(!app.diagnosticsPanel.classList.contains('hidden'), 'Clicking diagnostics item in menu opens diagnostics panel');
+    assert(!mgr.isOpen, 'Menu closes after executing action');
+
+    // 5. Submenu Selection (e.g. Zoom or Sample)
+    mgr.openMenu();
+    const zoomSubItem = mgr.dropdown.querySelector('[data-sub-value="0.5"]');
+    if (zoomSubItem) {
+      zoomSubItem.dispatchEvent('click');
+      assertEqual(app.currentZoom, '0.5', 'Selecting submenu option 50% updates app zoom');
+    }
+
+    // 6. Restoring space (1400px): all items restore, container hidden
+    mgr.toolbar.clientWidth = 1400;
+    mgr.updateLayout();
+    assertEqual(mgr.overflowedItemIds.size, 0, 'All items restored when space returns');
+    assertEqual(mgr.container.style.display, 'none', 'Hides overflow container when restored');
+    assert(!root.querySelector('#aiApiBtn').classList.contains('is-overflowed'), 'Removes is-overflowed class from aiApiBtn');
+
+    app.destroy();
   }
 
   /* ============================================================
