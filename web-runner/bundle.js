@@ -4418,8 +4418,13 @@ class CatWebInspector {
     if (this.drawerElement) {
       this.drawerElement.innerHTML = `
         <div class="cw-inspector-empty">
-          <div class="cw-empty-icon">🔍</div>
-          <div class="cw-empty-title">No Element Selected</div>
+          <div class="cw-empty-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <div class="cw-empty-title">No element selected</div>
           <div class="cw-empty-sub">Click any element on the preview canvas or an error card to inspect.</div>
         </div>
       `;
@@ -5082,10 +5087,13 @@ class CatWebRunnerApp {
     }
 
     if (this.audioBtn) {
+      const audioIconOn = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+      const audioIconOff = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+
       this.audioBtn.addEventListener('click', () => {
         this.audioEnabled = !this.audioEnabled;
         if (this.runtime) this.runtime.options.audioEnabled = this.audioEnabled;
-        this.audioBtn.textContent = this.audioEnabled ? '🔊 Audio' : '🔇 Muted';
+        this.audioBtn.innerHTML = `${this.audioEnabled ? audioIconOn : audioIconOff}<span>${this.audioEnabled ? 'Audio' : 'Muted'}</span>`;
         this.audioBtn.classList.toggle('active', this.audioEnabled);
       });
     }
@@ -5305,7 +5313,7 @@ class CatWebRunnerApp {
 
     if (this.statusValidation) {
       this.statusValidation.className = 'cw-badge-pill error';
-      this.statusValidation.textContent = '✖ JSON Syntax Error';
+      this.statusValidation.innerHTML = '<span class="cw-status-dot error"></span> Syntax error';
     }
   }
 
@@ -5316,13 +5324,16 @@ class CatWebRunnerApp {
    * @param {Array<object>} [warnings=[]]
    */
   showDiagnostics(errors = [], warnings = []) {
+    const checkIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    const alertIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+
     // Update toolbar button badge
     if (this.diagnosticsBtn) {
       if (errors.length === 0) {
-        this.diagnosticsBtn.innerHTML = '<span>✔</span> Diagnostics';
+        this.diagnosticsBtn.innerHTML = `${checkIcon}<span>Diagnostics</span>`;
         this.diagnosticsBtn.classList.remove('error');
       } else {
-        this.diagnosticsBtn.innerHTML = `<span>⚠</span> Diagnostics <span class="cw-count-pill">${errors.length}</span>`;
+        this.diagnosticsBtn.innerHTML = `${alertIcon}<span>Diagnostics</span><span class="cw-count-pill">${errors.length}</span>`;
         this.diagnosticsBtn.classList.add('error');
       }
     }
@@ -5332,9 +5343,9 @@ class CatWebRunnerApp {
     if (errors.length === 0 && warnings.length === 0) {
       this.diagnosticsDrawer.innerHTML = `
         <div class="cw-inspector-empty">
-          <div class="cw-empty-icon" style="color: var(--cw-accent-green);">✔</div>
-          <div class="cw-empty-title">All Schema Checks Passed</div>
-          <div class="cw-empty-sub">The document complies 100% with CatWeb v2.18.2.3 invariants.</div>
+          <div class="cw-empty-icon" style="color: var(--cw-status-success);">${checkIcon}</div>
+          <div class="cw-empty-title">All schema checks passed</div>
+          <div class="cw-empty-sub">The document complies 100% with CatWeb invariants.</div>
         </div>
       `;
       return;
@@ -5355,7 +5366,7 @@ class CatWebRunnerApp {
           </div>
           <div class="cw-diag-path">${escapeHtml(err.path || '$')}</div>
           <div class="cw-diag-msg">${escapeHtml(err.message || '')}</div>
-          ${err.suggestion ? `<div class="cw-diag-sug">💡 ${escapeHtml(err.suggestion)}</div>` : ''}
+          ${err.suggestion ? `<div class="cw-diag-sug">${escapeHtml(err.suggestion)}</div>` : ''}
         </div>
       `);
     }
@@ -5369,7 +5380,7 @@ class CatWebRunnerApp {
           </div>
           <div class="cw-diag-path">${escapeHtml(warn.path || '$')}</div>
           <div class="cw-diag-msg">${escapeHtml(warn.message || '')}</div>
-          ${warn.suggestion ? `<div class="cw-diag-sug">💡 ${escapeHtml(warn.suggestion)}</div>` : ''}
+          ${warn.suggestion ? `<div class="cw-diag-sug">${escapeHtml(warn.suggestion)}</div>` : ''}
         </div>
       `);
     }

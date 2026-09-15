@@ -96,7 +96,12 @@
           <div class="cw-panel-title-group">
             <span class="cw-panel-title">Raw JSON Editor</span>
           </div>
-          <button id="closeEditorBtn" class="cw-panel-close-btn" title="Close editor">✕</button>
+          <button id="closeEditorBtn" class="cw-panel-close-btn" title="Close editor">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
         <div class="cw-panel-content cw-fade-y">
           <textarea id="editorTextarea" class="cw-editor-textarea" spellcheck="false" placeholder="Paste or type CatWeb JSON here..."></textarea>
@@ -111,8 +116,12 @@
       <section id="viewportArea" class="cw-viewport-area">
         <!-- DRAG AND DROP OVERLAY -->
         <div class="cw-dropzone-overlay">
-          <div style="font-size:32px;">📂</div>
-          <div style="font-size:15px;font-weight:600;">Drop CatWeb JSON here</div>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            <polyline points="12 11 12 17"></polyline>
+            <polyline points="9 14 12 11 15 14"></polyline>
+          </svg>
+          <div style="font-size:14px;font-weight:600;">Drop CatWeb JSON here</div>
           <div style="font-size:12px;color:var(--cw-text-secondary);">Full site or component snippet</div>
         </div>
 
@@ -152,7 +161,12 @@
           <div class="cw-panel-title-group">
             <span class="cw-panel-title">Element Inspector</span>
           </div>
-          <button id="closeInspectorBtn" class="cw-panel-close-btn" title="Close inspector">✕</button>
+          <button id="closeInspectorBtn" class="cw-panel-close-btn" title="Close inspector">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
         <div id="inspectorDrawer" class="cw-panel-content cw-fade-y">
           <div class="cw-inspector-empty">
@@ -174,7 +188,12 @@
           <div class="cw-panel-title-group">
             <span class="cw-panel-title">Diagnostics &amp; Validation</span>
           </div>
-          <button id="closeDiagnosticsBtn" class="cw-panel-close-btn" title="Close diagnostics">✕</button>
+          <button id="closeDiagnosticsBtn" class="cw-panel-close-btn" title="Close diagnostics">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
         <div id="diagnosticsDrawer" class="cw-panel-content cw-fade-y">
           <div class="cw-inspector-empty">

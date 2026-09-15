@@ -2,27 +2,27 @@
  * CatWeb Web Runner & Renderer — Application Shell Stylesheet
  * 
  * Refined Codex / Vercel Dark App aesthetic:
- *   - Obsidian matte surfaces with subtle 1px translucent borders
+ *   - Clean surface contrast without cluttering outlines around everything
+ *   - Ghost and flat buttons that highlight gently on hover
  *   - Soft gradient masks for elegant overflow fading (no hard cutoffs)
  *   - Clean Sentence / Title Case typography (zero noisy uppercase)
- *   - Zero-neon palette with understated monochrome & semantic indicator dots
+ *   - Pure SVG icons (zero emojis)
  *   - 100% self-contained for file:// and web servers
  */
 
 :root {
   /* Surfaces */
-  --cw-bg-shell: #0d0d0f;
-  --cw-bg-toolbar: #151518;
-  --cw-bg-panel: #18181c;
-  --cw-bg-card: #222226;
-  --cw-bg-card-hover: #29292f;
+  --cw-bg-shell: #0c0c0e;
+  --cw-bg-toolbar: #141416;
+  --cw-bg-panel: #18181b;
+  --cw-bg-card: #202024;
+  --cw-bg-card-hover: #27272c;
   --cw-bg-input: #111113;
   --cw-bg-viewport: #09090b;
 
-  /* Translucent hairline borders */
-  --cw-border-subtle: rgba(255, 255, 255, 0.08);
-  --cw-border-medium: rgba(255, 255, 255, 0.13);
-  --cw-border-strong: rgba(255, 255, 255, 0.22);
+  /* Subtle hairline dividers */
+  --cw-border-subtle: rgba(255, 255, 255, 0.06);
+  --cw-border-medium: rgba(255, 255, 255, 0.10);
 
   /* Typography */
   --cw-text-primary: #f4f4f5;
@@ -32,7 +32,6 @@
   /* Accents */
   --cw-accent-solid: #ffffff;
   --cw-accent-contrast: #09090b;
-  --cw-accent-blue: #3b82f6;
   --cw-status-success: #10b981;
   --cw-status-warning: #f59e0b;
   --cw-status-error: #f43f5e;
@@ -100,7 +99,7 @@ body, html {
 }
 
 /* ============================================================
- * TOOLBAR
+ * TOOLBAR (Border-less clean Codex top bar)
  * ============================================================ */
 
 .cw-toolbar {
@@ -119,7 +118,7 @@ body, html {
 .cw-toolbar-left, .cw-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .cw-brand {
@@ -137,8 +136,7 @@ body, html {
   width: 24px;
   height: 24px;
   border-radius: var(--cw-radius-md);
-  background: var(--cw-bg-card);
-  border: 1px solid var(--cw-border-subtle);
+  background: rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -150,9 +148,10 @@ body, html {
   font-weight: 500;
   color: var(--cw-text-muted);
   margin-right: 2px;
+  margin-left: 4px;
 }
 
-/* Buttons */
+/* Border-less ghost buttons (Codex style) */
 .cw-btn {
   display: inline-flex;
   align-items: center;
@@ -160,20 +159,19 @@ body, html {
   gap: 6px;
   height: 30px;
   padding: 0 10px;
-  background-color: var(--cw-bg-card);
-  color: var(--cw-text-primary);
-  border: 1px solid var(--cw-border-subtle);
+  background-color: transparent;
+  color: var(--cw-text-secondary);
+  border: none;
   border-radius: var(--cw-radius-md);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
 }
 
 .cw-btn:hover {
-  background-color: var(--cw-bg-card-hover);
-  border-color: var(--cw-border-medium);
+  background-color: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 
@@ -182,37 +180,33 @@ body, html {
 }
 
 .cw-btn.active {
-  background-color: #2b2b32;
-  border-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }
 
-/* Primary Action Button (Vercel Style) */
+/* Primary Action Button (Vercel Style: clean white) */
 .cw-btn.cw-btn-primary {
   background-color: var(--cw-accent-solid);
-  border-color: var(--cw-accent-solid);
   color: var(--cw-accent-contrast);
   font-weight: 600;
 }
 
 .cw-btn.cw-btn-primary:hover {
   background-color: #e4e4e7;
-  border-color: #e4e4e7;
   color: #000;
 }
 
 .cw-btn.error {
-  border-color: rgba(244, 63, 94, 0.4);
   color: var(--cw-status-error);
 }
 
-/* Select Dropdowns */
+/* Select Dropdowns (Outline-free flat pill) */
 .cw-select {
   height: 30px;
   padding: 0 28px 0 10px;
-  background-color: var(--cw-bg-card);
+  background-color: rgba(255, 255, 255, 0.05);
   color: var(--cw-text-primary);
-  border: 1px solid var(--cw-border-subtle);
+  border: none;
   border-radius: var(--cw-radius-md);
   font-size: 12px;
   font-weight: 500;
@@ -222,12 +216,11 @@ body, html {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .cw-select:hover, .cw-select:focus {
-  border-color: var(--cw-border-medium);
-  background-color: var(--cw-bg-card-hover);
+  background-color: rgba(255, 255, 255, 0.09);
 }
 
 /* Status Indicator Dot & Pill */
@@ -239,8 +232,7 @@ body, html {
   border-radius: var(--cw-radius-pill);
   font-size: 11px;
   font-weight: 500;
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--cw-border-subtle);
+  background-color: transparent;
   color: var(--cw-text-secondary);
 }
 
@@ -297,7 +289,7 @@ body, html {
   padding: 24px;
   position: relative;
   background-color: var(--cw-bg-viewport);
-  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -312,7 +304,7 @@ body, html {
   border-radius: var(--cw-radius-lg);
   overflow: hidden;
   background-color: #121214;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px var(--cw-border-subtle);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
   transition: transform 0.1s ease-out;
   transform-origin: center center;
   position: relative;
@@ -354,8 +346,8 @@ body, html {
   gap: 6px;
   height: 24px;
   padding: 0 10px;
-  background-color: #0d0d0f;
-  border: 1px solid var(--cw-border-subtle);
+  background-color: rgba(255, 255, 255, 0.04);
+  border: none;
   border-radius: var(--cw-radius-sm);
   color: var(--cw-text-secondary);
   font-size: 11px;
@@ -396,17 +388,16 @@ body, html {
 .cw-dropzone-overlay {
   position: absolute;
   inset: 16px;
-  background-color: rgba(13, 13, 15, 0.92);
-  border: 1.5px dashed rgba(255, 255, 255, 0.25);
+  background-color: rgba(13, 13, 15, 0.94);
   border-radius: var(--cw-radius-lg);
   display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   z-index: 99999;
   pointer-events: none;
-  color: #fff;
+  color: var(--cw-text-primary);
 }
 
 .cw-viewport-area.cw-dragover .cw-dropzone-overlay {
@@ -466,7 +457,6 @@ body, html {
   background: transparent;
   border: none;
   color: var(--cw-text-muted);
-  font-size: 11px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -475,7 +465,7 @@ body, html {
 }
 
 .cw-panel-close-btn:hover {
-  background-color: var(--cw-bg-card);
+  background-color: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 
@@ -487,16 +477,16 @@ body, html {
   gap: 14px;
 }
 
-/* Raw Editor Panel */
+/* Raw Editor Panel (Clean flat dark textarea) */
 .cw-editor-textarea {
   flex: 1;
   width: 100%;
   min-height: 380px;
-  background-color: var(--cw-bg-input);
+  background-color: #121215;
   color: #e4e4e7;
-  border: 1px solid var(--cw-border-subtle);
+  border: none;
   border-radius: var(--cw-radius-md);
-  padding: 10px;
+  padding: 12px;
   font-family: var(--cw-font-mono);
   font-size: 12px;
   line-height: 1.5;
@@ -504,10 +494,11 @@ body, html {
   outline: none;
   white-space: pre;
   tab-size: 2;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .cw-editor-textarea:focus {
-  border-color: var(--cw-border-strong);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 
 .cw-editor-actions {
@@ -517,7 +508,7 @@ body, html {
 }
 
 /* ============================================================
- * INSPECTOR DRAWER STYLING
+ * INSPECTOR DRAWER STYLING (Outline-free)
  * ============================================================ */
 
 .cw-inspector-empty {
@@ -565,8 +556,8 @@ body, html {
 }
 
 .cw-class-tag {
-  background-color: #27272a;
-  border: 1px solid var(--cw-border-medium);
+  background-color: rgba(255, 255, 255, 0.08);
+  border: none;
   color: #fff;
   padding: 2px 8px;
   border-radius: var(--cw-radius-sm);
@@ -581,8 +572,8 @@ body, html {
 }
 
 .cw-id-badge {
-  background-color: var(--cw-bg-input);
-  border: 1px solid var(--cw-border-subtle);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: none;
   padding: 2px 8px;
   border-radius: var(--cw-radius-sm);
   font-family: var(--cw-font-mono);
@@ -609,8 +600,8 @@ body, html {
 }
 
 .cw-metric-box {
-  background-color: var(--cw-bg-card);
-  border: 1px solid var(--cw-border-subtle);
+  background-color: rgba(255, 255, 255, 0.035);
+  border: none;
   border-radius: var(--cw-radius-md);
   padding: 8px 10px;
   display: flex;
@@ -641,8 +632,8 @@ body, html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--cw-bg-card);
-  border: 1px solid var(--cw-border-subtle);
+  background-color: rgba(255, 255, 255, 0.035);
+  border: none;
   border-radius: var(--cw-radius-md);
   padding: 6px 10px;
   font-size: 11.5px;
@@ -662,23 +653,23 @@ body, html {
 .cw-props-table {
   display: flex;
   flex-direction: column;
-  background-color: var(--cw-bg-input);
-  border: 1px solid var(--cw-border-subtle);
-  border-radius: var(--cw-radius-md);
-  overflow: hidden;
+  background-color: transparent;
+  border: none;
 }
 
 .cw-prop-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 5px 8px;
+  border: none;
+  border-radius: var(--cw-radius-sm);
   font-size: 11.5px;
+  transition: background-color 0.1s ease;
 }
 
-.cw-prop-row:last-child {
-  border-bottom: none;
+.cw-prop-row:hover {
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .cw-prop-lbl {
@@ -699,13 +690,12 @@ body, html {
   width: 11px;
   height: 11px;
   border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
   display: inline-block;
   flex-shrink: 0;
 }
 
 /* ============================================================
- * DIAGNOSTICS DRAWER & CARDS
+ * DIAGNOSTICS DRAWER & CARDS (Outline-free)
  * ============================================================ */
 
 .cw-diagnostics-list {
@@ -715,26 +705,24 @@ body, html {
 }
 
 .cw-diag-card {
-  background-color: var(--cw-bg-card);
-  border: 1px solid var(--cw-border-subtle);
-  border-left: 2px solid var(--cw-status-error);
+  background-color: rgba(255, 255, 255, 0.035);
+  border: none;
+  border-left: 2.5px solid var(--cw-status-error);
   border-radius: var(--cw-radius-md);
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
+  transition: background-color 0.15s ease;
 }
 
 .cw-diag-card:hover {
-  background-color: var(--cw-bg-card-hover);
-  border-color: var(--cw-border-medium);
-  border-left-color: var(--cw-status-error);
+  background-color: rgba(255, 255, 255, 0.065);
 }
 
 .cw-diag-card.warning {
-  border-left-color: var(--cw-status-warning);
+  border-left: 2.5px solid var(--cw-status-warning);
 }
 
 .cw-diag-header {
@@ -763,8 +751,8 @@ body, html {
   font-family: var(--cw-font-mono);
   font-size: 10px;
   color: var(--cw-text-secondary);
-  background-color: var(--cw-bg-input);
-  border: 1px solid var(--cw-border-subtle);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: none;
   padding: 2px 6px;
   border-radius: var(--cw-radius-sm);
 }
@@ -784,10 +772,9 @@ body, html {
 .cw-diag-sug {
   font-size: 11px;
   color: var(--cw-text-secondary);
-  background-color: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--cw-border-subtle);
-  padding: 5px 8px;
-  border-radius: var(--cw-radius-sm);
+  background-color: transparent;
+  border: none;
+  padding: 2px 0 0 0;
   line-height: 1.35;
 }
 
@@ -802,7 +789,7 @@ body, html {
   height: 28px;
   padding: 0 14px;
   background-color: var(--cw-bg-toolbar);
-  border-top: 1px solid var(--cw-border-subtle);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
   font-size: 11px;
   color: var(--cw-text-secondary);
   flex-shrink: 0;
