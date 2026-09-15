@@ -11,6 +11,8 @@
  */
 
 :root {
+  color-scheme: dark;
+
   /* Surfaces */
   --cw-bg-shell: #0c0c0e;
   --cw-bg-toolbar: #141416;
@@ -64,6 +66,52 @@ body, html {
   line-height: 1.4;
   user-select: none;
   -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+}
+
+/* ============================================================
+ * MODERN SLEEK DARK SCROLLBARS (Overrides native Windows bars)
+ * ============================================================ */
+
+/* Standards-compliant scrollbar styling for all elements */
+*, *::before, *::after {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+/* WebKit / Chromium custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Eliminate Windows scrollbar arrow buttons completely */
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* ============================================================
@@ -219,12 +267,15 @@ body, html {
   transition: background-color 0.15s ease;
 }
 
-.cw-select:hover, .cw-select:focus {
+.cw-select:hover, .cw-select:focus, .cw-select:focus-visible {
   background-color: rgba(255, 255, 255, 0.09);
+  outline: none;
+  border: none;
+  box-shadow: none;
 }
 
 /* ============================================================
- * CUSTOM DROPDOWN MENUS (Codex / Vercel flyout card style)
+ * CUSTOM DROPDOWN MENUS (Codex / Vercel flyout card style - Outline Free)
  * ============================================================ */
 
 .cw-select-native-hidden {
@@ -236,6 +287,7 @@ body, html {
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
+  outline: none !important;
   overflow: hidden !important;
 }
 
@@ -243,6 +295,8 @@ body, html {
   position: relative;
   display: inline-flex;
   vertical-align: middle;
+  border: none;
+  outline: none;
 }
 
 .cw-custom-select-trigger {
@@ -254,6 +308,7 @@ body, html {
   background-color: rgba(255, 255, 255, 0.05);
   color: var(--cw-text-primary);
   border: none;
+  outline: none;
   border-radius: var(--cw-radius-md);
   font-size: 12px;
   font-weight: 500;
@@ -271,6 +326,15 @@ body, html {
 .cw-custom-select-trigger.active {
   background-color: rgba(255, 255, 255, 0.12);
   color: #ffffff;
+  outline: none;
+  border: none;
+}
+
+.cw-custom-select-trigger:focus,
+.cw-custom-select-trigger:focus-visible {
+  outline: none;
+  border: none;
+  box-shadow: none;
 }
 
 .cw-custom-select-label {
@@ -294,7 +358,7 @@ body, html {
   transform: rotate(180deg);
 }
 
-/* Dropdown Menu Card */
+/* Dropdown Menu Card (Pure background + soft shadow, zero border/outline) */
 .cw-custom-select-menu {
   position: absolute;
   top: calc(100% + 5px);
@@ -303,7 +367,8 @@ body, html {
   max-height: 280px;
   overflow-y: auto;
   background-color: #1e1e22;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
+  outline: none;
   border-radius: 12px;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.35);
   padding: 5px;
@@ -338,6 +403,8 @@ body, html {
   align-items: center;
   justify-content: space-between;
   padding: 6px 10px;
+  border: none;
+  outline: none;
   border-radius: 8px;
   font-size: 12.5px;
   font-weight: 500;
@@ -626,6 +693,32 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.cw-panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cw-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cw-panel-content::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+}
+
+.cw-panel-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+.cw-panel-content::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Raw Editor Panel (Clean flat dark textarea) */
@@ -646,6 +739,33 @@ body, html {
   white-space: pre;
   tab-size: 2;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  color-scheme: dark;
+}
+
+.cw-editor-textarea::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.cw-editor-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cw-editor-textarea::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+}
+
+.cw-editor-textarea::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+.cw-editor-textarea::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .cw-editor-textarea:focus {
