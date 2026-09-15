@@ -371,10 +371,15 @@ export class CatWebInspector {
   _positionBox(overlayBox, targetElement) {
     if (!overlayBox || !targetElement) return;
 
-    let cRect = { left: 0, top: 0 };
+    let cRect = { left: 0, top: 0, width: 0, height: 0 };
     if (this.canvasContainer && typeof this.canvasContainer.getBoundingClientRect === 'function') {
       cRect = this.canvasContainer.getBoundingClientRect();
     }
+
+    const containerW = this.canvasContainer?.offsetWidth || this.canvasContainer?.clientWidth || 0;
+    const containerH = this.canvasContainer?.offsetHeight || this.canvasContainer?.clientHeight || 0;
+    const scaleX = (containerW > 0 && cRect.width > 0) ? (cRect.width / containerW) : 1;
+    const scaleY = (containerH > 0 && cRect.height > 0) ? (cRect.height / containerH) : 1;
 
     let tRect = { left: 0, top: 0, width: 0, height: 0 };
     if (typeof targetElement.getBoundingClientRect === 'function') {
@@ -389,15 +394,37 @@ export class CatWebInspector {
       };
     }
 
-    const relLeft = (tRect.left || 0) - (cRect.left || 0);
-    const relTop = (tRect.top || 0) - (cRect.top || 0);
-    const width = tRect.width || targetElement.offsetWidth || 0;
-    const height = tRect.height || targetElement.offsetHeight || 0;
+    const relLeft = ((tRect.left || 0) - (cRect.left || 0)) / scaleX;
+    const relTop = ((tRect.top || 0) - (cRect.top || 0)) / scaleY;
+    const width = (tRect.width || targetElement.offsetWidth || 0) / scaleX;
+    const height = (tRect.height || targetElement.offsetHeight || 0) / scaleY;
 
     overlayBox.style.left = `${Math.round(relLeft)}px`;
     overlayBox.style.top = `${Math.round(relTop)}px`;
     overlayBox.style.width = `${Math.max(2, Math.round(width))}px`;
     overlayBox.style.height = `${Math.max(2, Math.round(height))}px`;
+
+    // Match corner radius of target element for a sleek faithful bounding box
+    try {
+      if (typeof window !== 'undefined' && window.getComputedStyle) {
+        const compRadius = window.getComputedStyle(targetElement).borderRadius;
+        if (compRadius) {
+          overlayBox.style.borderRadius = compRadius;
+        }
+      }
+    } catch {
+      // fallback
+    }
+
+    // Smart tooltip positioning: prevent cutoff at the top of the canvas
+    if (this.tooltip && overlayBox === this.hoverOverlay) {
+      if (relTop < 32) {
+        this.tooltip.style.top = 'calc(100% + 6px)';
+      } else {
+        this.tooltip.style.top = '-28px';
+      }
+    }
+
     overlayBox.style.display = 'block';
   }
 

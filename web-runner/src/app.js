@@ -997,6 +997,10 @@ export class CatWebRunnerApp {
       this.zoomSelect.value = String(zoom);
       this.zoomSelect._syncCustomSelect?.();
     }
+
+    if (this.inspector && this.inspector.selectedGlobalId) {
+      this.inspector.selectElement(this.inspector.selectedGlobalId);
+    }
   }
 
   /**
