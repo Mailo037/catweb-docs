@@ -299,6 +299,7 @@ async function runTests() {
           children: [
             { class: 'UICorner', globalid: 'c1', radius: '0,16' },
             { class: 'UIStroke', globalid: 's1', stroke_color: '#27272a', stroke_thickness: '2' },
+            { class: 'UIPadding', globalid: 'p1', top: '0,10', bottom: '0,12', left: '0,14', right: '0,16' },
             {
               class: 'TextButton?link',
               globalid: 'b1',
@@ -321,7 +322,7 @@ async function runTests() {
     const f1Desc = inspector.getDescriptor('f1');
     assert(!!f1Desc, 'Registry contains descriptor for Frame [f1]');
     assertEqual(f1Desc.jsonNode.alias, 'main_card', 'Descriptor preserves element alias');
-    assertEqual(f1Desc.modifiers.length, 2, 'Extracts 2 modifiers (UICorner, UIStroke) for [f1]');
+    assertEqual(f1Desc.modifiers.length, 3, 'Extracts 3 modifiers (UICorner, UIStroke, UIPadding) for [f1]');
 
     const b1Desc = inspector.getDescriptor('b1');
     assert(!!b1Desc, 'Registry contains descriptor for TextButton?link [b1]');
@@ -336,6 +337,11 @@ async function runTests() {
     assert(drawerElement.innerHTML.includes('main_card'), 'Detail drawer displays alias "main_card"');
     assert(drawerElement.innerHTML.includes('UICorner'), 'Detail drawer displays modifier "UICorner"');
     assert(drawerElement.innerHTML.includes('UIStroke'), 'Detail drawer displays modifier "UIStroke"');
+    assert(drawerElement.innerHTML.includes('UIPadding'), 'Detail drawer displays modifier "UIPadding"');
+    assert(drawerElement.innerHTML.includes('Top Padding'), 'Detail drawer displays "Top Padding" option');
+    assert(drawerElement.innerHTML.includes('Bottom Padding'), 'Detail drawer displays "Bottom Padding" option');
+    assert(drawerElement.innerHTML.includes('Left Padding'), 'Detail drawer displays "Left Padding" option');
+    assert(drawerElement.innerHTML.includes('Right Padding'), 'Detail drawer displays "Right Padding" option');
 
     inspector.selectElement('b1');
     assertEqual(inspector.selectedGlobalId, 'b1', 'Switches selection to [b1]');
@@ -365,7 +371,7 @@ async function runTests() {
 
     // Verify tree rendering
     assert(treeContainer.textContent.includes('main_card'), 'Tree contains root card alias "main_card"');
-    assert(treeContainer.textContent.includes('2 Styling-Elemente'), 'Tree displays compact badge "2 Styling-Elemente" instead of expanding modifiers');
+    assert(treeContainer.textContent.includes('3 Styling-Elemente'), 'Tree displays compact badge "3 Styling-Elemente" instead of expanding modifiers');
     assert(!treeContainer.textContent.includes('UICorner'), 'Tree does not expand UICorner as a child row (compact styling badge)');
 
     // Select and live-edit element
@@ -389,6 +395,23 @@ async function runTests() {
     editorInspector.updateModifierProperty('f1', 0, 'radius', '0,24');
     assertEqual(f1Desc.modifiers[0].radius, '0,24', 'Updates modifier radius in AST');
     assertEqual(f1Dom.style.borderRadius, '24px', 'Updates DOM border-radius live through modifier update');
+
+    // Live update UIPadding 4 options
+    editorInspector.updateModifierProperty('f1', 2, 'top', '0,20');
+    assertEqual(f1Desc.modifiers[2].top, '0,20', 'Updates UIPadding top in AST');
+    assertEqual(f1Dom.style.paddingTop, 'calc(0% + 20px)', 'Updates DOM paddingTop live');
+
+    editorInspector.updateModifierProperty('f1', 2, 'bottom', '0,25');
+    assertEqual(f1Desc.modifiers[2].bottom, '0,25', 'Updates UIPadding bottom in AST');
+    assertEqual(f1Dom.style.paddingBottom, 'calc(0% + 25px)', 'Updates DOM paddingBottom live');
+
+    editorInspector.updateModifierProperty('f1', 2, 'left', '0,30');
+    assertEqual(f1Desc.modifiers[2].left, '0,30', 'Updates UIPadding left in AST');
+    assertEqual(f1Dom.style.paddingLeft, 'calc(0% + 30px)', 'Updates DOM paddingLeft live');
+
+    editorInspector.updateModifierProperty('f1', 2, 'right', '0,35');
+    assertEqual(f1Desc.modifiers[2].right, '0,35', 'Updates UIPadding right in AST');
+    assertEqual(f1Dom.style.paddingRight, 'calc(0% + 35px)', 'Updates DOM paddingRight live');
 
     editorInspector.destroy();
   }

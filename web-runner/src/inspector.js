@@ -11,7 +11,14 @@
  */
 
 import { parseUDim2, formatUDimCss } from './coordinates.js';
-import { applyUICorner, applyUIStroke, applyBackgroundStyling, applyTextStyling } from './styling.js';
+import {
+  applyUICorner,
+  applyUIStroke,
+  applyUIPadding,
+  applyUIGradient,
+  applyBackgroundStyling,
+  applyTextStyling
+} from './styling.js';
 
 export class CatWebInspector {
   /**
@@ -854,6 +861,14 @@ export class CatWebInspector {
       return /^#[0-9a-fA-F]{6}$/.test(val) ? val : fallback;
     };
 
+    const formatModUDim = (val) => {
+      if (val === undefined || val === null) return '0,0';
+      if (typeof val === 'object') {
+        return `${val.scale || 0},${val.offset || 0}`;
+      }
+      return String(val);
+    };
+
     // Modifiers edit rows
     const modifiersHtml = (entry.modifiers || []).map((m, idx) => {
       let editControls = '';
@@ -874,6 +889,48 @@ export class CatWebInspector {
               <input type="color" class="cw-color-picker" data-mod-idx="${idx}" data-mod-field="stroke_color" value="${safeHex(m.stroke_color, '#27272a')}">
               <input type="text" class="cw-input cw-input-sm cw-hex-input" data-mod-idx="${idx}" data-mod-field="stroke_color" value="${escapeHtml(m.stroke_color || '#27272a')}">
             </div>
+          </div>
+        `;
+      } else if (m.class === 'UIPadding') {
+        editControls = `
+          <div class="cw-mod-padding-grid">
+            <div class="cw-mod-field-col">
+              <label class="cw-field-lbl">Top Padding</label>
+              <input type="text" class="cw-input cw-input-sm" data-mod-idx="${idx}" data-mod-field="top" value="${escapeHtml(formatModUDim(m.top))}" placeholder="0,0">
+            </div>
+            <div class="cw-mod-field-col">
+              <label class="cw-field-lbl">Bottom Padding</label>
+              <input type="text" class="cw-input cw-input-sm" data-mod-idx="${idx}" data-mod-field="bottom" value="${escapeHtml(formatModUDim(m.bottom))}" placeholder="0,0">
+            </div>
+            <div class="cw-mod-field-col">
+              <label class="cw-field-lbl">Left Padding</label>
+              <input type="text" class="cw-input cw-input-sm" data-mod-idx="${idx}" data-mod-field="left" value="${escapeHtml(formatModUDim(m.left))}" placeholder="0,0">
+            </div>
+            <div class="cw-mod-field-col">
+              <label class="cw-field-lbl">Right Padding</label>
+              <input type="text" class="cw-input cw-input-sm" data-mod-idx="${idx}" data-mod-field="right" value="${escapeHtml(formatModUDim(m.right))}" placeholder="0,0">
+            </div>
+          </div>
+        `;
+      } else if (m.class === 'UIListLayout') {
+        editControls = `
+          <div class="cw-mod-padding-grid">
+            <div class="cw-mod-field-col">
+              <label class="cw-field-lbl">Direction</label>
+              <input type="text" class="cw-input cw-input-sm" data-mod-idx="${idx}" data-mod-field="fill_direction" value="${escapeHtml(m.fill_direction || m.direction || 'Vertical')}" placeholder="Vertical">
+            </div>
+            <div class="cw-mod-field-col">
+              <label class="cw-field-lbl">Padding / Gap</label>
+              <input type="text" class="cw-input cw-input-sm" data-mod-idx="${idx}" data-mod-field="padding" value="${escapeHtml(m.padding || '0,0')}" placeholder="0,0">
+            </div>
+          </div>
+        `;
+      } else if (m.class === 'UIGradient') {
+        editControls = `
+          <div class="cw-mod-input-row">
+            <span class="cw-field-lbl">Rotation</span>
+            <input type="number" class="cw-input cw-input-sm" data-mod-idx="${idx}" data-mod-field="rotation" value="${escapeHtml(m.rotation || '0')}" placeholder="0">
+            <span class="cw-unit-lbl">deg</span>
           </div>
         `;
       } else {
@@ -1191,6 +1248,11 @@ export class CatWebInspector {
         this._positionBox(this.selectOverlay, el);
       } else if (mod.class === 'UIStroke') {
         applyUIStroke(el, mod);
+      } else if (mod.class === 'UIPadding') {
+        applyUIPadding(el, mod);
+        this._positionBox(this.selectOverlay, el);
+      } else if (mod.class === 'UIGradient') {
+        applyUIGradient(el, mod);
       }
     }
 

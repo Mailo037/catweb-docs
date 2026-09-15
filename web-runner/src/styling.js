@@ -254,3 +254,29 @@ export function applyTextStyling(domElement, fontColor, fontTrans) {
   }
 }
 
+/**
+ * Applies Roblox UIPadding modifier to a DOM element.
+ *
+ * @param {HTMLElement} domElement
+ * @param {object} paddingNode - UIPadding element node
+ */
+export function applyUIPadding(domElement, paddingNode) {
+  if (!domElement || !paddingNode || !domElement.style) return;
+  const parseSide = (val) => {
+    if (!val && val !== 0) return '0px';
+    try {
+      const u = parseUDim(val);
+      return `calc(${u.scale * 100}% + ${u.offset}px)`;
+    } catch {
+      return '0px';
+    }
+  };
+
+  domElement.style.paddingTop = parseSide(paddingNode.top);
+  domElement.style.paddingBottom = parseSide(paddingNode.bottom);
+  domElement.style.paddingLeft = parseSide(paddingNode.left);
+  domElement.style.paddingRight = parseSide(paddingNode.right);
+  domElement.style.boxSizing = 'border-box';
+}
+
+

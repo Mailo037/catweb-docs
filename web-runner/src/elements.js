@@ -40,6 +40,7 @@ import {
   applyUICorner,
   applyUIStroke,
   applyUIGradient,
+  applyUIPadding,
   applyBackgroundStyling,
   applyTextStyling,
   hexToRgba
@@ -607,19 +608,7 @@ export function renderElement(elementNode, parentDomElement = null, context = {}
       el.style.gridAutoRows = `${cellH}px`;
       el.style.gap = `${gapY}px ${gapX}px`;
     } else if (mod.class === 'UIPadding') {
-      const parseSide = (val) => {
-        if (!val) return '0px';
-        try {
-          const u = parseUDim(val);
-          return `calc(${u.scale * 100}% + ${u.offset}px)`;
-        } catch {
-          return '0px';
-        }
-      };
-      if (mod.top) el.style.paddingTop = parseSide(mod.top);
-      if (mod.bottom) el.style.paddingBottom = parseSide(mod.bottom);
-      if (mod.left) el.style.paddingLeft = parseSide(mod.left);
-      if (mod.right) el.style.paddingRight = parseSide(mod.right);
+      applyUIPadding(el, mod);
     }
   }
 

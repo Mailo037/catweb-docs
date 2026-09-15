@@ -1492,6 +1492,31 @@ body, html {
   gap: 8px;
 }
 
+.cw-mod-padding-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.cw-mod-field-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cw-mod-field-col .cw-field-lbl {
+  font-size: 11px;
+  color: var(--cw-text-tertiary);
+  font-weight: 500;
+}
+
+.cw-mod-field-col .cw-input-sm {
+  height: 28px;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
 /* ============================================================
  * DIAGNOSTICS DRAWER & CARDS (Outline-free)
  * ============================================================ */
