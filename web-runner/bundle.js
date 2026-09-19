@@ -562,6 +562,8 @@ const ACTION_IDS = exports.ACTION_IDS = new Set([
   '5', '26', '28',
   // Tables & Arrays
   '54', '55', '56', '59', '66', '89', '90', '91', '110', '113',
+  // Functions
+  '87', '115',
   // Conditionals & Loops
   '18', '19', '20', '21', '22', '23', '24', '25', '37', '38', '44', '45', '46', '47',
   '79', '80', '81', '82', '92', '93', '103', '104', '105', '108', '112', '125', '126'
@@ -742,6 +744,7 @@ function validateCatWeb(input, options = {}) {
   const declaredGlobalIds = new Map(); // globalid -> path
   const declaredAliases = new Map();   // alias -> path
   const referencedObjectIds = [];     // { id, path, context }
+  const dynamicObjectVariables = new Set(); // Variables storing dynamically created or assigned object references
 
   // Recursive element traversal
   function validateElement(element, currentPath) {
@@ -1229,6 +1232,18 @@ function validateCatWeb(input, options = {}) {
                     });
                   }
                 }
+
+                // Special Check: Track dynamic object returns (Action 49: Duplicate <object> → <variable>)
+                if (action.id === '49') {
+                  const varSlot = action.text.find(it => it && typeof it === 'object' && it.l === 'variable');
+                  if (varSlot && typeof varSlot.value === 'string') {
+                    const rawVar = varSlot.value.trim();
+                    const cleanVar = rawVar.replace(/^\{|\}$/g, '');
+                    dynamicObjectVariables.add(rawVar);
+                    dynamicObjectVariables.add(cleanVar);
+                    dynamicObjectVariables.add(`{${cleanVar}}`);
+                  }
+                }
               }
             }
           }
@@ -1312,14 +1327,24 @@ function validateCatWeb(input, options = {}) {
   }
 
   // Post-pass: Verify referenced object IDs exist in document
-  const reservedObjectKeywords = new Set(['(parent)', '(self)', '(page)', '(root)', 'parent', 'self']);
+  const reservedObjectKeywords = new Set([
+    '(parent)', '(self)', '(page)', '(root)', 'parent', 'self',
+    'Page', '(Page)', 'page', '(Root)', 'root'
+  ]);
   for (const ref of referencedObjectIds) {
-    if (!reservedObjectKeywords.has(ref.id) && !declaredGlobalIds.has(ref.id)) {
+    const isReserved = reservedObjectKeywords.has(ref.id);
+    const isDeclaredElement = declaredGlobalIds.has(ref.id);
+    const isDynamicObjectVar = dynamicObjectVariables.has(ref.id) ||
+                               /^\{[^{}]+\}$/.test(ref.id) ||
+                               /^(?:o!|l!)[A-Za-z0-9_]+$/.test(ref.id) ||
+                               dynamicObjectVariables.has(ref.id.replace(/^\{|\}$/g, ''));
+
+    if (!isReserved && !isDeclaredElement && !isDynamicObjectVar) {
       errors.push({
         path: ref.path,
         code: 'UNRESOLVED_OBJECT_REFERENCE',
         message: `Script references object with globalid "${ref.id}", but no element with this globalid exists in the document!`,
-        suggestion: `Ensure the target element exists and has "globalid": "${ref.id}".`,
+        suggestion: `Ensure the target element exists and has "globalid": "${ref.id}", or use a valid object variable like "{o!my_var}".`,
         globalid: ref.parentGlobalId
       });
     }
@@ -4114,6 +4139,54 @@ class CatWebRuntime {
           break;
         }
 
+        case '49': {
+          // Duplicate <object> → <variable>
+          const objSlot = act.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object'));
+          const varSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'variable');
+          if (objSlot && varSlot) {
+            let sourceGid = objSlot.value;
+            if (typeof sourceGid === 'string' && sourceGid.startsWith('{') && sourceGid.endsWith('}')) {
+              sourceGid = String(this.resolveTemplate(sourceGid));
+            } else if (typeof sourceGid === 'string' && this.variables.has(sourceGid)) {
+              sourceGid = String(this.variables.get(sourceGid));
+            }
+            const sourceNode = this.elementsByGlobalId.get(sourceGid);
+            if (sourceNode) {
+              const newGid = 'd' + Math.random().toString(36).substring(2, 4);
+              const clonedNode = JSON.parse(JSON.stringify(sourceNode));
+              clonedNode.globalid = newGid;
+              this.elementsByGlobalId.set(newGid, clonedNode);
+              const varName = String(varSlot.value).replace(/[{}]/g, '');
+              this.setVariable(varName, newGid);
+            }
+          }
+          break;
+        }
+
+        case '87': {
+          // Run function <function>
+          const fnSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'function' || item.t === 'string'));
+          if (fnSlot) {
+            const fnName = fnSlot.value;
+            for (const sc of this.scripts) {
+              for (const evt of (sc.content || [])) {
+                if (String(evt.id) === '6') {
+                  const nameSlot = evt.text?.find(item => item && typeof item === 'object' && item.l === 'function');
+                  if (nameSlot && nameSlot.value === fnName) {
+                    await this._executeActions(evt.actions || [], evt);
+                  }
+                }
+              }
+            }
+          }
+          break;
+        }
+
+        case '115': {
+          // Return <any>
+          return;
+        }
+
         default:
           if (this.options.logActions) {
             console.warn(`[CatWebRuntime] Unhandled action id: ${actId}`);
@@ -4171,8 +4244,17 @@ class CatWebRuntime {
    * @private
    */
   _applyPropertyToElement(targetGid, propName, resolvedVal) {
-    const targetNode = this.elementsByGlobalId.get(targetGid);
-    const domEl = this.domRoot?.querySelector ? this.domRoot.querySelector(`[data-globalid="${targetGid}"]`) : null;
+    let actualGid = targetGid;
+    if (typeof targetGid === 'string') {
+      if (targetGid.startsWith('{') && targetGid.endsWith('}')) {
+        actualGid = String(this.resolveTemplate(targetGid));
+      } else if (this.variables.has(targetGid)) {
+        actualGid = String(this.variables.get(targetGid));
+      }
+    }
+
+    const targetNode = this.elementsByGlobalId.get(actualGid);
+    const domEl = this.domRoot?.querySelector ? this.domRoot.querySelector(`[data-globalid="${actualGid}"]`) : null;
 
     const normalizedProp = propName.replace(/\s+/g, '').toLowerCase();
 
@@ -4391,8 +4473,9 @@ function getActionCategory(actionId) {
     case '48': // String length
       return BLOCK_CATEGORIES.STRING;
 
-    case '6':  // Define function
-    case '87': // Run function
+    case '6':   // Define function
+    case '87':  // Run function
+    case '115': // Return
       return BLOCK_CATEGORIES.FUNCTION;
 
     default:
@@ -4449,6 +4532,16 @@ function renderTokensHtml(tokens, options = {}) {
 
       // Target Object Slot
       if (slotType === 'object' || slotLabel === 'button' || slotLabel === 'object' || slotLabel === 'input') {
+        if (/^\{.+\}$/.test(String(val))) {
+          const varName = String(val).replace(/[{}]/g, '');
+          return `
+            <span class="cw-chip cw-chip-variable" title="Object Variable {${escapeHtml(varName)}}">
+              <span class="cw-var-prefix">{</span>
+              <span class="cw-var-num">${escapeHtml(varName)}</span>
+              <span class="cw-var-suffix">}</span>
+            </span>
+          `;
+        }
         const alias = aliases.get(val);
         const displayLabel = alias ? `#${alias}` : val;
         return `

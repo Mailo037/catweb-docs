@@ -115,6 +115,8 @@ export const ACTION_IDS = new Set([
   '5', '26', '28',
   // Tables & Arrays
   '54', '55', '56', '59', '66', '89', '90', '91', '110', '113',
+  // Functions
+  '87', '115',
   // Conditionals & Loops
   '18', '19', '20', '21', '22', '23', '24', '25', '37', '38', '44', '45', '46', '47',
   '79', '80', '81', '82', '92', '93', '103', '104', '105', '108', '112', '125', '126'
@@ -295,6 +297,7 @@ export function validateCatWeb(input, options = {}) {
   const declaredGlobalIds = new Map(); // globalid -> path
   const declaredAliases = new Map();   // alias -> path
   const referencedObjectIds = [];     // { id, path, context }
+  const dynamicObjectVariables = new Set(); // Variables storing dynamically created or assigned object references
 
   // Recursive element traversal
   function validateElement(element, currentPath) {
@@ -782,6 +785,18 @@ export function validateCatWeb(input, options = {}) {
                     });
                   }
                 }
+
+                // Special Check: Track dynamic object returns (Action 49: Duplicate <object> → <variable>)
+                if (action.id === '49') {
+                  const varSlot = action.text.find(it => it && typeof it === 'object' && it.l === 'variable');
+                  if (varSlot && typeof varSlot.value === 'string') {
+                    const rawVar = varSlot.value.trim();
+                    const cleanVar = rawVar.replace(/^\{|\}$/g, '');
+                    dynamicObjectVariables.add(rawVar);
+                    dynamicObjectVariables.add(cleanVar);
+                    dynamicObjectVariables.add(`{${cleanVar}}`);
+                  }
+                }
               }
             }
           }
@@ -865,14 +880,24 @@ export function validateCatWeb(input, options = {}) {
   }
 
   // Post-pass: Verify referenced object IDs exist in document
-  const reservedObjectKeywords = new Set(['(parent)', '(self)', '(page)', '(root)', 'parent', 'self']);
+  const reservedObjectKeywords = new Set([
+    '(parent)', '(self)', '(page)', '(root)', 'parent', 'self',
+    'Page', '(Page)', 'page', '(Root)', 'root'
+  ]);
   for (const ref of referencedObjectIds) {
-    if (!reservedObjectKeywords.has(ref.id) && !declaredGlobalIds.has(ref.id)) {
+    const isReserved = reservedObjectKeywords.has(ref.id);
+    const isDeclaredElement = declaredGlobalIds.has(ref.id);
+    const isDynamicObjectVar = dynamicObjectVariables.has(ref.id) ||
+                               /^\{[^{}]+\}$/.test(ref.id) ||
+                               /^(?:o!|l!)[A-Za-z0-9_]+$/.test(ref.id) ||
+                               dynamicObjectVariables.has(ref.id.replace(/^\{|\}$/g, ''));
+
+    if (!isReserved && !isDeclaredElement && !isDynamicObjectVar) {
       errors.push({
         path: ref.path,
         code: 'UNRESOLVED_OBJECT_REFERENCE',
         message: `Script references object with globalid "${ref.id}", but no element with this globalid exists in the document!`,
-        suggestion: `Ensure the target element exists and has "globalid": "${ref.id}".`,
+        suggestion: `Ensure the target element exists and has "globalid": "${ref.id}", or use a valid object variable like "{o!my_var}".`,
         globalid: ref.parentGlobalId
       });
     }

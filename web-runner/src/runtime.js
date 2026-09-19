@@ -446,6 +446,54 @@ export class CatWebRuntime {
           break;
         }
 
+        case '49': {
+          // Duplicate <object> → <variable>
+          const objSlot = act.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object'));
+          const varSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'variable');
+          if (objSlot && varSlot) {
+            let sourceGid = objSlot.value;
+            if (typeof sourceGid === 'string' && sourceGid.startsWith('{') && sourceGid.endsWith('}')) {
+              sourceGid = String(this.resolveTemplate(sourceGid));
+            } else if (typeof sourceGid === 'string' && this.variables.has(sourceGid)) {
+              sourceGid = String(this.variables.get(sourceGid));
+            }
+            const sourceNode = this.elementsByGlobalId.get(sourceGid);
+            if (sourceNode) {
+              const newGid = 'd' + Math.random().toString(36).substring(2, 4);
+              const clonedNode = JSON.parse(JSON.stringify(sourceNode));
+              clonedNode.globalid = newGid;
+              this.elementsByGlobalId.set(newGid, clonedNode);
+              const varName = String(varSlot.value).replace(/[{}]/g, '');
+              this.setVariable(varName, newGid);
+            }
+          }
+          break;
+        }
+
+        case '87': {
+          // Run function <function>
+          const fnSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'function' || item.t === 'string'));
+          if (fnSlot) {
+            const fnName = fnSlot.value;
+            for (const sc of this.scripts) {
+              for (const evt of (sc.content || [])) {
+                if (String(evt.id) === '6') {
+                  const nameSlot = evt.text?.find(item => item && typeof item === 'object' && item.l === 'function');
+                  if (nameSlot && nameSlot.value === fnName) {
+                    await this._executeActions(evt.actions || [], evt);
+                  }
+                }
+              }
+            }
+          }
+          break;
+        }
+
+        case '115': {
+          // Return <any>
+          return;
+        }
+
         default:
           if (this.options.logActions) {
             console.warn(`[CatWebRuntime] Unhandled action id: ${actId}`);
@@ -503,8 +551,17 @@ export class CatWebRuntime {
    * @private
    */
   _applyPropertyToElement(targetGid, propName, resolvedVal) {
-    const targetNode = this.elementsByGlobalId.get(targetGid);
-    const domEl = this.domRoot?.querySelector ? this.domRoot.querySelector(`[data-globalid="${targetGid}"]`) : null;
+    let actualGid = targetGid;
+    if (typeof targetGid === 'string') {
+      if (targetGid.startsWith('{') && targetGid.endsWith('}')) {
+        actualGid = String(this.resolveTemplate(targetGid));
+      } else if (this.variables.has(targetGid)) {
+        actualGid = String(this.variables.get(targetGid));
+      }
+    }
+
+    const targetNode = this.elementsByGlobalId.get(actualGid);
+    const domEl = this.domRoot?.querySelector ? this.domRoot.querySelector(`[data-globalid="${actualGid}"]`) : null;
 
     const normalizedProp = propName.replace(/\s+/g, '').toLowerCase();
 

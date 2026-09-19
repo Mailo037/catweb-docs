@@ -1,0 +1,56 @@
+{
+  "favicon": "16944769468",
+  "title": "Functions and Duplicates Verification",
+  "background": "#0f0f11",
+  "webcontent": [
+    {
+      "class": "TextLabel",
+      "globalid": "cd",
+      "alias": "card_template",
+      "size": "{0,200},{0,100}",
+      "position": "{0,0},{0,0}",
+      "text": "Original"
+    },
+    {
+      "class": "script",
+      "globalid": "s1",
+      "alias": "controller",
+      "content": [
+        {
+          "id": "6",
+          "globalid": "f1",
+          "text": ["Define function", { "value": "init_card", "t": "string", "l": "function" }],
+          "actions": [
+            {
+              "id": "49",
+              "globalid": "a1",
+              "text": ["Duplicate", { "value": "cd", "t": "object" }, "→", { "value": "1", "t": "string", "l": "variable" }]
+            },
+            {
+              "id": "31",
+              "globalid": "a2",
+              "text": ["Set", { "value": "Text", "t": "string", "l": "property" }, "of", { "value": "{1}", "t": "object" }, "to", { "value": "Cloned Card", "t": "any" }]
+            },
+            {
+              "id": "115",
+              "globalid": "a3",
+              "text": ["Return", { "value": "{1}", "t": "string", "l": "any" }]
+            }
+          ]
+        },
+        {
+          "id": "0",
+          "globalid": "e1",
+          "text": ["When website loaded..."],
+          "actions": [
+            {
+              "id": "87",
+              "globalid": "a4",
+              "text": ["Run function", { "value": "init_card", "t": "string", "l": "function" }, { "value": [], "t": "tuple" }, "→", { "value": "2", "t": "string", "l": "variable?" }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

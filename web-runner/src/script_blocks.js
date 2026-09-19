@@ -117,8 +117,9 @@ export function getActionCategory(actionId) {
     case '48': // String length
       return BLOCK_CATEGORIES.STRING;
 
-    case '6':  // Define function
-    case '87': // Run function
+    case '6':   // Define function
+    case '87':  // Run function
+    case '115': // Return
       return BLOCK_CATEGORIES.FUNCTION;
 
     default:
@@ -175,6 +176,16 @@ export function renderTokensHtml(tokens, options = {}) {
 
       // Target Object Slot
       if (slotType === 'object' || slotLabel === 'button' || slotLabel === 'object' || slotLabel === 'input') {
+        if (/^\{.+\}$/.test(String(val))) {
+          const varName = String(val).replace(/[{}]/g, '');
+          return `
+            <span class="cw-chip cw-chip-variable" title="Object Variable {${escapeHtml(varName)}}">
+              <span class="cw-var-prefix">{</span>
+              <span class="cw-var-num">${escapeHtml(varName)}</span>
+              <span class="cw-var-suffix">}</span>
+            </span>
+          `;
+        }
         const alias = aliases.get(val);
         const displayLabel = alias ? `#${alias}` : val;
         return `

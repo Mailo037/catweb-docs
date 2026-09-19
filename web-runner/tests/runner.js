@@ -29,12 +29,13 @@ async function main() {
   console.log(`${colors.bold}${colors.cyan}  CatWeb JSON Web Runner & Renderer — E2E Test Runner ${colors.reset}`);
   console.log(`${colors.bold}${colors.cyan}======================================================${colors.reset}\n`);
 
-  // Load all 4 test suites
+  // Load test suites
   console.log(`${colors.dim}Loading test suites...${colors.reset}`);
   await import('./tier1_features.test.js');
   await import('./tier2_boundaries.test.js');
   await import('./tier3_combinations.test.js');
   await import('./tier4_samples.test.js');
+  await import('./functions_and_dynamic_objects.test.js');
 
   const failures = [];
 

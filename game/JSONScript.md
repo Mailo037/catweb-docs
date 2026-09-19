@@ -151,6 +151,15 @@ Confusing these two causes fatal publishing failures:
 | **Table Item** | `{table.entry}` | — | Reads property `entry` of table `table` |
 | **Array Item** | `{arr.1}` | — | Reads 1-based index 1 of array `arr` |
 
+### 6.1 Dynamically Duplicated Object Variables
+When duplicating UI elements via Action `49` (`Duplicate <object> → <variable>`), the duplicated element's reference is returned into the designated variable (e.g. `"1"` or `"o!clone"`).
+
+To manipulate or target the duplicated object in subsequent actions (such as `Set property`, `Tween property`, or `Parent object`), pass the variable in the `<object>` slot with curly braces:
+- Example: `{"value": "{1}", "t": "object"}`
+- Scoped Example: `{"value": "{o!clone}", "t": "object"}`
+
+The validator and runtime recognize these variable patterns and do not require the variable name to be a pre-declared static element `globalid`.
+
 > [!TIP]
 > **Anti-Moderation Rule:** Always use pure numbers for variable names (`{1}`, `{2}`, `{10}`). Words like `{count}`, `{player}`, or `{admin}` can trigger Roblox's automated filter and turn into `{######}`.
 
@@ -298,6 +307,16 @@ Transcribed directly from CatWeb's confirmed block-palette export (16 Events, 12
 | `34` | Set cookie | `["Set cookie", {"value":"ck","t":"string","l":"cookie"}, "to", {"value":"val","t":"any"}]` |
 | `36` | Get cookie | `["Get cookie", {"value":"ck","t":"string","l":"cookie"}, "→", {"value":"1","t":"string","l":"variable"}]` |
 | `62` | Delete cookie | `["Delete cookie", {"value":"ck","t":"string","l":"cookie"}]` |
+
+### 7.9 Actions — Functions
+
+| ID | Action | Exact `text` Array |
+|---|---|---|
+| `87` | Run function | `["Run function", {"value":"fn","t":"string","l":"function"}, {"value":[],"t":"tuple"}, "→", {"value":"1","t":"string","l":"variable?"}]` |
+| `115` | Return | `["Return", {"value":"val","t":"string","l":"any"}]` |
+
+> [!NOTE]
+> Functions are defined at the top-level of `content` using Event ID `6` (`Define function`). Calling a function via Action `87` pauses execution until the function returns (or terminates via Action `115`). To avoid exceeding the 120-actions-per-event limit, break complex execution routines into helper functions.
 
 ---
 

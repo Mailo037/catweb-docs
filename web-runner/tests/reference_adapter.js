@@ -681,7 +681,14 @@ export class CatWebRuntime {
         const objSlot = act.text?.find(item => typeof item === 'object' && item.t === 'object');
         const valSlot = act.text?.find(item => typeof item === 'object' && (item.t === 'any' || item.l === 'any'));
         if (propSlot && objSlot && valSlot) {
-          const targetGid = objSlot.value;
+          let targetGid = objSlot.value;
+          if (typeof targetGid === 'string') {
+            if (targetGid.startsWith('{') && targetGid.endsWith('}')) {
+              targetGid = String(this._resolveTemplate(targetGid));
+            } else if (this.variables.has(targetGid)) {
+              targetGid = String(this.getVariable(targetGid));
+            }
+          }
           const propName = propSlot.value;
           const resolvedVal = this._resolveTemplate(valSlot.value);
           const targetNode = this.elementsByGlobalId.get(targetGid);
@@ -699,6 +706,44 @@ export class CatWebRuntime {
             }
           }
         }
+      } else if (actId === '49') {
+        // Duplicate object
+        const objSlot = act.text?.find(item => typeof item === 'object' && item.t === 'object');
+        const varSlot = act.text?.find(item => typeof item === 'object' && item.l === 'variable');
+        if (objSlot && varSlot) {
+          let sourceGid = objSlot.value;
+          if (typeof sourceGid === 'string' && sourceGid.startsWith('{') && sourceGid.endsWith('}')) {
+            sourceGid = String(this._resolveTemplate(sourceGid));
+          }
+          const sourceNode = this.elementsByGlobalId.get(sourceGid);
+          if (sourceNode) {
+            const newGid = 'd' + Math.random().toString(36).substring(2, 4);
+            const clonedNode = JSON.parse(JSON.stringify(sourceNode));
+            clonedNode.globalid = newGid;
+            this.elementsByGlobalId.set(newGid, clonedNode);
+            const varName = String(varSlot.value).replace(/[{}]/g, '');
+            this.setVariable(varName, newGid);
+          }
+        }
+      } else if (actId === '87') {
+        // Run function
+        const fnSlot = act.text?.find(item => typeof item === 'object' && (item.l === 'function' || item.t === 'string'));
+        if (fnSlot) {
+          const fnName = fnSlot.value;
+          for (const sc of this.scripts) {
+            for (const evt of (sc.content || [])) {
+              if (String(evt.id) === '6') {
+                const nameSlot = evt.text?.find(item => typeof item === 'object' && item.l === 'function');
+                if (nameSlot && nameSlot.value === fnName) {
+                  this._executeActions(evt.actions || []);
+                }
+              }
+            }
+          }
+        }
+      } else if (actId === '115') {
+        // Return
+        return;
       } else if (actId === '18') {
         // If condition
         const operands = act.text?.filter(item => typeof item === 'object' && item.l === 'any') || [];
@@ -727,7 +772,7 @@ export class CatWebRuntime {
 
   _resolveTemplate(str) {
     if (typeof str !== 'string') return str;
-    return str.replace(/\{(\d+)\}/g, (_, varId) => {
+    return str.replace(/\{([^{}]+)\}/g, (_, varId) => {
       return String(this.getVariable(varId));
     });
   }

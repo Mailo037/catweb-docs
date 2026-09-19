@@ -514,6 +514,7 @@ Example flat structure:
 - Global variable: `{1}` (accessible across scripts).
 - Object variable: `{o!1}` (scoped to current script).
 - Local variable: `{l!1}` (scoped to event/function).
+- **Dynamic Object Variable:** Returned by Action `49` (`Duplicate <object> → <variable>`) into a variable. Reference in `<object>` slots using `{1}` or `{o!clone}` (`{"value": "{1}", "t": "object"}`).
 
 ### 5.4 Parameter Shape Rules (`t` and `l`)
 - **Bare `{"t": "any"}` (No `l` property):**
@@ -525,6 +526,7 @@ Example flat structure:
 - **`{"t": "string", "l": "any"}` (Has `l: "any"`):**
   - Action `11` Set Variable
   - Action `12` Add to Variable
+  - Action `115` Return
   - Both operands of all comparison actions (`18`, `19`, `20`, `21`, `125`, `126`)
 
 ### 5.5 High-Frequency Block Reference
@@ -551,6 +553,7 @@ Example flat structure:
 | `12` | Variables | Add to Variable | `["Add", {"value":"1","t":"string","l":"any"}, "to", {"value":"1","t":"string","l":"variable"}]` |
 | `31` | Looks | Set Property | `["Set", {"value":"Background Color","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"#ff0000","t":"any"}]` |
 | `39` | Looks | Get Property | `["Get", {"value":"Text","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]` |
+| `49` | Looks | Duplicate Object | `["Duplicate", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]` |
 | `48` | Strings | String length | `["Get length of", {"value":"str","t":"string"}, "→", {"value":"1","t":"string","l":"variable"}]` |
 | `88` | Looks | Tween Property | `["Tween", {"value":"Position","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"{0,0},{0,100}","t":"any"}, "-", {"value":"0.3","t":"number","l":"time"}, {"value":"Quad","t":"string","l":"style"}, {"value":"Out","t":"string","l":"direction"}]` |
 | `4` | Navigation | Redirect | `["Redirect to", {"value":"other.rbx","t":"string","href":"true"}]` |
@@ -562,6 +565,7 @@ Example flat structure:
 | `24` | Loops | Break | `["Break"]` |
 | `25` | Control | End (Closes If/Repeat) | `["end"]` |
 | `87` | Functions | Run Function | `["Run function", {"value":"10","t":"string","l":"function"}]` |
+| `115` | Functions | Return | `["Return", {"value":"0","t":"string","l":"any"}]` |
 
 ---
 
