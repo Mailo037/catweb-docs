@@ -28,15 +28,16 @@
 
         <div id="sampleItem" class="cw-toolbar-item">
           <select id="sampleSelect" class="cw-select" title="Choose preloaded sample">
+            <option value="custom" hidden>Custom JSON</option>
             <option value="interactive_counter" selected>Interactive Counter</option>
             <option value="minimal_site">Minimal CatWeb Site</option>
             <option value="user_snippet">User Component Snippet</option>
             <option value="valid_snippet">Valid Snippet</option>
-            <option value="invalid_examples">Invalid Examples (13 Errors)</option>
+            <option value="invalid_examples">Invalid Examples</option>
           </select>
         </div>
 
-        <button id="uploadBtn" class="cw-btn cw-toolbar-item" title="Upload CatWeb JSON from disk">
+        <button id="uploadBtn" class="cw-btn cw-toolbar-item" title="Upload CatWeb JSON from disk (or drop / paste it anywhere)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="17 8 12 3 7 8"></polyline>
@@ -46,7 +47,7 @@
         </button>
         <input type="file" id="fileInput" accept=".json" style="display:none">
 
-        <button id="rawJsonBtn" class="cw-btn cw-toolbar-item" title="Toggle Raw JSON text editor">
+        <button id="rawJsonBtn" class="cw-btn cw-toolbar-item" title="Toggle Raw JSON editor (E)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="16 18 22 12 16 6"></polyline>
             <polyline points="8 6 2 12 8 18"></polyline>
@@ -58,7 +59,7 @@
       <div class="cw-toolbar-right">
         <div id="zoomItem" class="cw-toolbar-item cw-zoom-group">
           <label for="zoomSelect" class="cw-label-muted">Zoom</label>
-          <select id="zoomSelect" class="cw-select" title="Change preview zoom level">
+          <select id="zoomSelect" class="cw-select" title="Change preview zoom level (+ / − / 0)">
             <option value="fit" selected>Fit Window</option>
             <option value="0.5">50%</option>
             <option value="0.75">75%</option>
@@ -68,7 +69,7 @@
           </select>
         </div>
 
-        <button id="inspectorBtn" class="cw-btn cw-toolbar-item" title="Inspect elements and layout properties">
+        <button id="inspectorBtn" class="cw-btn cw-toolbar-item" title="Inspect elements and layout properties (I)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -76,19 +77,27 @@
           <span>Inspect</span>
         </button>
 
-        <button id="diagnosticsBtn" class="cw-btn cw-toolbar-item" title="View validation diagnostics and error cards">
+        <button id="diagnosticsBtn" class="cw-btn cw-toolbar-item" title="View validation diagnostics and error cards (D)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
           <span>Diagnostics</span>
         </button>
 
-        <button id="audioBtn" class="cw-btn cw-toolbar-item active" title="Toggle UI sound synthesis">
+        <button id="audioBtn" class="cw-btn cw-toolbar-item active" title="Toggle UI sound synthesis (M)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
           </svg>
           <span>Audio: On</span>
+        </button>
+
+        <button id="shareBtn" class="cw-btn cw-toolbar-item" title="Copy a link that opens this document (S)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <span>Share</span>
         </button>
 
         <button id="aiApiBtn" class="cw-btn cw-toolbar-item" title="AI Render Protocol, Image Export &amp; API">
@@ -130,11 +139,19 @@
           </button>
         </div>
         <div class="cw-panel-content cw-fade-y">
-          <textarea id="editorTextarea" class="cw-editor-textarea" spellcheck="false" placeholder="Paste or type CatWeb JSON here..."></textarea>
+          <textarea id="editorTextarea" class="cw-editor-textarea" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="CatWeb JSON" placeholder="Paste or type CatWeb JSON here..."></textarea>
+        </div>
+        <div class="cw-editor-statusline">
+          <span id="editorStatus" class="cw-editor-status muted" role="status" aria-live="polite">Ctrl+Enter renders</span>
+          <label class="cw-switch" title="Re-render automatically while typing">
+            <input type="checkbox" id="liveRenderToggle" checked>
+            <span class="cw-switch-track" aria-hidden="true"></span>
+            <span>Live</span>
+          </label>
         </div>
         <div class="cw-editor-actions">
           <button id="formatJsonBtn" class="cw-btn" style="flex:1;">Format JSON</button>
-          <button id="applyJsonBtn" class="cw-btn cw-btn-primary" style="flex:1;">Apply &amp; Render</button>
+          <button id="applyJsonBtn" class="cw-btn cw-btn-primary" style="flex:1;" title="Render now (Ctrl+Enter)">Apply &amp; Render</button>
         </div>
       </aside>
 
@@ -273,14 +290,14 @@
       <div id="statusResolution" class="cw-status-center">
         1920 × 1080 (Fit)
       </div>
-      <div id="statusValidation" class="cw-status-right cw-badge-pill success">
+      <div id="statusValidation" class="cw-status-right cw-badge-pill success" role="status" aria-live="polite">
         <span class="cw-status-dot"></span> Ready
       </div>
     </footer>
 
     <!-- AI PROTOCOL & IMAGE EXPORT MODAL -->
     <div id="aiApiModal" class="cw-modal-backdrop hidden">
-      <div class="cw-modal-card">
+      <div class="cw-modal-card" role="dialog" aria-modal="true" aria-label="AI Render Protocol and Image Export">
         <div class="cw-modal-header">
           <div class="cw-modal-title">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -354,6 +371,8 @@ window.addEventListener('message', (e) => {
       </div>
     </div>
   </div>
+
+  <div id="toast" class="cw-toast" role="status" aria-live="polite"></div>
 
   <!-- APPLICATION SCRIPT (Self-contained, CORS-free for file:// and HTTP) -->
   <script src="bundle.js"></script>

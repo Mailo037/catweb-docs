@@ -69,12 +69,17 @@ Preview and interact with CatWeb JSON sites directly in your web browser without
   - Roblox asset fallbacks and audio synthesis (`Play Sound` emulation via Web Audio API).
 - **Interactive Script Runtime & Visual Block Viewer:** Dispatches button clicks, manages variables, displays authentic Scratch/CatWeb-style visual block stacks with C-block indentation, and allows running events on demand.
 - **Live Visual Inspector & Property Editor:** Click any element to inspect its class, `globalid`, parent hierarchy, and live properties with two-way AST synchronization.
-- **Automated Test Suite (406 Tests):**
+- **Live Editing & Sharing:** The Raw JSON editor re-renders as you type (toggle "Live", or press `Ctrl+Enter`), points to the exact line and column of JSON syntax errors, and remembers your last document across reloads. **Share** copies a `#data=` link that opens the current document for anyone.
+- **Keyboard Shortcuts:** `E` editor · `I` inspector · `D` diagnostics · `M` audio · `S` share link · `+`/`-` zoom · `0` fit · `?` list shortcuts. Paste JSON (`Ctrl+V`) anywhere outside a text field to render it.
+- **Automated Test Suite (693 Tests):**
   ```bash
-  node web-runner/tests/runner.js              # 200 unit and integration tests
-  node web-runner/tests/runtime_and_app.test.js # 173 runtime and editor tests
-  node web-runner/tests/api_protocol.test.js    # 33 AI protocol & API server tests
+  npm test                 # runs every suite below + example validation
+  npm run build            # regenerate web-runner/bundle.js after editing web-runner/src/
+  npm run serve            # serve the runner locally
   ```
+  Individual suites: `npm run test:runner` (Tier 1–4), `test:app` (runtime & app shell), `test:api` (AI protocol), `test:engine` (core engine), `test:visual` (visual elements), `test:examples` (example JSON validation).
+
+  CI runs the full suite on every pull request and fails if the committed `bundle.js` is out of date with `web-runner/src/`. GitHub Pages only deploys after CI passes.
 
 ---
 

@@ -256,10 +256,57 @@ export function initAiProtocol(appInstance) {
     }
   });
 
-  // 3. Check URL Query Parameters & Hash on startup
+  // 3. Check URL Query Parameters & Hash on startup, and whenever the hash changes
   setTimeout(() => {
     checkUrlPayload(appInstance);
   }, 100);
+
+  window.addEventListener('hashchange', () => {
+    checkUrlPayload(appInstance);
+  });
+}
+
+/**
+ * True when the current page URL carries a document (?json=, ?url=, #json=, #data=).
+ * The app uses this to skip loading its default sample, so a shared link does not
+ * briefly flash the counter demo before the real payload renders.
+ *
+ * @returns {boolean}
+ */
+export function hasUrlPayload() {
+  if (typeof window === 'undefined' || !window.location) return false;
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('json') || urlParams.has('url')) return true;
+    const hash = window.location.hash.slice(1);
+    return hash.startsWith('json=') || hash.startsWith('data=');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Encodes a document for the `#data=` hash protocol (UTF-8 safe Base64).
+ *
+ * @param {object|Array|string} json
+ * @returns {string}
+ */
+export function encodeShareData(json) {
+  const text = typeof json === 'string' ? JSON.stringify(JSON.parse(json)) : JSON.stringify(json);
+  return btoa(unescape(encodeURIComponent(text)));
+}
+
+/**
+ * Decodes a `#data=` payload. Accepts standard and URL-safe Base64, with or
+ * without padding, and tolerates percent-encoding added by chat apps.
+ *
+ * @param {string} b64
+ * @returns {string}
+ */
+export function decodeShareData(b64) {
+  let clean = decodeURIComponent(b64).replace(/ /g, '+').replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
+  while (clean.length % 4) clean += '=';
+  return decodeURIComponent(escape(atob(clean)));
 }
 
 /**
@@ -284,9 +331,14 @@ async function checkUrlPayload(appInstance) {
       const targetUrl = urlParams.get('url');
       try {
         const resp = await fetch(targetUrl);
-        if (resp.ok) payload = await resp.text();
+        if (resp.ok) {
+          payload = await resp.text();
+        } else {
+          appInstance?.showToast?.(`Could not load ${targetUrl} (HTTP ${resp.status})`, 'error');
+        }
       } catch (fetchErr) {
         console.warn('[CatWebAPI] Failed to fetch remote payload URL:', fetchErr);
+        appInstance?.showToast?.(`Could not load ${targetUrl}: ${fetchErr.message}`, 'error');
       }
     }
 
@@ -296,8 +348,7 @@ async function checkUrlPayload(appInstance) {
       if (hash.startsWith('json=')) {
         payload = decodeURIComponent(hash.slice(5));
       } else if (hash.startsWith('data=')) {
-        const b64 = hash.slice(5);
-        payload = decodeURIComponent(escape(atob(b64)));
+        payload = decodeShareData(hash.slice(5));
       }
     }
 
@@ -305,16 +356,27 @@ async function checkUrlPayload(appInstance) {
       const shouldExportImage = urlParams.get('render') === 'image' || urlParams.get('export') === 'image';
       const result = await handleAiRenderRequest(payload, appInstance, { format: 'png' });
 
-      if (shouldExportImage && result.success && result.image) {
-        // Automatically trigger image view or download if requested
+      if (!result.success) {
+        // handleAiRenderRequest only renders valid documents. Load invalid ones
+        // anyway so a person opening the link sees the diagnostics.
+        appInstance?.loadDocument?.(payload);
+        appInstance?.toggleDiagnostics?.(true);
+      } else if (shouldExportImage && result.image) {
         const viewerLink = document.createElement('a');
         viewerLink.href = result.image;
         viewerLink.download = 'catweb_preview.png';
-        viewerLink.title = 'Rendered CatWeb Preview';
-        console.log('[CatWebAPI] Render completed successfully. Result stored in window.__CATWEB_RESULT__');
+        document.body.appendChild(viewerLink);
+        viewerLink.click();
+        viewerLink.remove();
       }
+      console.log('[CatWebAPI] URL payload processed. Result stored in window.__CATWEB_RESULT__');
+      return;
     }
   } catch (err) {
     console.warn('[CatWebAPI] URL payload initialization error:', err);
+    appInstance?.showToast?.('Could not read the document from this link: ' + err.message, 'error');
   }
+
+  // A payload was announced (e.g. ?url= that failed to fetch) but nothing rendered.
+  appInstance?.loadFallbackDocument?.();
 }

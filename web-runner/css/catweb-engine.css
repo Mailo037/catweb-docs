@@ -153,6 +153,26 @@
   font-family: "Comic Sans MS", "Comic Neue", cursive, sans-serif;
 }
 
+.cw-font-roboto {
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.cw-font-buildersans,
+.cw-font-buildersansbold {
+  font-family: "Builder Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Weight variants encoded in the Roblox font enum name */
+.cw-font-gothambold,
+.cw-font-sourcesansbold,
+.cw-font-buildersansbold {
+  font-weight: 700;
+}
+
+.cw-font-gothamblack {
+  font-weight: 900;
+}
+
 .cw-text-element {
   display: flex;
   box-sizing: border-box;

@@ -1,0 +1,23 @@
+{
+  "name": "catweb-docs",
+  "private": true,
+  "type": "module",
+  "description": "CatWeb documentation, validator and the in-browser Web Runner.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node tools/bundle_runner.js",
+    "check:bundle": "node tools/bundle_runner.js && git diff --exit-code -- web-runner/bundle.js",
+    "test": "npm run test:runner && npm run test:app && npm run test:api && npm run test:engine && npm run test:visual && npm run test:examples",
+    "test:runner": "node web-runner/tests/runner.js",
+    "test:app": "node web-runner/tests/runtime_and_app.test.js",
+    "test:api": "node web-runner/tests/api_protocol.test.js",
+    "test:engine": "node web-runner/tests/core_engine.test.js",
+    "test:visual": "node web-runner/tests/visual_elements.test.js",
+    "test:examples": "node tools/validate_examples.js",
+    "validate": "node tools/validate.js",
+    "serve": "npx --yes serve web-runner",
+    "api": "node tools/api_server.js"
+  }
+}

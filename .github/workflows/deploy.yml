@@ -16,7 +16,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
   build-and-deploy:
+    needs: test
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -24,18 +28,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Build Standalone Bundle & Run Tests
-        run: |
-          node tools/bundle_runner.js
-          node web-runner/tests/runner.js
-          node web-runner/tests/runtime_and_app.test.js
-          node web-runner/tests/api_protocol.test.js
 
       - name: Prepare Site Directory
         run: |
