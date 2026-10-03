@@ -11,7 +11,8 @@
  */
 
 import http from 'node:http';
-import { handleAiRenderRequest, captureCanvasImage } from '../src/api_protocol.js';
+import { handleAiRenderRequest, captureCanvasImage, encodeShareData, decodeShareData, hasUrlPayload } from '../src/api_protocol.js';
+import { locateJsonError } from '../src/app.js';
 import { createServer, handleRenderPayload } from '../../tools/api_server.js';
 import { getDocument } from './harness.js';
 
@@ -246,6 +247,36 @@ async function runTests() {
     } finally {
       await new Promise((resolve) => server.close(resolve));
     }
+  }
+
+  /* ============================================================
+   * SHARE LINKS & JSON ERROR LOCATION
+   * ============================================================ */
+  console.log('\n--- Share link encoding & JSON error location ---');
+  {
+    const doc = [{ class: 'TextLabel', globalid: 'tl', text: 'Grüße 🐱 <b>CatWeb</b>' }];
+    const encoded = encodeShareData(doc);
+    assertEqual(decodeShareData(encoded), JSON.stringify(doc), 'Share data round-trips UTF-8 and emoji');
+    assertEqual(encodeShareData(JSON.stringify(doc, null, 2)), encoded, 'Share data is compact regardless of input formatting');
+
+    const urlSafe = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    assertEqual(decodeShareData(urlSafe), JSON.stringify(doc), 'Decodes URL-safe Base64 without padding');
+    assertEqual(decodeShareData(encoded.replace(/\+/g, ' ')), JSON.stringify(doc), 'Decodes Base64 whose "+" became spaces');
+    assertEqual(hasUrlPayload(), false, 'hasUrlPayload() is false outside a browser');
+
+    const bad = '{\n  "a": 1\n  "b": 2\n}';
+    let parseErr = null;
+    try { JSON.parse(bad); } catch (e) { parseErr = e; }
+    const loc = locateJsonError(parseErr, bad);
+    assert(loc !== null, 'locateJsonError finds a position for a missing comma');
+    assertEqual(loc && loc.line, 3, 'Missing comma is reported on line 3');
+    assertEqual(loc && loc.column, 3, 'Missing comma is reported at column 3');
+
+    let eofErr = null;
+    try { JSON.parse('[1, 2'); } catch (e) { eofErr = e; }
+    const eof = locateJsonError(eofErr, '[1, 2');
+    assertEqual(eof && eof.line, 1, 'Unexpected end of input is located on line 1');
+    assertEqual(locateJsonError(new Error('no position here'), '{}'), null, 'Returns null when the message has no position');
   }
 
   /* ============================================================

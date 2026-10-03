@@ -81,7 +81,17 @@ function createFallbackMockDocument() {
       this.attributes = {};
       this.dataset = {};
       this.listeners = {};
-      this.style = {};
+      // Mirrors CSSStyleDeclaration: unset properties read as '' and the
+      // setProperty/getPropertyValue/removeProperty helpers exist.
+      this.style = new Proxy({}, {
+        get(target, prop) {
+          if (prop === 'setProperty') return (key, value) => { target[key] = String(value); };
+          if (prop === 'getPropertyValue') return (key) => target[key] ?? '';
+          if (prop === 'removeProperty') return (key) => { delete target[key]; };
+          if (typeof prop !== 'string') return target[prop];
+          return target[prop] ?? '';
+        }
+      });
       this.classList = {
         _classes: new Set(),
         add(...cls) { cls.forEach(c => this._classes.add(c)); },
@@ -432,6 +442,19 @@ export function renderElement(elementNode, parentDomElement = null, context = {}
     if (elementNode.align_x) {
       el.style.textAlign = elementNode.align_x.toLowerCase();
     }
+
+    // Roblox text objects default to centered text on both axes. The engine
+    // stylesheet maps these classes onto a flex container, which is what makes
+    // align_y work at all. Truncated text stays a block box because
+    // text-overflow: ellipsis does not apply to flex items.
+    const alignX = String(elementNode.align_x || 'Center').toLowerCase();
+    const alignY = String(elementNode.align_y || 'Center').toLowerCase();
+    if (elementNode.truncate !== 'AtEnd') {
+      el.classList.add('cw-text-element');
+    }
+    el.classList.add(`cw-text-align-x-${alignX}`, `cw-text-align-y-${alignY}`);
+    el.classList.add(`cw-font-${String(elementNode.font || 'SourceSans').toLowerCase().replace(/[^a-z0-9]/g, '')}`);
+
     if (elementNode.wrap === 'true') {
       el.style.whiteSpace = 'normal';
       el.style.wordBreak = 'break-word';
@@ -446,7 +469,9 @@ export function renderElement(elementNode, parentDomElement = null, context = {}
     }
 
     if (elementNode.rich === 'true' && elementNode.text) {
-      el.innerHTML = renderRichText(elementNode.text);
+      // Single wrapper so the flex text container sees one item and inline
+      // runs like "Hello <b>World</b>" keep their spacing.
+      el.innerHTML = `<span class="cw-rich-text">${renderRichText(elementNode.text)}</span>`;
     }
 
     if (baseClass === 'TextBox') {

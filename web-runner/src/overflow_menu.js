@@ -23,10 +23,20 @@ export const OVERFLOW_CONFIG = [
     }
   },
   {
+    id: 'share',
+    priority: 1.5,
+    selector: '#shareBtn',
+    label: 'Copy Share Link',
+    icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`,
+    action: (app) => {
+      app.copyShareLink?.();
+    }
+  },
+  {
     id: 'audio',
     priority: 2,
     selector: '#audioBtn',
-    getLabel: (app) => (app.audioEnabled ? 'Audio: On' : 'Audio: Muted'),
+    getLabel: (app) => (app.audioEnabled ? 'Audio: On' : 'Audio: Off'),
     getIcon: (app) =>
       app.audioEnabled
         ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`
@@ -235,6 +245,7 @@ export class CatWebOverflowManager {
       case 'diagnostics': return 100;
       case 'audio': return 95;
       case 'aiApi': return 130;
+      case 'share': return 80;
       default: return 90;
     }
   }
@@ -426,7 +437,7 @@ export class CatWebOverflowManager {
         const subItems = config.getSubmenuItems?.(this.app) || [];
         const currentVal = config.getCurrentValue?.(this.app);
         const currentItem = subItems.find((s) => s.value === currentVal);
-        const currentLabel = currentItem ? currentItem.label : currentVal;
+        const currentLabel = currentItem ? currentItem.label : (currentVal === 'custom' ? 'Custom JSON' : currentVal);
 
         const isSubmenuOpen = !this.isDrilldownMode() && this.activeSubmenuId === config.id;
 

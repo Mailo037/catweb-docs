@@ -14,8 +14,23 @@ import { renderCatWebTree } from './elements.js';
 import { CatWebRuntime } from './runtime.js';
 import { CatWebInspector } from './inspector.js';
 import { playSyntheticAudio } from './assets.js';
-import { initAiProtocol, captureCanvasImage, handleAiRenderRequest } from './api_protocol.js';
+import { initAiProtocol, captureCanvasImage, handleAiRenderRequest, hasUrlPayload, encodeShareData } from './api_protocol.js';
 import { CatWebOverflowManager } from './overflow_menu.js';
+
+/** localStorage key for the last document rendered from the editor, an upload or a paste. */
+const STORAGE_KEY = 'catweb-runner:last-document';
+
+/** Debounce for live rendering while typing in the Raw JSON editor. */
+const LIVE_RENDER_DELAY_MS = 450;
+
+/** Zoom steps used by the +/- keyboard shortcuts. */
+const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5];
+
+/** Share links longer than this may get cut off by chat apps. */
+const SHARE_URL_WARN_LENGTH = 32000;
+
+/** Value of the hidden sample option shown while a non-sample document is loaded. */
+const CUSTOM_SAMPLE_KEY = 'custom';
 
 /**
  * Preloaded canonical CatWeb fixtures embedded for 100% offline file:// compatibility.
@@ -305,6 +320,9 @@ export function initCustomSelect(selectEl, options = {}) {
         selectedText = text;
       }
 
+      // Hidden options (e.g. "Custom JSON") can be the current label but are not pickable.
+      if (opt.hidden) continue;
+
       const item = doc.createElement('div');
       item.className = 'cw-custom-select-item' + (isSelected ? ' active' : '');
       if (item.setAttribute) {
@@ -364,6 +382,12 @@ export function initCustomSelect(selectEl, options = {}) {
         if (item.classList?.remove) item.classList.remove('active');
         if (item.setAttribute) item.setAttribute('aria-selected', 'false');
       }
+    }
+
+    if (!selectedText) {
+      // The current value may be a hidden option that has no menu item.
+      const opt = selectEl.options?.[selectEl.selectedIndex];
+      if (opt) selectedText = opt.textContent || '';
     }
 
     if (selectedText) {
@@ -535,7 +559,18 @@ export class CatWebRunnerApp {
 
     this.overflowManager = null;
 
+    this.shareBtn = null;
+    this.editorStatus = null;
+    this.liveRenderToggle = null;
+    this.toastEl = null;
+    this.liveRender = true;
+    this._liveRenderTimer = null;
+    this._toastTimer = null;
+    this._lastSyntaxErrorPos = null;
+
     this._boundOnResize = this._onResize.bind(this);
+    this._boundOnKeydown = this._onGlobalKeydown.bind(this);
+    this._boundOnPaste = this._onPaste.bind(this);
     this._resizeObserver = null;
   }
 
@@ -585,13 +620,18 @@ export class CatWebRunnerApp {
     this.statusResolution = this.root.querySelector('#statusResolution');
     this.statusValidation = this.root.querySelector('#statusValidation');
 
+    this.shareBtn = this.root.querySelector('#shareBtn');
+    this.editorStatus = this.root.querySelector('#editorStatus');
+    this.liveRenderToggle = this.root.querySelector('#liveRenderToggle');
+    this.toastEl = this.root.querySelector('#toast');
+
     // 2. Bind Toolbar Events
     if (this.sampleSelect) {
       this.sampleSelectCtrl = initCustomSelect(this.sampleSelect);
       this.sampleSelect.addEventListener('change', () => {
         const sampleKey = this.sampleSelect.value;
         if (PRELOADED_SAMPLES[sampleKey]) {
-          this.loadDocument(PRELOADED_SAMPLES[sampleKey]);
+          this.loadDocument(PRELOADED_SAMPLES[sampleKey], { sampleKey });
         }
         if (this.overflowManager) {
           this.overflowManager.measureIntrinsicWidths();
@@ -605,11 +645,9 @@ export class CatWebRunnerApp {
       this.fileInput.addEventListener('change', (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          this.loadDocument(evt.target?.result);
-        };
-        reader.readAsText(file);
+        this._loadFile(file);
+        // Reset so picking the same file again still fires "change".
+        this.fileInput.value = '';
       });
     }
 
@@ -625,16 +663,49 @@ export class CatWebRunnerApp {
         try {
           const parsed = JSON.parse(this.editorTextarea.value);
           this.editorTextarea.value = JSON.stringify(parsed, null, 2);
+          this._setEditorStatus('Formatted', 'success');
         } catch (err) {
-          alert('Invalid JSON syntax: ' + err.message);
+          this.showSyntaxError(err, this.editorTextarea.value);
+          this.focusSyntaxError();
         }
       });
     }
 
     if (this.applyJsonBtn && this.editorTextarea) {
       this.applyJsonBtn.addEventListener('click', () => {
-        this.loadDocument(this.editorTextarea.value);
+        this._applyEditor();
       });
+    }
+
+    if (this.editorTextarea) {
+      this.editorTextarea.addEventListener('input', () => {
+        if (!this.liveRender) {
+          this._setEditorStatus('Unsaved changes. Press Ctrl+Enter to render.', 'muted');
+          return;
+        }
+        clearTimeout(this._liveRenderTimer);
+        this._liveRenderTimer = setTimeout(() => this._applyEditor(), LIVE_RENDER_DELAY_MS);
+      });
+      this.editorTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          this._applyEditor();
+        }
+      });
+    }
+
+    if (this.liveRenderToggle) {
+      const savedLive = readStorage('catweb-runner:live-render');
+      if (savedLive !== null) this.liveRender = savedLive !== 'false';
+      this.liveRenderToggle.checked = this.liveRender;
+      this.liveRenderToggle.addEventListener('change', () => {
+        this.liveRender = Boolean(this.liveRenderToggle.checked);
+        writeStorage('catweb-runner:live-render', String(this.liveRender));
+      });
+    }
+
+    if (this.shareBtn) {
+      this.shareBtn.addEventListener('click', () => this.copyShareLink());
     }
 
     if (this.inspectorBtn) {
@@ -665,7 +736,7 @@ export class CatWebRunnerApp {
       this.audioBtn.addEventListener('click', () => {
         this.audioEnabled = !this.audioEnabled;
         if (this.runtime) this.runtime.options.audioEnabled = this.audioEnabled;
-        this.audioBtn.innerHTML = `${this.audioEnabled ? audioIconOn : audioIconOff}<span>${this.audioEnabled ? 'Audio' : 'Muted'}</span>`;
+        this.audioBtn.innerHTML = `${this.audioEnabled ? audioIconOn : audioIconOff}<span>${this.audioEnabled ? 'Audio: On' : 'Audio: Off'}</span>`;
         this.audioBtn.classList.toggle('active', this.audioEnabled);
         this.overflowManager?.renderMenuContent();
       });
@@ -691,11 +762,11 @@ export class CatWebRunnerApp {
         this.viewportArea.classList.remove('cw-dragover');
         const file = e.dataTransfer?.files?.[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            this.loadDocument(evt.target?.result);
-          };
-          reader.readAsText(file);
+          this._loadFile(file);
+        } else {
+          // Dropped text, e.g. JSON dragged out of another tab or editor.
+          const text = e.dataTransfer?.getData?.('text/plain');
+          if (text && /^\s*[[{]/.test(text)) this.loadDocument(text);
         }
       });
     }
@@ -703,6 +774,10 @@ export class CatWebRunnerApp {
     // 4. Window & Viewport Resize Listeners
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', this._boundOnResize);
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('keydown', this._boundOnKeydown);
+      document.addEventListener('paste', this._boundOnPaste);
     }
     if (typeof ResizeObserver !== 'undefined' && this.viewportArea) {
       this._resizeObserver = new ResizeObserver(() => {
@@ -743,6 +818,8 @@ export class CatWebRunnerApp {
               this.editorTextarea.value = JSON.stringify(updatedTree, null, 2);
             } catch {}
           }
+          this._syncSampleSelect(null);
+          this._persistDocument(updatedTree, null);
         }
       });
     }
@@ -759,6 +836,7 @@ export class CatWebRunnerApp {
       this.aiApiBtn.addEventListener('click', () => {
         if (this.aiApiModal.classList?.remove) {
           this.aiApiModal.classList.remove('hidden');
+          this.closeAiModalBtn?.focus?.();
         }
       });
     }
@@ -827,20 +905,50 @@ export class CatWebRunnerApp {
     this.overflowManager = new CatWebOverflowManager(this);
     this.overflowManager.init();
 
-    // 8. Load Initial Document
-    const defaultKey = this.options.defaultSample;
-    const initialContent = PRELOADED_SAMPLES[defaultKey] || PRELOADED_SAMPLES.interactive_counter;
-    if (initialContent) {
-      this.loadDocument(initialContent);
+    // 8. Load Initial Document. A document in the URL is rendered by the AI
+    // protocol instead, so skip the default here to avoid a flash of the sample.
+    if (!hasUrlPayload()) {
+      this.loadFallbackDocument();
     }
+  }
+
+  /**
+   * Loads the last document from this browser, or the default sample.
+   * Does nothing when a document is already showing.
+   */
+  loadFallbackDocument() {
+    if (this.currentDocument) return;
+
+    const saved = readStorage(STORAGE_KEY);
+    if (saved) {
+      try {
+        const entry = JSON.parse(saved);
+        if (entry?.json !== undefined) {
+          // Pass the parsed value so the editor shows it pretty-printed.
+          this.loadDocument(JSON.parse(entry.json));
+          if (this.currentDocument) {
+            this.showToast('Restored your last document');
+            return;
+          }
+        } else if (entry?.sampleKey && PRELOADED_SAMPLES[entry.sampleKey]) {
+          this.loadDocument(PRELOADED_SAMPLES[entry.sampleKey], { sampleKey: entry.sampleKey });
+          return;
+        }
+      } catch {}
+    }
+
+    const defaultKey = PRELOADED_SAMPLES[this.options.defaultSample] ? this.options.defaultSample : 'interactive_counter';
+    this.loadDocument(PRELOADED_SAMPLES[defaultKey], { sampleKey: defaultKey });
   }
 
   /**
    * Loads, validates, and renders a CatWeb JSON string or object.
    *
    * @param {string|object|Array} rawJsonOrObj
+   * @param {object} [meta={}]
+   * @param {string} [meta.sampleKey] - Set when the document is one of PRELOADED_SAMPLES
    */
-  loadDocument(rawJsonOrObj) {
+  loadDocument(rawJsonOrObj, meta = {}) {
     let parsedData = null;
     let jsonString = '';
 
@@ -864,6 +972,9 @@ export class CatWebRunnerApp {
     }
 
     this.currentDocument = parsedData;
+    this._lastSyntaxErrorPos = null;
+    this._syncSampleSelect(meta.sampleKey);
+    this._persistDocument(parsedData, meta.sampleKey);
 
     // Update raw editor textarea
     if (this.editorTextarea && this.editorTextarea.value !== jsonString) {
@@ -924,6 +1035,12 @@ export class CatWebRunnerApp {
     // Update Status Bar Statistics
     this._updateStatusBar(validation);
 
+    const errCount = validation.errors?.length || 0;
+    this._setEditorStatus(
+      errCount ? `Rendered with ${errCount} validation error${errCount === 1 ? '' : 's'}` : 'Rendered',
+      errCount ? 'warning' : 'success'
+    );
+
     // Apply Zoom / Fit
     this.setZoom(this.currentZoom);
   }
@@ -973,9 +1090,12 @@ export class CatWebRunnerApp {
     }
 
     if (this.statusValidation) {
+      const warnLen = validation.warnings?.length || 0;
       if (validation.valid) {
         this.statusValidation.className = 'cw-badge-pill success';
-        this.statusValidation.innerHTML = '<span class="cw-status-dot"></span> Valid';
+        this.statusValidation.innerHTML = warnLen
+          ? `<span class="cw-status-dot warning"></span> Valid · ${warnLen} warning${warnLen === 1 ? '' : 's'}`
+          : '<span class="cw-status-dot"></span> Valid';
       } else {
         const errLen = validation.errors?.length || 0;
         this.statusValidation.className = 'cw-badge-pill error';
@@ -988,17 +1108,43 @@ export class CatWebRunnerApp {
    * Surfaces syntax errors in raw JSON input.
    */
   showSyntaxError(err, rawText) {
+    const loc = locateJsonError(err, rawText);
+    this._lastSyntaxErrorPos = loc ? loc.position : null;
+    const where = loc ? `line ${loc.line}, column ${loc.column}` : null;
+
     this.showDiagnostics([{
       code: 'JSON_SYNTAX_ERROR',
-      path: '$',
+      path: where ? `$ (${where})` : '$',
       message: err.message,
-      suggestion: 'Verify matching braces, brackets, and quotes in the JSON editor.'
+      suggestion: 'Verify matching braces, brackets, and quotes in the JSON editor.',
+      position: loc ? loc.position : null
     }]);
 
     if (this.statusValidation) {
       this.statusValidation.className = 'cw-badge-pill error';
       this.statusValidation.innerHTML = '<span class="cw-status-dot error"></span> Syntax error';
     }
+    if (this.statusInfo) {
+      this.statusInfo.textContent = where
+        ? `JSON syntax error at ${where}. The preview shows the last valid render.`
+        : 'JSON syntax error. The preview shows the last valid render.';
+    }
+    this._setEditorStatus(where ? `Syntax error at ${where}` : 'Syntax error', 'error', loc ? 'Go to error' : null);
+  }
+
+  /**
+   * Moves the editor caret to the last reported JSON syntax error.
+   */
+  focusSyntaxError() {
+    if (!this.editorTextarea || this._lastSyntaxErrorPos === null) return;
+    this.toggleEditor(true);
+    const pos = Math.min(this._lastSyntaxErrorPos, this.editorTextarea.value.length);
+    this.editorTextarea.focus?.();
+    this.editorTextarea.setSelectionRange?.(pos, Math.min(pos + 1, this.editorTextarea.value.length));
+    // Scroll the caret line into view (textarea has a fixed line-height).
+    const lineHeight = parseFloat(getComputedStyleSafe(this.editorTextarea, 'lineHeight')) || 18;
+    const line = this.editorTextarea.value.slice(0, pos).split('\n').length - 1;
+    this.editorTextarea.scrollTop = Math.max(0, line * lineHeight - this.editorTextarea.clientHeight / 2);
   }
 
   /**
@@ -1037,13 +1183,20 @@ export class CatWebRunnerApp {
 
     const cards = [];
 
+    const summary = [
+      errors.length ? `<span class="cw-diag-count error">${errors.length} error${errors.length === 1 ? '' : 's'}</span>` : '',
+      warnings.length ? `<span class="cw-diag-count warning">${warnings.length} warning${warnings.length === 1 ? '' : 's'}</span>` : ''
+    ].join('');
+
     // Render error cards
     for (const err of errors) {
       const gidMatch = err.path?.match(/\[['"]?([\x20-\x7E]{2,3})['"]?\]/) || err.message?.match(/globalid ["']([^"']+)["']/);
       const gid = err.globalid || (gidMatch ? gidMatch[1] : null);
+      const posAttr = Number.isInteger(err.position) ? ` data-pos="${err.position}"` : '';
+      const clickable = gid || posAttr;
 
       cards.push(`
-        <div class="cw-diag-card" data-gid="${gid || ''}">
+        <div class="cw-diag-card${clickable ? ' is-clickable' : ''}" data-gid="${escapeHtml(gid || '')}"${posAttr}${clickable ? ' role="button" tabindex="0"' : ''}>
           <div class="cw-diag-header">
             <span class="cw-diag-code">${escapeHtml(err.code || 'VALIDATION_ERROR')}</span>
             ${gid ? `<span class="cw-diag-gid">ID: ${escapeHtml(gid)}</span>` : ''}
@@ -1070,20 +1223,29 @@ export class CatWebRunnerApp {
     }
 
     this.diagnosticsDrawer.innerHTML = `
+      <div class="cw-diag-summary">${summary}</div>
       <div class="cw-diagnostics-list">
         ${cards.join('')}
       </div>
     `;
 
-    // Attach click listeners to error cards to highlight offending element
+    // Clicking a card selects the offending element, or jumps to a syntax error in the editor
     const renderedCards = this.diagnosticsDrawer.querySelectorAll('.cw-diag-card');
     for (const card of renderedCards) {
       const gid = card.getAttribute('data-gid');
-      if (gid) {
-        card.addEventListener('click', () => {
-          this.selectElement(gid);
-        });
-      }
+      const hasPos = card.getAttribute('data-pos') !== null && card.getAttribute('data-pos') !== undefined;
+      if (!gid && !hasPos) continue;
+      const activate = () => {
+        if (hasPos) this.focusSyntaxError();
+        else this.selectElement(gid);
+      };
+      card.addEventListener('click', activate);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault?.();
+          activate();
+        }
+      });
     }
   }
 
@@ -1246,11 +1408,203 @@ export class CatWebRunnerApp {
   }
 
   /**
+   * Copies a `#data=` link that reproduces the current document.
+   */
+  async copyShareLink() {
+    if (!this.currentDocument) {
+      this.showToast('Nothing to share yet', 'error');
+      return;
+    }
+
+    let url;
+    try {
+      const loc = typeof window !== 'undefined' ? window.location : null;
+      const base = loc ? `${loc.origin === 'null' ? loc.protocol + '//' : loc.origin}${loc.pathname}` : '';
+      url = `${base}#data=${encodeShareData(this.currentDocument)}`;
+    } catch (err) {
+      this.showToast('Could not create link: ' + err.message, 'error');
+      return;
+    }
+
+    const copied = await copyText(url);
+    if (!copied) {
+      if (typeof prompt !== 'undefined') prompt('Copy this link:', url);
+      return;
+    }
+
+    const isLocalFile = typeof window !== 'undefined' && window.location?.protocol === 'file:';
+    if (isLocalFile) {
+      this.showToast('Link copied. It points to a local file, so it only works on this computer.', 'warning');
+    } else if (url.length > SHARE_URL_WARN_LENGTH) {
+      this.showToast(`Link copied (${Math.round(url.length / 1024)} KB). Some chat apps cut off links this long.`, 'warning');
+    } else {
+      this.showToast('Share link copied to clipboard', 'success');
+    }
+  }
+
+  /**
+   * Shows a short-lived notification in the bottom corner.
+   *
+   * @param {string} message
+   * @param {'info'|'success'|'warning'|'error'} [kind='info']
+   */
+  showToast(message, kind = 'info') {
+    if (!this.toastEl) return;
+    this.toastEl.textContent = message;
+    this.toastEl.className = `cw-toast ${kind} visible`;
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      if (this.toastEl) this.toastEl.className = `cw-toast ${kind}`;
+    }, kind === 'error' || kind === 'warning' ? 6000 : 3000);
+  }
+
+  /** Renders the Raw JSON editor content now. @private */
+  _applyEditor() {
+    clearTimeout(this._liveRenderTimer);
+    if (this.editorTextarea) this.loadDocument(this.editorTextarea.value);
+  }
+
+  /**
+   * Updates the one-line status under the Raw JSON editor.
+   * @private
+   */
+  _setEditorStatus(text, kind = 'muted', actionLabel = null) {
+    if (!this.editorStatus) return;
+    this.editorStatus.className = `cw-editor-status ${kind}`;
+    this.editorStatus.textContent = text;
+    if (actionLabel && typeof document !== 'undefined') {
+      const link = document.createElement('button');
+      link.type = 'button';
+      link.className = 'cw-link-btn';
+      link.textContent = actionLabel;
+      link.addEventListener('click', () => this.focusSyntaxError());
+      this.editorStatus.appendChild(document.createTextNode(' · '));
+      this.editorStatus.appendChild(link);
+    }
+  }
+
+  /**
+   * Reads a dropped or uploaded file and renders it.
+   * @private
+   */
+  _loadFile(file) {
+    if (typeof FileReader === 'undefined') return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      this.loadDocument(evt.target?.result);
+      if (this.currentDocument) this.showToast(`Loaded ${file.name}`, 'success');
+    };
+    reader.onerror = () => this.showToast(`Could not read ${file.name}`, 'error');
+    reader.readAsText(file);
+  }
+
+  /**
+   * Shows the sample name in the sample picker, or "Custom JSON" for anything else.
+   * @private
+   */
+  _syncSampleSelect(sampleKey) {
+    if (!this.sampleSelect) return;
+    const key = sampleKey || CUSTOM_SAMPLE_KEY;
+    const options = this.sampleSelect.options ? Array.from(this.sampleSelect.options) : [];
+    if (!options.some((o) => o.value === key)) return;
+    if (this.sampleSelect.value !== key) {
+      this.sampleSelect.value = key;
+      this.sampleSelect._syncCustomSelect?.();
+      this.overflowManager?.renderMenuContent();
+    }
+  }
+
+  /**
+   * Remembers the current document (or which sample is open) for the next visit.
+   * @private
+   */
+  _persistDocument(data, sampleKey) {
+    try {
+      const entry = sampleKey ? { sampleKey } : { json: JSON.stringify(data) };
+      writeStorage(STORAGE_KEY, JSON.stringify(entry));
+    } catch {}
+  }
+
+  /**
+   * Global keyboard shortcuts. Ignored while typing in a form field.
+   * @private
+   */
+  _onGlobalKeydown(e) {
+    if (e.defaultPrevented) return;
+
+    if (e.key === 'Escape') {
+      if (this.aiApiModal && !this.aiApiModal.classList.contains('hidden')) {
+        this.aiApiModal.classList.add('hidden');
+        this.aiApiBtn?.focus?.();
+      }
+      return;
+    }
+
+    const target = e.target;
+    const tag = target?.tagName;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) return;
+    if (this.aiApiModal && !this.aiApiModal.classList.contains('hidden')) return;
+
+    const actions = {
+      e: () => this.toggleEditor(),
+      i: () => this.toggleInspector(),
+      d: () => this.toggleDiagnostics(),
+      m: () => this.audioBtn?.click(),
+      s: () => this.copyShareLink(),
+      0: () => this.setZoom('fit'),
+      '+': () => this._stepZoom(1),
+      '=': () => this._stepZoom(1),
+      '-': () => this._stepZoom(-1),
+      '?': () => this.showToast('Shortcuts: E editor · I inspect · D diagnostics · M audio · S share · +/− zoom · 0 fit · Ctrl+Enter render · Ctrl+V paste JSON')
+    };
+    const action = actions[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+    if (action) {
+      e.preventDefault();
+      action();
+    }
+  }
+
+  /** Moves one zoom step up or down from the current (possibly "fit") scale. @private */
+  _stepZoom(direction) {
+    let current = parseFloat(this.currentZoom);
+    if (this.currentZoom === 'fit' && this.browserWindow) {
+      const match = /scale\(([\d.]+)\)/.exec(this.browserWindow.style.transform || '');
+      current = match ? parseFloat(match[1]) : 1;
+    }
+    const next = direction > 0
+      ? ZOOM_STEPS.find((z) => z > current + 0.001)
+      : [...ZOOM_STEPS].reverse().find((z) => z < current - 0.001);
+    if (next !== undefined) this.setZoom(String(next));
+  }
+
+  /**
+   * Pasting JSON anywhere outside a text field renders it.
+   * @private
+   */
+  _onPaste(e) {
+    const target = e.target;
+    const tag = target?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
+    const text = e.clipboardData?.getData('text');
+    if (!text || !/^\s*[[{]/.test(text)) return;
+    e.preventDefault();
+    this.loadDocument(text);
+    if (this.currentDocument) this.showToast('Rendered pasted JSON', 'success');
+  }
+
+  /**
    * Destroys application and listeners.
    */
   destroy() {
+    clearTimeout(this._liveRenderTimer);
+    clearTimeout(this._toastTimer);
     if (typeof window !== 'undefined') {
       window.removeEventListener('resize', this._boundOnResize);
+    }
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('keydown', this._boundOnKeydown);
+      document.removeEventListener('paste', this._boundOnPaste);
     }
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
@@ -1282,6 +1636,92 @@ export class CatWebRunnerApp {
 function escapeHtml(str) {
   if (typeof str !== 'string') return String(str);
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
+ * localStorage access that never throws (private mode, file://, Node).
+ */
+function readStorage(key) {
+  try {
+    return typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem(key) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key, value) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) window.localStorage.setItem(key, value);
+  } catch {}
+}
+
+/**
+ * Finds the character offset, line and column of a JSON.parse error.
+ * V8 reports "at position N" and newer versions add "(line L column C)".
+ *
+ * @returns {{position:number,line:number,column:number}|null}
+ */
+export function locateJsonError(err, rawText) {
+  if (typeof rawText !== 'string') return null;
+  const msg = String(err?.message || '');
+  let position = null;
+
+  const posMatch = /position (\d+)/.exec(msg);
+  if (posMatch) {
+    position = parseInt(posMatch[1], 10);
+  } else {
+    const lcMatch = /line (\d+) column (\d+)/.exec(msg);
+    if (lcMatch) {
+      const lines = rawText.split('\n');
+      const line = parseInt(lcMatch[1], 10);
+      position = lines.slice(0, line - 1).reduce((n, l) => n + l.length + 1, 0) + parseInt(lcMatch[2], 10) - 1;
+    } else if (/unexpected end/i.test(msg)) {
+      position = rawText.length;
+    }
+  }
+  if (position === null || Number.isNaN(position)) return null;
+
+  position = Math.max(0, Math.min(position, rawText.length));
+  const before = rawText.slice(0, position);
+  const line = before.split('\n').length;
+  const column = position - before.lastIndexOf('\n');
+  return { position, line, column };
+}
+
+function getComputedStyleSafe(el, prop) {
+  try {
+    return typeof getComputedStyle === 'function' ? getComputedStyle(el)[prop] : '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Copies text to the clipboard, with a fallback for file:// and older browsers.
+ * @returns {Promise<boolean>}
+ */
+async function copyText(text) {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {}
+  try {
+    if (typeof document === 'undefined') return false;
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand('copy');
+    area.remove();
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 // Auto-bootstrap in browser environment if index.html is loaded
