@@ -5,6 +5,7 @@ import { validateCatWeb } from './validate.js';
 const filesToValidate = [
   'skills/catweb/examples/minimal_site.json',
   'skills/catweb/examples/interactive_counter.json',
+  'skills/catweb/examples/click_counter_minimal.json',
   '.agents/skills/catweb/examples/minimal_site.json',
   '.agents/skills/catweb/examples/interactive_counter.json'
 ];

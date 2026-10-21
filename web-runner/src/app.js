@@ -9,13 +9,15 @@
  */
 
 import { parseCatWebJson, normalizeCatWeb, detectFormat } from './parser.js';
-import { validateCatWeb } from './validator.js';
+import { validateCatWeb, VALID_SCRIPT_PROPERTIES } from './validator.js';
 import { renderCatWebTree } from './elements.js';
 import { CatWebRuntime } from './runtime.js';
 import { CatWebInspector } from './inspector.js';
 import { playSyntheticAudio } from './assets.js';
 import { initAiProtocol, captureCanvasImage, handleAiRenderRequest, hasUrlPayload, encodeShareData } from './api_protocol.js';
 import { CatWebOverflowManager } from './overflow_menu.js';
+import { ScriptWorkspace } from './script_workspace.js';
+import { ConsolePanel } from './console_panel.js';
 
 /** localStorage key for the last document rendered from the editor, an upload or a paste. */
 const STORAGE_KEY = 'catweb-runner:last-document';
@@ -558,6 +560,9 @@ export class CatWebRunnerApp {
     this.statusValidation = null;
 
     this.overflowManager = null;
+    this.workspace = null;
+    this.console = null;
+    this.cookieJar = new Map();
 
     this.shareBtn = null;
     this.editorStatus = null;
@@ -624,6 +629,11 @@ export class CatWebRunnerApp {
     this.editorStatus = this.root.querySelector('#editorStatus');
     this.liveRenderToggle = this.root.querySelector('#liveRenderToggle');
     this.toastEl = this.root.querySelector('#toast');
+    this.scriptsBtn = this.root.querySelector('#scriptsBtn');
+    this.consoleBtn = this.root.querySelector('#consoleBtn');
+    this.restartBtn = this.root.querySelector('#restartBtn');
+    this.workspaceEl = this.root.querySelector('#scriptWorkspace');
+    this.consoleDock = this.root.querySelector('#consoleDock');
 
     // 2. Bind Toolbar Events
     if (this.sampleSelect) {
@@ -736,7 +746,9 @@ export class CatWebRunnerApp {
       this.audioBtn.addEventListener('click', () => {
         this.audioEnabled = !this.audioEnabled;
         if (this.runtime) this.runtime.options.audioEnabled = this.audioEnabled;
-        this.audioBtn.innerHTML = `${this.audioEnabled ? audioIconOn : audioIconOff}<span>${this.audioEnabled ? 'Audio: On' : 'Audio: Off'}</span>`;
+        this.audioBtn.innerHTML = this.audioEnabled ? audioIconOn : audioIconOff;
+        this.audioBtn.title = this.audioEnabled ? 'Sound is on — click to mute (M)' : 'Sound is muted — click to unmute (M)';
+        this.audioBtn.setAttribute?.('aria-label', this.audioEnabled ? 'Sound on' : 'Sound muted');
         this.audioBtn.classList.toggle('active', this.audioEnabled);
         this.overflowManager?.renderMenuContent();
       });
@@ -820,6 +832,41 @@ export class CatWebRunnerApp {
           }
           this._syncSampleSelect(null);
           this._persistDocument(updatedTree, null);
+        }
+      });
+    }
+
+    // 5b. Script workspace (full-screen block editor) and console dock
+    this.scriptsBtn?.addEventListener('click', () => this.toggleWorkspace());
+    this.consoleBtn?.addEventListener('click', () => this.toggleConsole());
+    this.restartBtn?.addEventListener('click', () => this.restart());
+
+    const hasDom = typeof document !== 'undefined' && typeof document.createElement === 'function';
+    if (this.consoleDock && hasDom) {
+      this.console = new ConsolePanel(this.consoleDock, {
+        onReveal: (gid) => this.workspace?.reveal(gid),
+        onClose: () => this.toggleConsole(false),
+        onCountsChange: (counts) => this._updateConsoleBadge(counts)
+      });
+    }
+
+    if (this.workspaceEl && hasDom) {
+      this.workspace = new ScriptWorkspace(this.workspaceEl, {
+        properties: Array.from(VALID_SCRIPT_PROPERTIES || []),
+        onChange: (doc) => this.loadDocument(doc, { fromWorkspace: true }),
+        onRunEvent: (scriptNode, eventNode) => {
+          if (!this.runtime) return;
+          this.toggleConsole(true);
+          this.runtime.executeEventNode(eventNode);
+        },
+        onSelectObject: (gid) => {
+          this.toggleWorkspace(false);
+          this.selectElement(gid);
+        },
+        onRestart: () => this.restart(),
+        onClose: () => {
+          this.scriptsBtn?.classList.remove('active');
+          this.overflowManager?.renderMenuContent();
         }
       });
     }
@@ -973,6 +1020,7 @@ export class CatWebRunnerApp {
 
     this.currentDocument = parsedData;
     this._lastSyntaxErrorPos = null;
+    if (!meta.fromWorkspace && !meta.keepConsole) this.console?.clear();
     this._syncSampleSelect(meta.sampleKey);
     this._persistDocument(parsedData, meta.sampleKey);
 
@@ -1022,10 +1070,27 @@ export class CatWebRunnerApp {
     // Initialize & Start Runtime
     if (this.previewCanvas) {
       this.runtime = new CatWebRuntime(renderableData, this.previewCanvas, {
-        audioEnabled: this.audioEnabled
+        audioEnabled: this.audioEnabled,
+        cookies: this.cookieJar,
+        url: this.urlText?.textContent || 'catweb://site.rbx',
+        onLog: (entry) => {
+          this.console?.add(entry);
+          if (entry.level === 'error') this.workspace?.markError(entry.actionGid || entry.eventGid, entry.message);
+        },
+        onAction: (act) => this.workspace?.flash(act?.globalid),
+        onVariableChange: () => this.console?.refreshVariables()
       });
+      const runtime = this.runtime;
+      this.console?.watchVariables(() => runtime.listVariables());
       this.runtime.start();
     }
+
+    // Keep the script editor on the same document
+    if (this.workspace) {
+      this.workspace.setDocument(parsedData);
+      this.workspace.setDiagnostics(validation.errors || []);
+    }
+    this._updateScriptsBadge();
 
     // Update Inspector Registry
     if (this.inspector && this.previewCanvas) {
@@ -1397,6 +1462,86 @@ export class CatWebRunnerApp {
   }
 
   /**
+   * Opens or closes the full-screen script editor.
+   * @param {boolean} [show]
+   */
+  toggleWorkspace(show = null) {
+    if (!this.workspace) return;
+    const next = show !== null ? show : !this.workspace.isOpen();
+    if (next) {
+      this.workspace.open();
+      this.scriptsBtn?.classList.add('active');
+    } else if (this.workspace.isOpen()) {
+      this.workspace.close();
+    }
+    this.overflowManager?.renderMenuContent();
+  }
+
+  /**
+   * Shows or hides the console dock.
+   * @param {boolean} [show]
+   */
+  toggleConsole(show = null) {
+    if (!this.consoleDock) return;
+    const next = show !== null ? show : this.consoleDock.classList.contains('hidden');
+    if (next) this.consoleDock.classList.remove('hidden');
+    else this.consoleDock.classList.add('hidden');
+    if (this.consoleBtn) {
+      if (next) this.consoleBtn.classList.add('active');
+      else this.consoleBtn.classList.remove('active');
+    }
+    if (next) this.console?.refreshVariables();
+    this.overflowManager?.renderMenuContent();
+    if (this.currentZoom === 'fit') this.setZoom('fit');
+  }
+
+  /** Re-renders the page and runs every script from the start. */
+  restart() {
+    if (!this.currentDocument) return;
+    const key = this.sampleSelect?.value;
+    this.console?.add({ level: 'info', message: 'Page reloaded', time: Date.now() });
+    this.loadDocument(this.currentDocument, { keepConsole: true, sampleKey: PRELOADED_SAMPLES[key] ? key : null });
+  }
+
+  /** @private */
+  _updateConsoleBadge(counts) {
+    if (!this.consoleBtn?.querySelector || typeof document === 'undefined') return;
+    this.consoleBtn.querySelector('.cw-count-pill')?.remove();
+    if (counts.error) this.consoleBtn.classList.add('error');
+    else this.consoleBtn.classList.remove('error');
+    if (counts.error || counts.warn) {
+      const pill = document.createElement('span');
+      pill.className = `cw-count-pill${counts.error ? '' : ' warning'}`;
+      pill.textContent = String(counts.error || counts.warn);
+      this.consoleBtn.appendChild(pill);
+    }
+  }
+
+  /** @private Shows how many scripts the page has on the Scripts button. */
+  _updateScriptsBadge() {
+    if (!this.scriptsBtn?.querySelector || typeof document === 'undefined') return;
+    let n = 0;
+    const walk = (node) => {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) { node.forEach(walk); return; }
+      if (node.class === 'script') n++;
+      if (Array.isArray(node.webcontent)) node.webcontent.forEach(walk);
+      if (Array.isArray(node.children)) node.children.forEach(walk);
+    };
+    walk(this.currentDocument);
+    let pill = this.scriptsBtn.querySelector('.cw-ws-badge');
+    if (!pill && n) {
+      pill = document.createElement('span');
+      pill.className = 'cw-ws-badge';
+      this.scriptsBtn.appendChild(pill);
+    }
+    if (pill) {
+      pill.textContent = String(n);
+      pill.style.display = n ? '' : 'none';
+    }
+  }
+
+  /**
    * Selects and highlights an element by global ID.
    * @param {string} globalid
    */
@@ -1536,6 +1681,8 @@ export class CatWebRunnerApp {
       if (this.aiApiModal && !this.aiApiModal.classList.contains('hidden')) {
         this.aiApiModal.classList.add('hidden');
         this.aiApiBtn?.focus?.();
+      } else if (this.workspace?.isOpen() && !e.target?.closest?.('input, textarea')) {
+        this.toggleWorkspace(false);
       }
       return;
     }
@@ -1545,9 +1692,16 @@ export class CatWebRunnerApp {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) return;
     if (this.aiApiModal && !this.aiApiModal.classList.contains('hidden')) return;
+    // A site with "When <key> pressed" gets that key instead of the shortcut.
+    if (!this.workspace?.isOpen() && this.runtime?.listensForKey?.(e)) return;
+    // Zoom keys belong to the script canvas while it is open.
+    if (this.workspace?.isOpen() && ['+', '=', '-', '0'].includes(e.key)) return;
 
     const actions = {
       e: () => this.toggleEditor(),
+      b: () => this.toggleWorkspace(),
+      c: () => this.toggleConsole(),
+      r: () => this.restart(),
       i: () => this.toggleInspector(),
       d: () => this.toggleDiagnostics(),
       m: () => this.audioBtn?.click(),
@@ -1556,7 +1710,7 @@ export class CatWebRunnerApp {
       '+': () => this._stepZoom(1),
       '=': () => this._stepZoom(1),
       '-': () => this._stepZoom(-1),
-      '?': () => this.showToast('Shortcuts: E editor · I inspect · D diagnostics · M audio · S share · +/− zoom · 0 fit · Ctrl+Enter render · Ctrl+V paste JSON')
+      '?': () => this.showToast('Shortcuts: B scripts · E JSON · C console · I inspect · D diagnostics · R reload page · M sound · S share · +/− zoom · 0 fit · Ctrl+Enter render · Ctrl+V paste JSON')
     };
     const action = actions[e.key.length === 1 ? e.key.toLowerCase() : e.key];
     if (action) {
@@ -1630,6 +1784,8 @@ export class CatWebRunnerApp {
       this.inspector.destroy();
       this.inspector = null;
     }
+    this.workspace?.destroy();
+    this.workspace = null;
   }
 }
 

@@ -380,7 +380,7 @@ async function runTests() {
 
     // Verify tree rendering
     assert(treeContainer.textContent.includes('main_card'), 'Tree contains root card alias "main_card"');
-    assert(treeContainer.textContent.includes('3 Styling-Elemente'), 'Tree displays compact badge "3 Styling-Elemente" instead of expanding modifiers');
+    assert(treeContainer.textContent.includes('3 modifiers'), 'Tree displays compact badge "3 modifiers" instead of expanding modifiers');
     assert(!treeContainer.textContent.includes('UICorner'), 'Tree does not expand UICorner as a child row (compact styling badge)');
 
     // Select and live-edit element

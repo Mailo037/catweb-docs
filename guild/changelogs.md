@@ -3,16 +3,16 @@ Guild: CatWeb
 Channel: 🌐 CatWeb / changelogs
 ==============================================================
 
-[07.04.2024 16:59] humancat222
+[07.04.2024 18:59] humancat222
 **v1.0.1**
 
 🔵 **Fixed:**
 - background colors didn't apply to the document
 
 {Reactions}
-1️⃣ (17)
+1️⃣ (23)
 
-[07.04.2024 19:42] humancat222
+[07.04.2024 21:42] humancat222
 **v1.1.0**
 
 🟢 **Added:**
@@ -24,7 +24,7 @@ Channel: 🌐 CatWeb / changelogs
 - `Frame` element icon
 
 
-[07.04.2024 19:51] humancat222
+[07.04.2024 21:51] humancat222
 **v1.1.1**
 
 🔵 **Fixed:**
@@ -33,7 +33,7 @@ Channel: 🌐 CatWeb / changelogs
 {Reactions}
 👍 (4)
 
-[07.04.2024 20:03] humancat222
+[07.04.2024 22:03] humancat222
 **v1.1.2**
 
 **🟡 Changed:**
@@ -43,21 +43,21 @@ Channel: 🌐 CatWeb / changelogs
 - domains were always "filtered" when using uppercase characters
 
 
-[07.04.2024 20:23] humancat222
+[07.04.2024 22:23] humancat222
 **v1.1.3**
 
 🔵 **Fixed:**
 - fixed an issue with donations's reference property being reset after saving
 
 
-[07.04.2024 21:16] humancat222
+[07.04.2024 23:16] humancat222
 **v1.1.4**
 
 🔵 **Fixed:**
 - https://canary.discord.com/channels/1226224104370208860/1226628727652356176
 
 
-[08.04.2024 19:14] humancat222
+[08.04.2024 21:14] humancat222
 **v1.2.0**
 
 🟢 **Added:**
@@ -68,7 +68,7 @@ Channel: 🌐 CatWeb / changelogs
 - duplicate / delete icons in the editor
 
 
-[08.04.2024 19:25] humancat222
+[08.04.2024 21:25] humancat222
 **v1.2.1**
 
 🔵 **Fixed:**
@@ -77,21 +77,21 @@ Channel: 🌐 CatWeb / changelogs
 - https://canary.discord.com/channels/1226224104370208860/1226955893267103774
 
 
-[08.04.2024 19:36] humancat222
+[08.04.2024 21:36] humancat222
 **v1.2.2**
 
 🔵 **Fixed:**
 - Fixed a critical bug that didnt allow adding images and also spammed the Roblox API with requests. please rejoin
 
 
-[08.04.2024 20:03] humancat222
+[08.04.2024 22:03] humancat222
 **v1.2.3**
 
 🔵 **Fixed:**
 - Fixed a bug making it impossible to import `Frame` elements
 
 
-[09.04.2024 16:07] humancat222
+[09.04.2024 18:07] humancat222
 **v1.2.4**
 
 🟢 **Added:**
@@ -103,7 +103,7 @@ Channel: 🌐 CatWeb / changelogs
 - It was possible to create subdomains with underscores in the name
 
 
-[09.04.2024 18:19] humancat222
+[09.04.2024 20:19] humancat222
 **v1.3.0**
 
 🟢 **Added:**
@@ -114,28 +114,28 @@ Channel: 🌐 CatWeb / changelogs
 - security vulnerability
 
 
-[09.04.2024 18:31] humancat222
+[09.04.2024 20:31] humancat222
 **v1.3.1**
 
 🔵 **Fixed:**
 - https://canary.discord.com/channels/1226224104370208860/1227324806655901706
 
 
-[09.04.2024 18:41] humancat222
+[09.04.2024 20:41] humancat222
 **v1.3.2**
 
 🔵 **Fixed:**
 - Unable to import frames, lists, grids
 
 
-[09.04.2024 18:58] humancat222
+[09.04.2024 20:58] humancat222
 **v1.3.3**
 
 🔵 **Fixed:**
 - Unable to visit pages that go 2 pages deep like page/page
 
 
-[15.04.2024 21:25] humancat222
+[15.04.2024 23:25] humancat222
 **v1.4.0**
 
 **🟢 Added:**
@@ -144,7 +144,7 @@ Channel: 🌐 CatWeb / changelogs
 {Reactions}
 👍 (4)
 
-[18.04.2024 17:20] humancat222
+[18.04.2024 19:20] humancat222
 **v1.4.1**
 
 **🟢 Added:**
@@ -158,14 +158,14 @@ Channel: 🌐 CatWeb / changelogs
 - https://discord.com/channels/1226224104370208860/1229527778156613683
 
 
-[18.04.2024 17:42] humancat222
+[18.04.2024 19:42] humancat222
 **v1.4.2**
 
 **🔵 Fixed:**
 - https://discord.com/channels/1226224104370208860/1230567845629264013
 
 
-[19.04.2024 19:25] humancat222
+[19.04.2024 21:25] humancat222
 **v1.4.3**
 
 **🟡 Changed:**
@@ -175,14 +175,14 @@ Channel: 🌐 CatWeb / changelogs
 - Sometimes, topbar insets were ignored
 
 
-[19.04.2024 22:00] humancat222
+[20.04.2024 00:00] humancat222
 **v1.4.4**
 
 **🔵 Fixed:**
 - Fixed a bug where phones were being considered as tablets and thus, stuck in fullscreen (unable to open tabs)
 
 
-[21.04.2024 16:27] humancat222
+[21.04.2024 18:27] humancat222
 **v1.5.0**
 
 **🟢 Added:**
@@ -193,28 +193,28 @@ Channel: 🌐 CatWeb / changelogs
 - https://discord.com/channels/1226224104370208860/1229537446409015436
 
 
-[21.04.2024 16:54] humancat222
+[21.04.2024 18:54] humancat222
 **v1.5.1**
 
 **🔵 Fixed:**
 - fixed a bug with moderation
 
 
-[21.04.2024 17:12] humancat222
+[21.04.2024 19:12] humancat222
 **v1.5.2**
 
 **🔵 Fixed:**
 - Fixed a bug that editing properties woudn't submit it
 
 
-[22.04.2024 18:02] humancat222
+[22.04.2024 20:02] humancat222
 **v1.6.0**
 
 **🟢 Added:**
 - You can now delete your domains! (this will act differently based on your site's status, OK, site suspended, or domain suspended)
 
 
-[22.04.2024 18:24] humancat222
+[22.04.2024 20:24] humancat222
 **v1.6.1**
 
 **🟢 Added:**
@@ -224,21 +224,21 @@ Channel: 🌐 CatWeb / changelogs
 - https://discord.com/channels/1226224104370208860/1232031267852259380
 
 
-[22.04.2024 18:52] humancat222
+[22.04.2024 20:52] humancat222
 **v1.6.2**
 
 **🔵 Fixed:**
 - Issue with the garbage collector
 
 
-[23.04.2024 07:45] humancat222
+[23.04.2024 09:45] humancat222
 **v1.6.3**
 
 **🔵 Fixed:**
 - Issue when loading sites
 
 
-[24.04.2024 18:46] humancat222
+[24.04.2024 20:46] humancat222
 **v1.7.0**
 
 **🟢 Added:**
@@ -255,7 +255,7 @@ Discord - A New Way to Chat with Friends & Communities
 Discord is the easiest way to communicate over voice, video, and text.  Chat, hang out, and stay close with your friends and communities.
 
 
-[24.04.2024 20:28] humancat222
+[24.04.2024 22:28] humancat222
 **v1.7.1**
 
 **🟢 Added:**
@@ -263,27 +263,27 @@ Discord is the easiest way to communicate over voice, video, and text.  Chat, ha
  only suspends one page of your site.
 
 
-[24.04.2024 20:44] humancat222
+[24.04.2024 22:44] humancat222
 **v1.7.2**
 
 **🔵 Fixed:**
 - CatWeb did not load for users using the minimum window size (600 x 600)
 
 
-[25.04.2024 08:34] humancat222
+[25.04.2024 10:34] humancat222
 **v1.7.3**
 
 Update for moderators
 
 
-[25.04.2024 08:57] humancat222
+[25.04.2024 10:57] humancat222
 **v1.7.4**
 
 **🔵 Fixed:**
 - bug with the emergency alerts
 
 
-[25.04.2024 18:19] humancat222
+[25.04.2024 20:19] humancat222
 **v1.7.5**
 
 **🟢 Added:**
@@ -294,21 +294,21 @@ Update for moderators
 *it is possible that this issue is not fully fixed and in this case you can report it to #catweb-bugs*
 
 
-[25.04.2024 18:49] humancat222
+[25.04.2024 20:49] humancat222
 **v1.7.6**
 
 **🟢 Added:**
 - simple filter to block users from bypassing the roblox filter using multiple textboxes (report to #catweb-bugs if you encounter false positives)
 
 
-[25.04.2024 19:22] humancat222
+[25.04.2024 21:22] humancat222
 **v1.7.7**
 
 **🟢 Added:**
 - More "not found" pages: `HTTP ERROR 404` (not found) and `HTTP ERROR 500` (internal server error)
 
 
-[26.04.2024 10:53] humancat222
+[26.04.2024 12:53] humancat222
 **v1.7.8**
 
 **🟢 Added:**
@@ -318,7 +318,7 @@ Update for moderators
 - 1 character domain names are now available
 
 
-[26.04.2024 14:34] humancat222
+[26.04.2024 16:34] humancat222
 **v1.7.9**
 
 **🟢 Added:**
@@ -334,14 +334,14 @@ Update for moderators
 - `catweb.rbx` wasn't being translated
 
 
-[29.04.2024 20:34] humancat222
+[29.04.2024 22:34] humancat222
 **v1.7.10**
 
 **🟢 Added:**
 - Domain Promotion / ADs
 
 
-[26.05.2024 13:03] humancat222
+[26.05.2024 15:03] humancat222
 @Original Tester version v2.0.0 released
 
 **🟢 Added:**
@@ -353,16 +353,16 @@ Update for moderators
 Game released as a Public Test Beta
 
 {Reactions}
-AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) 🅱️ (4) 🇪 (4) 🇹 (4) 🇦 (4) ‼️ (4)
+AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) 🅱️ (4) 🇪 (4) 🇹 (5) 🇦 (4) ‼️ (4)
 
-[26.05.2024 13:16] humancat222
+[26.05.2024 15:16] humancat222
 **v2.0.1**
 
 **🟢 Added:**
 - Link to rules when creating a domain
 
 
-[26.05.2024 13:35] humancat222
+[26.05.2024 15:35] humancat222
 **v2.0.2**
 
 **🟢 Added:**
@@ -371,7 +371,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 {Reactions}
 👍 (5)
 
-[07.06.2024 20:31] humancat222
+[07.06.2024 22:31] humancat222
 **v2.0.3**
 
 **🟢 Added:**
@@ -384,14 +384,14 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - Decals not converting to images properly
 
 
-[07.06.2024 21:46] humancat222
+[07.06.2024 23:46] humancat222
 **v2.0.4**
 
 **🔵 Fixed:**
 - https://discord.com/channels/1226224104370208860/1248744965970858085
 
 
-[13.06.2024 07:42] humancat222
+[13.06.2024 09:42] humancat222
 **v2.0.5**
 
 **🟢 Added:**
@@ -401,7 +401,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - Issues with duplicating elements
 
 
-[16.06.2024 18:14] humancat222
+[16.06.2024 20:14] humancat222
 **v2.0.6**
 
 **🟢 Added:**
@@ -417,7 +417,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - TextBox in scripts didn't scale properly (https://discord.com/channels/1226224104370208860/1250862615194894356)
 
 
-[17.06.2024 16:42] humancat222
+[17.06.2024 18:42] humancat222
 **v2.0.7**
 
 **🔵 Fixed:**
@@ -426,7 +426,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - JSON failing to import (https://discord.com/channels/1226224104370208860/1252297821571252224)
 
 
-[21.06.2024 17:05] humancat222
+[21.06.2024 19:05] humancat222
 **v2.0.8**
 
 **🟢 Added:**
@@ -450,7 +450,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 {Reactions}
 🇼 (6)
 
-[22.06.2024 15:16] humancat222
+[22.06.2024 17:16] humancat222
 **v2.0.9**
 
 **🟢 Added:**
@@ -477,7 +477,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 {Reactions}
 🇼 (5)
 
-[28.06.2024 16:04] humancat222
+[28.06.2024 18:04] humancat222
 **v2.1.0**
 
 **🟢 Added:**
@@ -502,7 +502,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 {Reactions}
 💀 (3)
 
-[29.06.2024 14:04] humancat222
+[29.06.2024 16:04] humancat222
 **v2.1.1**
 
 **🟡 Changed:**
@@ -518,16 +518,16 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 {Reactions}
 💀 (3)
 
-[29.06.2024 20:59] humancat222
+[29.06.2024 22:59] humancat222
 **v2.1.2**
 
 **🔵 Fixed**
 - Critical Bug - https://discord.com/channels/1226224104370208860/1256641299369431142
 
 {Reactions}
-💀 (3)
+💀 (4)
 
-[03.07.2024 13:43] humancat222
+[03.07.2024 15:43] humancat222
 **v2.1.3**
 
 **🟢 Added:**
@@ -541,14 +541,14 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - False ban bugs
 
 
-[03.07.2024 16:29] humancat222
+[03.07.2024 18:29] humancat222
 **v2.1.4**
 
 **🔵 Fixed:**
 - Critical Bug - https://discord.com/channels/1226224104370208860/1257925730780581978
 
 
-[04.07.2024 12:43] humancat222
+[04.07.2024 14:43] humancat222
 **v2.1.5**
 
 **🟡 Changed:**
@@ -558,14 +558,14 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - A **critical bug** in moderation
 
 
-[05.07.2024 10:34] humancat222
+[05.07.2024 12:34] humancat222
 **v2.1.6**
 
 **🔵 Fixed:**
 - Critical security patch
 
 
-[06.07.2024 11:36] humancat222
+[06.07.2024 13:36] humancat222
 **v2.2.0**
 
 **🟢 Added:**
@@ -579,7 +579,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - Moderation bugs
 
 
-[06.07.2024 12:53] humancat222
+[06.07.2024 14:53] humancat222
 **v2.2.1**
 
 **🟡 Changed:**
@@ -589,14 +589,14 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - ADs clicks and impressions would always be 0; now it displays the correct number
 
 
-[06.07.2024 16:14] humancat222
+[06.07.2024 18:14] humancat222
 **v2.2.2**
 
 **🔵 Fixed:**
 - Critical bug - https://discordapp.com/channels/1226224104370208860/1259166346630004867
 
 
-[06.07.2024 18:52] humancat222
+[06.07.2024 20:52] humancat222
 **v2.2.3**
 
 **🟢 Added:**
@@ -608,7 +608,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - Sometimes images will dissapear.
 
 
-[06.07.2024 22:03] humancat222
+[07.07.2024 00:03] humancat222
 **v2.2.4**
 
 **🟢 Added:**
@@ -627,7 +627,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 {Reactions}
 👍 (4) 🇹 (2) 🇭 (2) 🇽 (2)
 
-[07.07.2024 12:05] humancat222
+[07.07.2024 14:05] humancat222
 **v2.2.5**
 
 **🟢 Added:**
@@ -640,7 +640,7 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - `Resume all audio` didn't work
 
 
-[08.07.2024 23:09] humancat222
+[09.07.2024 01:09] humancat222
 **v2.3.0**
 
 **🟢 Added:**
@@ -658,27 +658,27 @@ AlexThumbsup (6) 🇵 (5) 🇺 (5) 🇧 (5) 🇱 (5) 🇮 (5) 🇨 (5) ❗ (6) �
 - https://discordapp.com/channels/1226224104370208860/1259513015892574208
 
 {Reactions}
-😻 (2) 🇧🇻 (3) 🇸🇯 (3) 🇳🇴 (3) meowcat (3)
+😻 (3) 🇧🇻 (3) 🇸🇯 (3) 🇳🇴 (3) meowcat (3)
 
-[09.07.2024 05:53] humancat222
+[09.07.2024 07:53] humancat222
 **v2.3.1**
 
 **🔵 Fixed:**
 - A critical bug ☠️
 
 {Reactions}
-error (8) retard (6) appleskull (5)
+error (8) retard (6) appleskull (6)
 
-[12.07.2024 17:11] humancat222
+[12.07.2024 19:11] humancat222
 **v2.3.2**
 
 **🔵 Fixed:**
 - Many critical bugs in the game
 
 {Reactions}
-appleskull (20)
+appleskull (21)
 
-[15.07.2024 13:29] humancat222
+[15.07.2024 15:29] humancat222
 **v2.3.3**
 
 **🟢 Added:**
@@ -695,7 +695,7 @@ appleskull (20)
 {Reactions}
 👍 (12) 🇵🇹 (2)
 
-[25.07.2024 21:38] humancat222
+[25.07.2024 23:38] humancat222
 **v2.4.0**
 
 **🟢 Added:**
@@ -710,7 +710,7 @@ appleskull (20)
 {Reactions}
 👍 (16) cat_dance (2) 🇵🇱 (5) 🔥 (7) 🇼 (7) 🫃 (4) 🎉 (5) 🥳 (5) warn (2) 🇪 (3) 🇱🇹 (2) 🇬🇧 🐱
 
-[31.07.2024 09:30] humancat222
+[31.07.2024 11:30] humancat222
 **v2.4.1**
 
 **🟡 Changed:**
@@ -723,7 +723,7 @@ appleskull (20)
 {Reactions}
 👌 (12) 🥚 (4) 🅰️ (5) 🇬🇧 (3) 🐱 (3) cat_dance (6) 🇵🇹 (2)
 
-[04.08.2024 18:13] humancat222
+[04.08.2024 20:13] humancat222
 **v2.5.0** The Scripting Update
 
 **🟢 Added:**
@@ -776,9 +776,9 @@ appleskull (20)
 - others
 
 {Reactions}
-✨ (8) 🔥 (12) 🍪 (7) 🇵🇹 (3) 🤯 (2)
+✨ (8) 🔥 (13) 🍪 (7) 🇵🇹 (3) 🤯 (3)
 
-[05.08.2024 13:15] humancat222
+[05.08.2024 15:15] humancat222
 **v2.5.1**
 
 **🔵 Fixed:**
@@ -791,7 +791,7 @@ appleskull (20)
 {Reactions}
 👍 (16) ❤️
 
-[06.08.2024 19:16] humancat222
+[06.08.2024 21:16] humancat222
 **v2.5.2**
 
 **🟢 Added:**
@@ -807,7 +807,7 @@ appleskull (20)
 {Reactions}
 👍 (10) 🔥 (5) 🇾 (5) 🇦 (5) 🇸 (3)
 
-[09.08.2024 23:10] humancat222
+[10.08.2024 01:10] humancat222
 **v2.5.3**
 
 **🟡 Changed:**
@@ -823,7 +823,7 @@ Optimized the editor a little bit. More optimizations coming soon
 {Reactions}
 🔥 (13) 👍 (8) M4_ate (5) ✝️ (2) 🇭 (6) 🇮 (6) 🇸 (6) 🇹 (6) 🇴 (5) 🇷 (5) 🇾 (6) ⁉️ (5) ❓ (4) ❔ (3) 🪲 (2)
 
-[26.08.2024 22:38] humancat222
+[27.08.2024 00:38] humancat222
 **v2.5.4**
 
 **🔵 Fixed:**
@@ -833,7 +833,7 @@ Optimized the editor a little bit. More optimizations coming soon
 {Reactions}
 ❤️ (9)
 
-[06.09.2024 20:00] humancat222
+[06.09.2024 22:00] humancat222
 **v2.6.0**
 
 **🟢 Added:**
@@ -870,7 +870,7 @@ Optimized the editor a little bit. More optimizations coming soon
 {Reactions}
 🔥 (14) 🇼 (14) 🚽 (6) 😭 (8) staff (4) gotit (2) 💩
 
-[13.09.2024 20:00] humancat222
+[13.09.2024 22:00] humancat222
 **v2.6.1**
 
 **🟢 Added:**
@@ -897,7 +897,7 @@ Optimized the editor a little bit. More optimizations coming soon
 {Reactions}
 🔥 (5) booster (9) 😍 (5) 🇱 (5) 🇪 (5) 🇸 (5) 🇬 (5) 🇴 (5) 🤑 (5)
 
-[20.09.2024 20:11] humancat222
+[20.09.2024 22:11] humancat222
 **v2.6.2**
 
 **🟢 Added:**
@@ -920,7 +920,7 @@ Optimized the editor a little bit. More optimizations coming soon
 {Reactions}
 🏴󠁧󠁢󠁥󠁮󠁧󠁿 (5) 👍 (16) 🏳️‍🌈 (3) developer (4) booster (3) 🇾 (2) 🇦 (2) 🇸 (2) ❗ (2) 🇼 (4)
 
-[27.09.2024 20:05] humancat222
+[27.09.2024 22:05] humancat222
 **v2.6.3**
 
 **🟢 Added:**
@@ -945,9 +945,9 @@ Optimized the editor a little bit. More optimizations coming soon
 {Reactions}
 👍 (13) 🇭 (4) 🇪 (4) 🇱 (4) ⬛ (4) 🇾 (3) 🅰️ (3) 🦅 (5) 🇼 (3) 🤑 (4) 🇵🇸 (3)
 
-[25.10.2024 20:09] humancat222
+[25.10.2024 22:09] humancat222
 **v2.7.0**
-🕯️ **HALLOWEEN EVENT:** Available until 03.11.2024 00:00
+🕯️ **HALLOWEEN EVENT:** Available until 03.11.2024 01:00
 
 **🟢 Added:**
 - 4 new scripting templates
@@ -974,7 +974,7 @@ Optimized the editor a little bit. More optimizations coming soon
 {Reactions}
 🔥 (15) 👍 (7) 🥰 (4) 🤑 (2)
 
-[03.11.2024 00:01] humancat222
+[03.11.2024 01:01] humancat222
 **v2.7.1**
 
 **🟢 Added:**
@@ -1002,7 +1002,7 @@ Optimized the editor a little bit. More optimizations coming soon
 {Reactions}
 👍 (12) 🧑‍🚒 (4) 🇩 (4) 🇴 (5) 🇬 (5) 🔥 (6) 🥚 (4) 🇼 (5) 🟥 (3) 🇨 (6) 🇦 (5) 🇹 (6) 🤑 (3) 🇱 (4) 🅾️ (4) 🫷 (4) 😼 (5)
 
-[02.12.2024 18:17] humancat222
+[02.12.2024 19:17] humancat222
 **v2.7.2**
 
 **🟢 Added:**
@@ -1019,9 +1019,9 @@ Optimized the editor a little bit. More optimizations coming soon
 {Reactions}
 👍 (10) 🍞 (3) 🤯 (2)
 
-[18.12.2024 19:00] humancat222
+[18.12.2024 20:00] humancat222
 **v2.8.0**
-🎁 **CHRISTMAS EVENT:** Available until 04.01.2025 19:00
+🎁 **CHRISTMAS EVENT:** Available until 04.01.2025 20:00
 
 **🟢 Added:**
 - **Run math function** block
@@ -1052,11 +1052,11 @@ Optimized the editor a little bit. More optimizations coming soon
 - Removed "Global ID" from properties
 
 
-[19.12.2024 15:20] humancat222
+[19.12.2024 16:20] humancat222
 auto-recovery time has been lowered due to high memory usage
 
 
-[04.01.2025 20:19] humancat222
+[04.01.2025 21:19] humancat222
 **v2.8.1**
 
 🟢 **Added:**
@@ -1086,7 +1086,7 @@ auto-recovery time has been lowered due to high memory usage
 {Reactions}
 😱 (11) 🔥 (15) 👍 (13)
 
-[09.02.2025 17:00] humancat222
+[09.02.2025 18:00] humancat222
 **v2.9.0**
 
 🟢 **Added:**
@@ -1134,7 +1134,7 @@ auto-recovery time has been lowered due to high memory usage
 {Reactions}
 AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 
-[16.02.2025 19:00] humancat222
+[16.02.2025 20:00] humancat222
 **v2.9.1**
 
 🟢 **Added:**
@@ -1152,7 +1152,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Updated the tutorial
 
 
-[02.03.2025 20:55] humancat222
+[02.03.2025 21:55] humancat222
 **v2.9.2**
 
 🟢 **Added:**
@@ -1181,7 +1181,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 {Reactions}
 🔥 (19) z4scroll (15)
 
-[24.03.2025 19:18] humancat222
+[24.03.2025 20:18] humancat222
 **v2.10.0**
 
 🟢 **Added:**
@@ -1233,14 +1233,14 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - **Delete entry <entry> of <table>** (the old one)
 
 
-[01.04.2025 13:10] humancat222
+[01.04.2025 15:10] humancat222
 **v-3.0.0**
 
 **🟢 Added:**
 - Website boosting 🤑
 
 
-[04.04.2025 19:00] humancat222
+[04.04.2025 21:00] humancat222
 **v2.10.1**
 
 🟢 **Added:**
@@ -1265,11 +1265,11 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Website boosting 🤑
 
 
-[19.04.2025 16:00] humancat222
+[19.04.2025 18:00] humancat222
 **v2.11.0.0**
 -# See [CatWeb's new direction for updates](https://discord.com/channels/1226224104370208860/1227278934278934558/1361822958158348389).
 
-🥚 **EASTER EVENT:** Available until 30.04.2025 16:00
+🥚 **EASTER EVENT:** Available until 30.04.2025 18:00
 
 🟢 **Added:**
 - Hierarchy category & blocks
@@ -1290,7 +1290,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1359144676002893913
 
 
-[19.04.2025 16:24] humancat222
+[19.04.2025 18:24] humancat222
 **v2.11.0.1**
 
 🔵 **Fixed:**
@@ -1298,7 +1298,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Elements were layed out incorrectly in Ultimate Egg Hunt settings
 
 
-[19.04.2025 19:08] humancat222
+[19.04.2025 21:08] humancat222
 **v2.11.0.2**
 
 🔵 **Fixed:**
@@ -1306,7 +1306,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Issues related to mitigating the current server issue.
 
 
-[19.04.2025 19:47] humancat222
+[19.04.2025 21:47] humancat222
 **v2.11.0.3**
 
 🟡 **Changed:**
@@ -1316,7 +1316,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Issues related to mitigating the current server issue.
 
 
-[19.04.2025 20:05] humancat222
+[19.04.2025 22:05] humancat222
 **v2.11.0.4**
 
 🔵 **Fixed:**
@@ -1324,7 +1324,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - The "modulo" block
 
 
-[20.04.2025 10:30] humancat222
+[20.04.2025 12:30] humancat222
 **v2.11.0.5**
 
 🟡 **Changed:**
@@ -1335,7 +1335,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1363426014453039124
 
 
-[21.04.2025 18:18] humancat222
+[21.04.2025 20:18] humancat222
 **v2.11.0.6**
 
 🟡 **Changed:**
@@ -1347,7 +1347,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1363542927057485886
 
 
-[21.04.2025 22:17] humancat222
+[22.04.2025 00:17] humancat222
 **v2.11.0.7**
 
 🟡 **Changed:**
@@ -1358,7 +1358,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1363964644162801674
 
 
-[23.04.2025 12:20] humancat222
+[23.04.2025 14:20] humancat222
 **v2.11.0.8**
 
 🟡 **Changed:**
@@ -1368,7 +1368,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - The game would not load on first join
 
 
-[23.04.2025 19:30] humancat222
+[23.04.2025 21:30] humancat222
 **v2.11.0.9**
 
 🟡 **Changed:**
@@ -1378,7 +1378,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 {Reactions}
 👍 (15)
 
-[30.04.2025 16:00] humancat222
+[30.04.2025 18:00] humancat222
 **v2.11.1.0**
 
 🟢 **Added:**
@@ -1403,14 +1403,14 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Easter stuff
 
 
-[30.04.2025 19:40] humancat222
+[30.04.2025 21:40] humancat222
 **v2.11.1.1**
 
 🔵 **Fixed:**
 - Issues related to Website Limitations
 
 
-[05.05.2025 17:47] humancat222
+[05.05.2025 19:47] humancat222
 **v2.11.1.2**
 
 🟢 **Added:**
@@ -1427,14 +1427,14 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1367485178984792104
 
 
-[06.05.2025 18:36] humancat222
+[06.05.2025 20:36] humancat222
 **v2.11.1.3**
 
 🔵 **Fixed:**
 - Issues related to Text Overload errors
 
 
-[07.05.2025 05:33] humancat222
+[07.05.2025 07:33] humancat222
 **v2.11.1.4**
 
 🔵 **Fixed:**
@@ -1442,7 +1442,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Issues related to "get cursor position" on console
 
 
-[08.05.2025 15:49] humancat222
+[08.05.2025 17:49] humancat222
 **v2.11.1.5**
 
 **🟡 Updated:**
@@ -1452,7 +1452,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1369586177937772597
 
 
-[16.05.2025 17:50] humancat222
+[16.05.2025 19:50] humancat222
 **v2.11.1.6**
 
 **🟡 Updated:**
@@ -1464,14 +1464,14 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1369562837776601218
 
 
-[16.05.2025 18:07] humancat222
+[16.05.2025 20:07] humancat222
 **v2.11.1.7**
 
 🔵 **Fixed:**
 - https://discord.com/channels/1226224104370208860/1372998440849768619
 
 
-[17.05.2025 08:30] humancat222
+[17.05.2025 10:30] humancat222
 **v2.11.1.8**
 
 🟡 **Updated:**
@@ -1481,7 +1481,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1373205184301236265
 
 
-[31.05.2025 14:42] humancat222
+[31.05.2025 16:42] humancat222
 **v2.11.2.0**
 
 🟢 **Added:**
@@ -1517,7 +1517,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Search Spellchecking
 
 
-[01.06.2025 15:07] humancat222
+[01.06.2025 17:07] humancat222
 **v2.11.2.1**
 
 🔵 **Fixed:**
@@ -1525,7 +1525,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Performance issues
 
 
-[03.06.2025 19:52] humancat222
+[03.06.2025 21:52] humancat222
 **v2.11.2.2**
 
 🔵 **Fixed:**
@@ -1533,7 +1533,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Suspended domains would be falsely marked as unavailable
 
 
-[04.06.2025 16:47] humancat222
+[04.06.2025 18:47] humancat222
 **v2.11.2.3**
 
 🔵 **Fixed:**
@@ -1541,7 +1541,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - CatWeb QRs created on phone were unscannable
 
 
-[04.06.2025 20:07] humancat222
+[04.06.2025 22:07] humancat222
 **v2.11.2.4**
 
 🔵 **Fixed:**
@@ -1550,7 +1550,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1379812575117578322
 
 
-[07.06.2025 18:05] humancat222
+[07.06.2025 20:05] humancat222
 **v2.11.2.5**
 
 🟢 **Added:**
@@ -1561,14 +1561,14 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1380425554792022097
 
 
-[08.06.2025 20:45] humancat222
+[08.06.2025 22:45] humancat222
 **v2.11.2.6**
 
 🔵 **Fixed:**
 - Fixed issues related to joining CatWeb after content moderation
 
 
-[23.06.2025 20:51] humancat222
+[23.06.2025 22:51] humancat222
 **v2.11.2.7**
 
 🟡 **Changed:**
@@ -1579,7 +1579,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - https://discord.com/channels/1226224104370208860/1384172601223676076
 
 
-[28.06.2025 22:12] humancat222
+[29.06.2025 00:12] humancat222
 **v2.11.2.8**
 
 🔵 **Fixed:**
@@ -1588,21 +1588,21 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 - Vulnerability fixes
 
 
-[07.07.2025 12:17] humancat222
+[07.07.2025 14:17] humancat222
 **v2.11.2.9**
 
 🔵 **Fixed:**
 - https://discord.com/channels/1226224104370208860/1389489338328551506
 
 
-[08.07.2025 17:14] humancat222
+[08.07.2025 19:14] humancat222
 **v2.11.2.10**
 
 **🟡 Changed:**
 - Improved error handling across CatWeb
 
 
-[17.07.2025 13:45] humancat222
+[17.07.2025 15:45] humancat222
 **v2.11.2.11**
 
 **🟡 Changed:**
@@ -1611,7 +1611,7 @@ AMOGUS (17) yummy (10) 🔥 (15) PepeHerz (9)
 {Reactions}
 rimtimtagidim (18) 👍🏿 (17)
 
-[25.07.2025 16:00] humancat222
+[25.07.2025 18:00] humancat222
 **v2.12.0.0**
 
 **🟢 Added:**
@@ -1669,7 +1669,7 @@ Character limit :(
 - Deprecated "When message received..." and iterate through in favor of new blocks that use local variables
 
 
-[26.07.2025 11:51] humancat222
+[26.07.2025 13:51] humancat222
 **v2.12.0.1**
 
 **🟡 Changed:**
@@ -1688,7 +1688,7 @@ Character limit :(
 {Reactions}
 👍🏿 (6)
 
-[26.07.2025 16:22] humancat222
+[26.07.2025 18:22] humancat222
 **v2.12.0.2**
 
 **🟡 Changed:**
@@ -1698,7 +1698,7 @@ Character limit :(
 - "Tween" can no longer be used to set properties on the Page (using variables)
 
 
-[27.07.2025 09:34] humancat222
+[27.07.2025 11:34] humancat222
 **v2.12.0.3**
 
 **🔵 Fixed:**
@@ -1707,7 +1707,7 @@ Character limit :(
 - https://discord.com/channels/1226224104370208860/1398794903198109767
 
 
-[28.07.2025 20:01] humancat222
+[28.07.2025 22:01] humancat222
 **v2.12.0.4**
 
 **🟡 Changed:**
@@ -1719,7 +1719,7 @@ Character limit :(
 - Fixed bugs related to "Make object invisible" & "Make object visible" block using variables
 
 
-[29.07.2025 23:09] humancat222
+[30.07.2025 01:09] humancat222
 **v2.12.0.5**
 
 **🟡 Changed:**
@@ -1731,7 +1731,7 @@ Character limit :(
 - Fixed bugs related to variable scopes
 
 
-[31.07.2025 19:51] humancat222
+[31.07.2025 21:51] humancat222
 **v2.12.0.6**
 
 **🟡 Changed:**
@@ -1749,7 +1749,7 @@ Character limit :(
 - Fixed the "Duplicate Tool" on the Script Editor on mobile
 
 
-[18.08.2025 22:17] humancat222
+[19.08.2025 00:17] humancat222
 **v2.12.0.7**
 
 **🟡 Changed:**
@@ -1763,7 +1763,7 @@ Character limit :(
 - Issues related to the "included domain" count shown in domain registration (https://discord.com/channels/1226224104370208860/1400251750946177214)
 
 
-[07.09.2025 16:00] humancat222
+[07.09.2025 18:00] humancat222
 **v2.13.0.0**
 
 **🟢 Added:**
@@ -1814,7 +1814,7 @@ Character limit :(
 - Check #catweb-bugs!
 
 
-[08.09.2025 16:59] humancat222
+[08.09.2025 18:59] humancat222
 **v2.13.0.1**
 
 **🟡 Changed:**
@@ -1830,7 +1830,7 @@ Character limit :(
 - After loading a site in the editor while having unsaved changes, some fields would appear that made exporting impossible (https://discord.com/channels/1226224104370208860/1414351961762959521)
 
 
-[12.09.2025 15:39] humancat222
+[12.09.2025 17:39] humancat222
 **v2.13.0.2**
 
 **🟡 Changed:**
@@ -1845,7 +1845,7 @@ Character limit :(
 - Adding text that was just whitespace to a script's value would delete it (https://discord.com/channels/1226224104370208860/1414699416417210430)
 
 
-[12.09.2025 22:44] humancat222
+[13.09.2025 00:44] humancat222
 **v2.13.0.3**
 
 **🔵 Fixed:**
@@ -1857,7 +1857,7 @@ Character limit :(
 - Typing "inf" as a number would not correctly convert it to infinite
 
 
-[13.09.2025 13:14] humancat222
+[13.09.2025 15:14] humancat222
 **v2.13.0.4**
 
 **🔵 Fixed:**
@@ -1865,7 +1865,7 @@ Character limit :(
 - Performance improvements
 
 
-[15.09.2025 16:21] humancat222
+[15.09.2025 18:21] humancat222
 **v2.13.0.5**
 
 **🟡 Changed:**
@@ -1877,7 +1877,7 @@ Character limit :(
 - Changing Size or Canvas Size on an element that previously had it's size set to "auto", "auto_y" or "auto_x" made automatic size stay on the editor's preview
 
 
-[19.09.2025 16:35] humancat222
+[19.09.2025 18:35] humancat222
 **v2.13.0.6**
 
 **🟡 Changed:**
@@ -1891,7 +1891,7 @@ Character limit :(
 - Other bugs
 
 
-[20.09.2025 05:09] humancat222
+[20.09.2025 07:09] humancat222
 **v2.13.0.7**
 
 **🔵 Fixed:**
@@ -1900,14 +1900,14 @@ Character limit :(
 - Descriptions did not appear in Search's "side panels"
 
 
-[24.09.2025 14:30] humancat222
+[24.09.2025 16:30] humancat222
 **v2.13.0.8**
 
 **🔵 Fixed:**
 - `(parent)` and `Page` in <object> fields were converted to variables after imported via JSON (https://discord.com/channels/1226224104370208860/1412211540131578018)
 
 
-[03.10.2025 16:24] humancat222
+[03.10.2025 18:24] humancat222
 **v2.13.0.9**
 
 **🔵 Fixed:**
@@ -1918,7 +1918,7 @@ Character limit :(
 - Text & Description would get cleared when loading a saved version of the page after a rejoin
 
 
-[11.10.2025 11:44] humancat222
+[11.10.2025 13:44] humancat222
 **v2.13.0.10**
 
 **🔵 Fixed:**
@@ -1926,9 +1926,9 @@ Character limit :(
 - When deleting a page, domain or subdomain, related pages's saved versions would not be deleted (https://discord.com/channels/1226224104370208860/1425180306222088363)
 
 
-[26.10.2025 17:12] humancat222
+[26.10.2025 18:12] humancat222
 **v2.14.0.0**
-🚪 **HALLOWEEN EVENT:** Available until 09.11.2025 17:00
+🚪 **HALLOWEEN EVENT:** Available until 09.11.2025 18:00
 
 **🟢 Added:**
 - Added properties:
@@ -1971,7 +1971,7 @@ Character limit :(
 - Updated the Add Element menu
 
 
-[27.10.2025 13:29] humancat222
+[27.10.2025 14:29] humancat222
 **v2.14.0.1**
 
 **🟡 Changed:**
@@ -1989,7 +1989,7 @@ Character limit :(
 - Issues related to object variables' curly brackets dissapearing after saving (https://discord.com/channels/1226224104370208860/1426844200728789045)
 
 
-[29.10.2025 01:10] humancat222
+[29.10.2025 02:10] humancat222
 **v2.14.0.2**
 
 **🔵 Fixed:**
@@ -1997,7 +1997,7 @@ Character limit :(
 - Issues related to infinite loading screens when joining CatWeb
 
 
-[03.11.2025 18:06] humancat222
+[03.11.2025 19:06] humancat222
 **v2.14.0.3**
 
 **🔵 Fixed:**
@@ -2008,7 +2008,7 @@ Character limit :(
 - "Object" fields would be cleared when saving (https://discord.com/channels/1226224104370208860/1433529233518493846)
 
 
-[09.11.2025 17:02] humancat222
+[09.11.2025 18:02] humancat222
 **v2.14.1.0**
 
 **🔴 Removed:**
@@ -2017,7 +2017,7 @@ Character limit :(
 {Reactions}
 OMG (5) 🚪 (3) animated_cat_kiss (13)
 
-[15.11.2025 11:31] humancat222
+[15.11.2025 12:31] humancat222
 **v2.14.1.1**
 
 **🟡 Changed:**
@@ -2030,7 +2030,7 @@ OMG (5) 🚪 (3) animated_cat_kiss (13)
 {Reactions}
 Bugcatcher (3)
 
-[30.11.2025 17:00] humancat222
+[30.11.2025 18:00] humancat222
 **v2.15.0.0**
 
 **🟢 Added:**
@@ -2060,7 +2060,7 @@ Bugcatcher (3)
 - Styling category in the Add Element menu
 
 
-[30.11.2025 22:01] humancat222
+[30.11.2025 23:01] humancat222
 **v2.15.0.1**
 
 **🔵 Fixed:**
@@ -2069,14 +2069,14 @@ Bugcatcher (3)
 - The Delete button for actions in the script editor would sometimes delete the wrong action
 
 
-[01.12.2025 16:44] humancat222
+[01.12.2025 17:44] humancat222
 **v2.15.0.2**
 
 **🔵 Fixed:**
 - Scripting tutorials & templates
 
 
-[05.12.2025 16:33] humancat222
+[05.12.2025 17:33] humancat222
 **v2.15.0.3**
 
 **🔵 Fixed:**
@@ -2094,7 +2094,7 @@ Bugcatcher (3)
 - Choosing an element by editing an "<object>" value in a script now re-expands the editor if possible
 
 
-[19.12.2025 14:11] humancat222
+[19.12.2025 15:11] humancat222
 **v2.15.0.4**
 
 **🔵 Fixed:**
@@ -2104,9 +2104,9 @@ Bugcatcher (3)
 - Using Direct Entry Access would sometimes log a warning in the console
 
 {Reactions}
-great (2)
+great (3)
 
-[26.12.2025 16:23] humancat222
+[26.12.2025 17:23] humancat222
 **v2.15.0.5**
 
 **🟢 Added:**
@@ -2116,9 +2116,9 @@ great (2)
 - "Thread cannot be yielded to Wait" error
 
 {Reactions}
-great (2)
+great (4)
 
-[29.12.2025 20:56] humancat222
+[29.12.2025 21:56] humancat222
 **v2.15.0.6**
 
 **🔵 Fixed:**
@@ -2130,7 +2130,7 @@ great (2)
 {Reactions}
 great (3)
 
-[09.01.2026 18:03] humancat222
+[09.01.2026 19:03] humancat222
 **v2.15.0.7**
 
 **🔵 Fixed:**
@@ -2139,9 +2139,9 @@ great (3)
 - On smaller devices, the script editor was not expanded properly when starting the scripting tutorial and would eventually result in being stuck (https://discord.com/channels/1226224104370208860/1458927061736620235)
 
 {Reactions}
-great (2)
+great (3)
 
-[10.01.2026 01:53] humancat222
+[10.01.2026 02:53] humancat222
 **v2.15.0.8**
 
 **🔵 Fixed:**
@@ -2150,7 +2150,7 @@ great (2)
 {Reactions}
 great (12)
 
-[15.02.2026 18:12] humancat222
+[15.02.2026 19:12] humancat222
 **v2.16.0.0**
 
 **🟢 Added:**
@@ -2203,14 +2203,14 @@ great (12)
 #catweb-bugs
 
 
-[15.02.2026 18:33] humancat222
+[15.02.2026 19:33] humancat222
 **v2.16.0.1**
 
 **🔵 Fixed:**
 - Fixed issues related to game joining
 
 
-[15.02.2026 21:35] humancat222
+[15.02.2026 22:35] humancat222
 **v2.16.0.2**
 
 **🔵 Fixed:**
@@ -2219,14 +2219,14 @@ great (12)
 - The pages menu would sometimes fail to load in collaboration sessions (https://discord.com/channels/1226224104370208860/1472646744515936377)
 
 
-[16.02.2026 19:17] humancat222
+[16.02.2026 20:17] humancat222
 **v2.16.0.3**
 
 **🔵 Fixed:**
 - Cross Site broadcasts could be received using the "When message received..." event, and normal broadcasts could be received using the "When cross-site message received..." event (https://discord.com/channels/1226224104370208860/1473017359638855874)
 
 
-[20.02.2026 20:03] humancat222
+[20.02.2026 21:03] humancat222
 **v2.16.0.4**
 
 **🔵 Fixed:**
@@ -2240,7 +2240,7 @@ great (12)
 - Making the window smaller with many tabs open now resizes the tabs to fit (https://discord.com/channels/1226224104370208860/1382257871101886544)
 
 
-[06.03.2026 21:54] humancat222
+[06.03.2026 22:54] humancat222
 **v2.16.0.5**
 
 **🔵 Fixed:**
@@ -2255,7 +2255,7 @@ great (12)
 - Implemented a temporary fix for users unable to join CatWeb (https://discord.com/channels/1226224104370208860/1476931282368856228)
 
 
-[16.03.2026 17:40] humancat222
+[16.03.2026 18:40] humancat222
 **v2.16.1.0**
 
 **🟢 Added:**
@@ -2268,14 +2268,14 @@ great (12)
 - <key> values would dissapear on save (https://discord.com/channels/1226224104370208860/1482515953471197357)
 
 
-[17.03.2026 15:07] humancat222
+[17.03.2026 16:07] humancat222
 **v2.16.1.1**
 
 **🔵 Fixed:**
 - Domain registration caused a "You are currently locked from registering domains" error message for some people
 
 
-[24.03.2026 17:00] humancat222
+[24.03.2026 18:00] humancat222
 **v2.17.0.0**
 
 **🟢 Added:**
@@ -2299,7 +2299,7 @@ great (12)
 - It was impossible to redirect to a site with a query string parameter containing "." in a script (https://discord.com/channels/1226224104370208860/1479926194039423147)
 
 
-[24.03.2026 17:37] humancat222
+[24.03.2026 18:37] humancat222
 **v2.17.0.1**
 
 **🔵 Fixed:**
@@ -2308,7 +2308,7 @@ great (12)
 - Creating an ad via Ads Portal would always result in a "description filtered" error
 
 
-[25.03.2026 08:37] humancat222
+[25.03.2026 09:37] humancat222
 **v2.17.0.2**
 
 **🔵 Fixed:**
@@ -2316,14 +2316,14 @@ great (12)
 - Issues on console (https://discord.com/channels/1226224104370208860/1486084561149362196)
 
 
-[27.03.2026 21:58] humancat222
+[27.03.2026 22:58] humancat222
 **v2.17.0.3**
 
 **🔵 Fixed:**
 - Importing an Upload would reset all enum properties to default (https://discord.com/channels/1226224104370208860/1487158610172838030)
 
 
-[01.04.2026 12:02] humancat222
+[01.04.2026 14:02] humancat222
 **v3.π**
 
 **🟢 Added:**
@@ -2331,7 +2331,7 @@ great (12)
 - Calls
 
 
-[04.04.2026 08:10] humancat222
+[04.04.2026 10:10] humancat222
 **v2.17.1.0**
 
 **🟢 Added:**
@@ -2345,14 +2345,14 @@ great (12)
 - Issues related to Ads
 
 
-[04.04.2026 08:41] humancat222
+[04.04.2026 10:41] humancat222
 **v2.17.1.1**
 
 **🔵 Fixed:**
 - Fixed multiple issues.
 
 
-[04.04.2026 14:24] humancat222
+[04.04.2026 16:24] humancat222
 **v2.17.1.2**
 
 **🔵 Fixed:**
@@ -2360,7 +2360,7 @@ great (12)
 - Fixed multiple other issues
 
 
-[07.04.2026 22:18] humancat222
+[08.04.2026 00:18] humancat222
 **v2.17.1.3**
 
 **🔵 Fixed:**
@@ -2371,7 +2371,7 @@ great (12)
 - Issues related to Broadcasts (https://discord.com/channels/1226224104370208860/1471483287309385882)
 
 
-[13.04.2026 19:10] humancat222
+[13.04.2026 21:10] humancat222
 **v2.17.1.4**
 
 **🔵 Fixed:**
@@ -2379,14 +2379,14 @@ great (12)
 - Fixed several issues
 
 
-[21.04.2026 22:05] humancat222
+[22.04.2026 00:05] humancat222
 **v2.17.2.0**
 
 **🟡 Changed:**
 - Improvements to the new user experience.
 
 
-[12.05.2026 17:30] humancat222
+[12.05.2026 19:30] humancat222
 **v2.17.3.0**
 
 **🟢 Added:**
@@ -2400,7 +2400,7 @@ great (12)
 - **Legacy Donation** element. If you currently sell passes or developer products within your website, make sure to migrate to the **Donation** or **Avatar Item** element before May 29th.
 
 
-[16.05.2026 17:37] humancat222
+[16.05.2026 19:37] humancat222
 **v2.17.3.1**
 
 **🟡 Changed:**
@@ -2417,7 +2417,7 @@ great (12)
 - Issues related to copying and pasting inside of a collaboration session
 
 
-[22.05.2026 21:51] humancat222
+[22.05.2026 23:51] humancat222
 **v2.17.3.2**
 
 **🔵 Fixed:**
@@ -2426,14 +2426,14 @@ great (12)
 - The "Get objects at position" action would return inaccurate results on console
 
 
-[29.05.2026 22:35] humancat222
+[30.05.2026 00:35] humancat222
 **v2.17.3.3**
 
 **🟡 Changed:**
 - Changes for the new Donation policies for passes and developer products, taking place on this day.
 
 
-[06.06.2026 10:41] humancat222
+[06.06.2026 12:41] humancat222
 **v2.17.3.4**
 
 **🟡 Changed:**
@@ -2451,7 +2451,7 @@ great (12)
 - Issues related to the Milestones menu not loading properly when inside a collaboration session
 
 
-[28.06.2026 16:42] humancat222
+[28.06.2026 18:42] humancat222
 **v2.18.0.0**
 
 **🟢 Added:**
@@ -2491,7 +2491,7 @@ great (12)
 - The old Promote flow
 
 
-[29.06.2026 14:08] humancat222
+[29.06.2026 16:08] humancat222
 **v2.18.0.1**
 
 **🔵 Fixed:**
@@ -2507,7 +2507,7 @@ great (12)
 - Fixed multiple other issues
 
 
-[30.06.2026 13:15] humancat222
+[30.06.2026 15:15] humancat222
 **v2.18.0.2**
 
 **🟡 Changed:**
@@ -2523,8 +2523,7 @@ great (12)
 {Reactions}
 👍 (11)
 
-
-[01.07.2026 13:50] humancat222
+[01.07.2026 15:50] humancat222
 **v2.18.0.3**
 
 **🟡 Changed:**
@@ -2546,8 +2545,7 @@ great (12)
 {Reactions}
 👍 (17)
 
-
-[02.07.2026 10:47] humancat222
+[02.07.2026 12:47] humancat222
 **v2.18.0.4**
 
 **🔵 Fixed:**
@@ -2559,7 +2557,7 @@ great (12)
    - Scripts parented inside other scripts were not compiled by the server, which could lead to unintended behavior
 
 
-[03.07.2026 12:32] humancat222
+[03.07.2026 14:32] humancat222
 **v2.18.0.5**
 
 **🟡 Changed:**
@@ -2572,7 +2570,7 @@ great (12)
    - Fixed issues related to Direct Entry Access
 
 
-[07.07.2026 11:49] humancat222
+[07.07.2026 13:49] humancat222
 **v2.18.1.0**
 
 **🟡 Changed:**
@@ -2587,7 +2585,7 @@ great (12)
 - Clicking "Manage" in the Site Information popout could redirect to the wrong domain
 
 
-[08.07.2026 09:32] humancat222
+[08.07.2026 11:32] humancat222
 **v2.18.1.1**
 
 **🟡 Changed:**
@@ -2599,7 +2597,7 @@ great (12)
 - After publishing, a site could not correctly update in all servers
 
 
-[09.07.2026 09:49] humancat222
+[09.07.2026 11:49] humancat222
 **v2.18.1.2**
 
 **🟡 Changed:**
@@ -2611,14 +2609,14 @@ great (12)
 - Fixed an issue where tooltips inside the properties menu would not show on mobile
 
 
-[10.07.2026 14:10] humancat222
+[10.07.2026 16:10] humancat222
 **v2.18.1.3**
 
 **🟡 Changed:**
 - Made changes and fixed multiple issues in the new user experience / tutorials
 
 
-[13.07.2026 20:59] humancat222
+[13.07.2026 22:59] humancat222
 **v2.18.1.4**
 
 **🔵 Fixed:**
@@ -2628,7 +2626,7 @@ great (12)
   - Leaving the position parameter empty in the "Remove entry" action could cause an error to occur
 
 
-[16.07.2026 12:30] humancat222
+[16.07.2026 14:30] humancat222
 **v2.18.1.5**
 
 **🔵 Fixed:**
@@ -2640,7 +2638,7 @@ great (12)
   - Objects with certain Global IDs could not be referenced via a script
 
 
-[21.07.2026 15:55] humancat222
+[21.07.2026 17:55] humancat222
 **v2.18.2.0**
 
 **🟡 Changed:**
@@ -2653,8 +2651,7 @@ great (12)
 {Reactions}
 👀 (7)
 
-
-[06.08.2026 16:01] humancat222
+[06.08.2026 18:01] humancat222
 **v2.18.2.1**
 
 **🔵 Fixed:**
@@ -2672,8 +2669,7 @@ great (12)
 {Reactions}
 👍 (7)
 
-
-[14.08.2026 14:50] humancat222
+[14.08.2026 16:50] humancat222
 **v2.18.2.2**
 
 **🟡 Changed:**
@@ -2688,8 +2684,7 @@ great (12)
 {Reactions}
 sob2k (19)
 
-
-[02.09.2026 15:59] humancat222
+[02.09.2026 17:59] humancat222
 **v2.18.2.3**
 
 **🟡 Changed:**
@@ -2699,3 +2694,86 @@ sob2k (19)
 **🔵 Fixed:**
 - Fixed a mobile issue where bookmarks could be pressed when behind the URL bar
 - Fixed an issue preventing deletion of suspended domains
+
+
+[21.09.2026 21:07] humancat222
+**v2.18.3.0**
+
+**🟢 Added:**
+- Added the ability to rename a campaign inside Ads Portal
+- Adds 3 new variants of the "Run function", "Run function in background" and "Run function protected" actions, which error instead of warn if the function is not found. The existing actions are marked as deprecated and run in "compatibility mode", warning if the function is not found.
+
+**🟡 Changed:**
+- Increased the Runtime Object Limit to 2000 objects (This is an experimental flag and only available to some sites)
+- Updated the tab website loading animation (This is an experimental flag and only available to some players)
+- Changed Uploads to be the default option when exporting or importing elements (This is an experimental flag and only available to some players)
+- "Click-Through Rate" inside Ads Portal is now rounded to the decimal
+- Updated WebRenderer crash screens
+
+**🔵 Fixed:**
+- Fixed a mobile issue where bookmarks could not be pressed when the bookmarks tab was shown on the new tab
+- Fixed multiple other issues
+
+{Reactions}
+2️⃣ (15) 🇰 (14) ⬛ (13) 🇴 (13) 🇧 (14) 🇯 (13) 🇪 (13) 🇨 (13) 🇹 (14) 🇸 (13) ‼️ (15)
+
+[09.10.2026 18:35] humancat222
+**v2.18.3.1**
+
+**🟡 Changed:**
+- Introduced a new suggestions menu for the Script Editor. This also fixes many issues the previous one had.
+- The "Set property" action now accepts an empty <any> field
+
+**🔵 Fixed:**
+- A Link object's Reference property could not be reset using the "Set property" action
+- When using "Set property", "Tween property" or "Get property" to set, get or tween a property on the Page, an error will be thrown correctly if the property doesn't exist
+- The "Tooltip" property could be set or gotten on unsupported elements using scripts
+- When getting the "Robux Amount" of a Donation element using a script, if the value was set to the default "null" would be returned instead of the default value of 50
+- The "Is Loaded" property could not be gotten from Image Buttons and Image Links using scripts
+- The "Product Type" property was unable to be gotten from Legacy Donations using scripts
+- The buttons when adding bid to a campaign inside Ads Portal were ordered incorrectly
+- "Find in Script" was unable to find values inside of tuples
+- The "Find Donations" window would suggest passes, despite it being impossible to donate via passes anymore
+- Script Compilation exclusive issues:
+  - The "Identifier" property in Donations could not be used
+  - Fixed an issue related to using local variables within a function (This fix is an experimental flag and only available to some players)
+  - Fixed other compilation issues
+
+
+[11.10.2026 18:18] humancat222
+**v2.19.0.0**
+
+**🟢 Added:**
+- Added the **Shadow** styling element
+- Added properties:
+  - **Top Left Radius**
+  - **Top Right Radius**
+  - **Bottom Left Radius**
+  - **Bottom Right Radius**
+  - **Middle Image**
+  - **Top Image**
+  - **Bottom Image**
+  - **Mouse Icon**
+- Added actions:
+  - **Set mouse icon to <id?>**
+  - **Hide mouse cursor**
+  - **Show mouse cursor**
+  - **Set <attribute> of <object> to <any?>**
+  - **Get <attribute> of <object> → <any?>**
+- Analytics
+- Attributes
+
+**🟡 Changed:**
+- Replaces the Object Limit by a **Cost Limit**, calculated by the number of elements, styling elements, events and actions in scripts (This is an experimental flag and only available to some players)
+- Increased script limits:
+  - 30 events -> 90 events, 120 actions/event -> 360 actions/event
+- Scrollable Frame **Color**, **Transparency** and **Thickness** properties are now scriptable
+- Updates the CatWeb TV UI
+
+**🔵 Fixed:**
+- Fixed multiple bugs with the "Is left mouse button down" action, notably it was unable to detect mobile or console presses.
+
+
+==============================================================
+Exported 196 message(s)
+==============================================================

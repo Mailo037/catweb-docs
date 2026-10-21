@@ -4,7 +4,7 @@ description: >-
   Comprehensive guide, specification, and block reference for building 2D websites and visual block scripting in CatWeb (Roblox). Use whenever asked to create, edit, debug, convert, or script a CatWeb website or generate CatWeb JSON.
 ---
 
-# CatWeb Development Skill (Roblox v2.18.2.3)
+# CatWeb Development Skill (Roblox v2.18.3.1)
 
 CatWeb is a Roblox game where players create 2D websites using a custom JSON-based UI layout schema and a visual block-based scripting system. Sites exist within an in-game simulated web browser (`.rbx` domain).
 
@@ -31,13 +31,13 @@ Breaking any of these rules causes immediate import rejection (`[INVALIDATED]`) 
 10. **UI and scripts live in ONE JSON file:** Scripts are elements with `"class": "script"` inside `webcontent` (or the snippet array). Never split scripts and UI into separate files (global IDs regenerate upon separate import).
 11. **Two Separate Vocabularies:** Never confuse JSON authoring keys with Script display names:
     - **JSON Authoring Keys (snake_case):** Used directly on elements (`background_color`, `font_color`, `stroke_thickness`, `size` for grid cells, `order`).
-    - **Script Display Names (Title Case):** Used ONLY inside script action parameters (`"Background Color"`, `"Text Color"`, `"Thickness"`, `"Cell Size"`, `"Order"`, `"Text"`, `"Visible"`, `"Grow Ratio"`, etc.).
+    - **Script Display Names (Title Case):** Used ONLY inside script action parameters (`"Background Color"`, `"Text Color"`, `"Thickness"`, `"Cell Size"`, `"Order"`, `"Text"`, `"Visible"`, `"Grow Ratio"`, `"Mouse Icon"`, etc.).
 12. **Flat Control Flow in Scripts:** Control flow actions (`If` `18`, `Repeat` `22`, `Repeat forever` `23`) must **NEVER** contain a nested `actions: [...]` property. Their body consists of flat sibling actions in the event's `actions` array, terminated by `end` (`25`).
 13. **Property Action Structure (`<property>` of `<object>`):**
     Property manipulation blocks are strictly structured with the property BEFORE the object:
-    - **Set:** `Set <property> of <object> to <any>` (`["Set", {"value":"Background Color","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"#ff0000","t":"any"}]`)
-    - **Get:** `Get <property> of <object> → <variable>` (`["Get", {"value":"Text","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]`)
-    - **Tween:** `Tween <property> of <object> to <any> ...` (`["Tween", {"value":"Position","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", ...]`)
+    - **Set:** `Set <property> of <object> to <any>` (`["Set", {"value":"Background Color","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"#ff0000","t":"any"}]`). Action `31` accepts an empty `<any>` field (v2.18.3.1).
+    - **Get:** `Get <property> of <object> → <variable>` (`["Get", {"value":"Text","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "→", {"value":"1","t":"string","l":"variable"}]`).
+    - **Tween:** `Tween <property> of <object> to <any> ...` (`["Tween", {"value":"Position","t":"string","l":"property"}, "of", {"value":"obj","t":"object"}, "to", ...]`).
     > [!CAUTION]
     > NEVER write `Set <object> property ...` or `Tween <object> property ...`. CatWeb expects `<property> of <object>`.
 14. **`Wait` Block is Action ID `3` (Logic Category):**
@@ -47,7 +47,9 @@ Breaking any of these rules causes immediate import rejection (`[INVALIDATED]`) 
     The audio action is `Play audio` with Action ID **`5`** (under the **Audio** category with the speaker icon 🔊: `["Play audio", {"value":"88442833509532","t":"string","l":"id","assetbrowser":"audio"}, "→", {"value":"","t":"string","l":"variable?"}]`).
     > [!CAUTION]
     > Action ID **`48`** is `String length` (`Get length of <string> → <variable>`) in the **Strings** category (indicated by the **`TT`** font icon). **NEVER** use ID `48` for audio/sounds! Using `48` causes CatWeb to treat the audio action as a String block.
-16. **Always Validate with the Semantic Validator Tool (MANDATORY):**
+16. **Function Calling Semantics:**
+    `Run function` (`87`), `Run function in background`, and `Run function protected` operate in **Strict Mode** in v2.18.3.0+, throwing an error if the function does not exist. (Legacy variants run in compatibility mode with a warning).
+17. **Always Validate with the Semantic Validator Tool (MANDATORY):**
     Whenever creating, modifying, or delivering a CatWeb JSON site or component snippet, ALWAYS run:
     ```bash
     node tools/validate.js <path-to-json>
@@ -613,7 +615,7 @@ Before outputting any CatWeb JSON, verify all 13 checks:
 2. [ ] Every scalar value is a quoted string (`"font_size": "16"`, `"visible": "true"`).
 3. [ ] No comments (`//` or `/* */`) anywhere.
 4. [ ] All hex colors start with `#` (`"#ffffff"`).
-5. [ ] Every `globalid` is 2–3 alphanumeric characters (`[A-Za-z0-9]{2,3}`) and strictly unique.
+5. [ ] Every `globalid` — on elements, events and actions — is 2–3 printable ASCII characters (`"bt"`, `"e1"`, `"~O"`) and unique across the file.
 6. [ ] Layout order key is `"order"`, NEVER `"layout_order"`.
 7. [ ] Grid layout cell size key is `"size"`, NEVER `"cell_size"`.
 8. [ ] UI authoring properties are in `snake_case`, script property display names are in `Title Case`.
@@ -626,9 +628,6 @@ Before outputting any CatWeb JSON, verify all 13 checks:
     ```bash
     node tools/validate.js <path-to-json>
     ```
-15. [ ] **Preview in Web Runner (`web-runner/`):** Test visual layout and script interactivity directly in the browser by opening `web-runner/index.html` or running the test suite:
-    ```bash
-    node web-runner/tests/runner.js
-    ```
+15. [ ] **Preview in Web Runner (`web-runner/`):** Open `web-runner/index.html` (or `npm run serve`) and paste the JSON. Press `B` for the script editor (every event stack at its `x`/`y`, with a **Run** button per event) and `C` for the console (`Log`/`Warn`/`Error` output, runtime errors with the block's `globalid`, live variables).
 
 

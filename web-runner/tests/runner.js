@@ -36,6 +36,7 @@ async function main() {
   await import('./tier3_combinations.test.js');
   await import('./tier4_samples.test.js');
   await import('./functions_and_dynamic_objects.test.js');
+  await import('./script_engine.test.js');
 
   const failures = [];
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CatWeb JSON Semantic Validator (Roblox v2.18.2.3)
+ * CatWeb JSON Semantic Validator (Roblox v2.18.3.1)
  * Comprehensive validator enforcing structural, scalar, styling, and script invariants.
  *
  * Usage:
@@ -43,7 +43,8 @@ export const VALID_CLASSES = new Set([
   'Folder', 'script',
   // Styling & Layout Modifiers
   'UICorner', 'UIStroke', 'UIGradient', 'UIPadding', 'UIListLayout', 'UIGridLayout',
-  'UIAspectRatioConstraint', 'UISizeConstraint', 'UITextSizeConstraint', 'UIFlexItem'
+  'UIAspectRatioConstraint', 'UISizeConstraint', 'UITextSizeConstraint', 'UIFlexItem',
+  'UIShadow'
 ]);
 
 // All 89 official CatWeb Script Display Names (from editor property pickers)
@@ -61,6 +62,7 @@ export const VALID_SCRIPT_PROPERTIES = new Set([
   'List Horizontal Alignment', 'List Horizontal Flex', 'List Padding',
   'List Vertical Alignment', 'List Vertical Flex',
   'Max Visible Graphemes', 'Maximum Size', 'Maximum Text Size', 'Minimum Size', 'Minimum Text Size',
+  'Mouse Icon',
   'Name', 'Offset', 'Order',
   'Outline Color', 'Outline Thickness', 'Outline Transparency',
   'Placeholder', 'Placeholder Color', 'Position', 'Product Type',
@@ -104,12 +106,12 @@ export const VALID_VALUES = {
 
 export const COLOR_KEYS = new Set([
   'background_color', 'font_color', 'placeholder_color',
-  'stroke_color', 'scrollbar_color', 'image_color', 'outline_color'
+  'stroke_color', 'scrollbar_color', 'image_color', 'outline_color', 'shadow_color'
 ]);
 
 export const TRANSPARENCY_KEYS = new Set([
   'background_transparency', 'font_transparency', 'image_transparency',
-  'stroke_transparency', 'scrollbar_transparency'
+  'stroke_transparency', 'scrollbar_transparency', 'shadow_transparency'
 ]);
 
 // Authoritative Event IDs (§7.1)
@@ -123,18 +125,30 @@ export const ACTION_IDS = new Set([
   '0', '1', '2', '3',
   // System & Environment
   '4', '32', '33', '84', '85', '117', '34', '36', '62',
+  // Navigation, Broadcast & User
+  '67', '130', '51', '52', '53',
+  // Cookies
+  '35',
+  // Time & Date
+  '68', '71', '72', '83', '116', '118',
+  // Colour
+  '120', '122', '123',
   // Objects & Display
-  '8', '9', '10', '30', '31', '39', '49', '50', '58', '88', '106',
+  '8', '9', '10', '30', '31', '39', '49', '50', '58', '88', '106', '107', '127', '129', '135',
+  // Attributes
+  '138', '139', '140',
+  // Hierarchy
+  '97', '98', '99', '100', '101', '102',
   // Variables & Math
   '11', '12', '13', '14', '15', '16', '17', '27', '40', '41', '78', '96', '114',
   // Strings & Conversions
   '42', '43', '48', '57', '69', '70', '109', '119', '121',
   // Audio
-  '5', '26', '28',
+  '5', '26', '28', '7', '73', '74', '75', '76', '77', '94', '95',
   // Tables & Arrays
-  '54', '55', '56', '59', '66', '89', '90', '91', '110', '113',
-  // Functions
-  '87', '115',
+  '54', '55', '56', '59', '66', '89', '90', '91', '110', '113', '131',
+  // Functions (87, 63, 128 are the deprecated forms of 132, 133, 134)
+  '132', '133', '134', '87', '63', '128', '115',
   // Conditionals & Loops
   '18', '19', '20', '21', '22', '23', '24', '25', '37', '38', '44', '45', '46', '47',
   '79', '80', '81', '82', '92', '93', '103', '104', '105', '108', '112', '125', '126'
@@ -333,7 +347,7 @@ export function validateCatWeb(input, options = {}) {
         errors.push({
           path: `${currentPath}.globalid`,
           code: 'INVALID_GLOBALID_FORMAT',
-          message: `globalid "${gid}" is invalid. It must be 2-3 characters matching ^[A-Za-z0-9_~;.-]{2,3}$.`,
+          message: `globalid "${gid}" is invalid. It must be 2-3 printable ASCII characters (e.g. "bt", "~O"), not a descriptive name.`,
           suggestion: 'Use a compact 2-3 character identifier like "5m", "rt", "b1", "sc".'
         });
       } else {
@@ -555,7 +569,7 @@ export function validateCatWeb(input, options = {}) {
       warnings.push({
         path: `${scriptPath}.content`,
         code: 'SCRIPT_EVENT_LIMIT_EXCEEDED',
-        message: `Script contains ${scriptEl.content.length} events (CatWeb recommendation/limit is max 30 events per script).`,
+        message: `Script contains ${scriptEl.content.length} events (CatWeb recommendation/limit is max 30 events per script, expanding to 90 in Unlimited Update).`,
         suggestion: 'Split logic across multiple script elements.'
       });
     }
@@ -594,7 +608,7 @@ export function validateCatWeb(input, options = {}) {
           errors.push({
             path: `${blockPath}.globalid`,
             code: 'INVALID_GLOBALID',
-            message: `Event globalid "${block.globalid}" is invalid. Must match ^[A-Za-z0-9_~;.-]{2,3}$.`,
+            message: `Event globalid "${block.globalid}" is invalid. Use 2-3 printable ASCII characters (e.g. "e1", "a7").`,
             suggestion: 'Use a compact 2-3 character identifier.'
           });
         } else {
@@ -638,7 +652,7 @@ export function validateCatWeb(input, options = {}) {
             warnings.push({
               path: `${blockPath}.actions`,
               code: 'EVENT_ACTION_LIMIT_EXCEEDED',
-              message: `Event contains ${block.actions.length} actions (CatWeb limit is 120 actions per event).`,
+              message: `Event contains ${block.actions.length} actions (CatWeb limit is 120 actions per event, expanding to 360 in Unlimited Update).`,
               suggestion: 'Decompose long action sequences using functions or broadcasts.'
             });
           }
@@ -678,7 +692,7 @@ export function validateCatWeb(input, options = {}) {
                   errors.push({
                     path: `${actPath}.globalid`,
                     code: 'INVALID_GLOBALID',
-                    message: `Action globalid "${action.globalid}" is invalid. Must match ^[A-Za-z0-9_~;.-]{2,3}$.`,
+                    message: `Action globalid "${action.globalid}" is invalid. Use 2-3 printable ASCII characters (e.g. "e1", "a7").`,
                     suggestion: 'Use a compact 2-3 character identifier.'
                   });
                 } else {
@@ -780,7 +794,7 @@ export function validateCatWeb(input, options = {}) {
       warnings.push({
         path: scriptPath,
         code: 'SCRIPT_TOTAL_ACTION_LIMIT_EXCEEDED',
-        message: `Script contains ${scriptTotalActions} total actions (CatWeb max recommendation is 3,600).`,
+        message: `Script contains ${scriptTotalActions} total actions (CatWeb max recommendation is 3,600, expanding in Unlimited Update).`,
         suggestion: 'Decompose across multiple scripts.'
       });
     }

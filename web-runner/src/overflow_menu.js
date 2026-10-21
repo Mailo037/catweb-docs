@@ -15,7 +15,7 @@ export const OVERFLOW_CONFIG = [
     id: 'aiApi',
     priority: 1,
     selector: '#aiApiBtn',
-    label: 'AI / Export Image',
+    label: 'Export Image / AI API',
     icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
     action: (app) => {
       const btn = app.root.querySelector('#aiApiBtn');
@@ -36,7 +36,7 @@ export const OVERFLOW_CONFIG = [
     id: 'audio',
     priority: 2,
     selector: '#audioBtn',
-    getLabel: (app) => (app.audioEnabled ? 'Audio: On' : 'Audio: Off'),
+    getLabel: (app) => (app.audioEnabled ? 'Sound: On' : 'Sound: Off'),
     getIcon: (app) =>
       app.audioEnabled
         ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`
@@ -57,6 +57,17 @@ export const OVERFLOW_CONFIG = [
       app.toggleDiagnostics?.();
     },
     isActive: (app) => !app.diagnosticsPanel?.classList?.contains('hidden')
+  },
+  {
+    id: 'console',
+    priority: 3.5,
+    selector: '#consoleBtn',
+    label: 'Console & Variables',
+    icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`,
+    action: (app) => {
+      app.toggleConsole?.();
+    },
+    isActive: (app) => Boolean(app.consoleDock) && !app.consoleDock.classList?.contains('hidden')
   },
   {
     id: 'inspector',
@@ -99,6 +110,17 @@ export const OVERFLOW_CONFIG = [
       app.toggleEditor?.();
     },
     isActive: (app) => !app.editorPanel?.classList?.contains('hidden')
+  },
+  {
+    id: 'scripts',
+    priority: 6.5,
+    selector: '#scriptsBtn',
+    label: 'Script Editor',
+    icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="5" rx="1.5"></rect><rect x="7" y="10" width="14" height="5" rx="1.5"></rect><rect x="7" y="17" width="10" height="4" rx="1.5"></rect></svg>`,
+    action: (app) => {
+      app.toggleWorkspace?.();
+    },
+    isActive: (app) => Boolean(app.workspace?.isOpen?.())
   },
   {
     id: 'upload',
@@ -231,6 +253,11 @@ export class CatWebOverflowManager {
     }
   }
 
+  /** @private Config entries whose toolbar element exists. */
+  _presentConfigs() {
+    return OVERFLOW_CONFIG.filter((config) => this.root.querySelector?.(config.selector));
+  }
+
   /**
    * Fallback width estimation if element has not rendered yet or in mock DOM.
    * @private
@@ -243,8 +270,10 @@ export class CatWebOverflowManager {
       case 'zoom': return 125;
       case 'inspector': return 85;
       case 'diagnostics': return 100;
-      case 'audio': return 95;
-      case 'aiApi': return 130;
+      case 'audio': return 36;
+      case 'aiApi': return 85;
+      case 'console': return 90;
+      case 'scripts': return 90;
       case 'share': return 80;
       default: return 90;
     }
@@ -274,9 +303,9 @@ export class CatWebOverflowManager {
     // Available width for items if NO overflow button is present
     const maxAvailable = toolbarWidth - brandWidth - 32; // 32px padding
 
-    // Compute total width of all items
+    // Compute total width of all items (only the ones this page actually has)
     let totalItemsWidth = 0;
-    for (const config of OVERFLOW_CONFIG) {
+    for (const config of this._presentConfigs()) {
       const w = this.intrinsicWidths.get(config.id) || this._estimateFallbackWidth(config.id);
       totalItemsWidth += w + gap;
     }
@@ -298,7 +327,7 @@ export class CatWebOverflowManager {
       let remainingCapacity = availableWithOverflowBtn;
 
       // Items sorted by priority descending (priority 8 stays longest, priority 1 collapses first)
-      const sortedConfigs = [...OVERFLOW_CONFIG].sort((a, b) => b.priority - a.priority);
+      const sortedConfigs = this._presentConfigs().sort((a, b) => b.priority - a.priority);
 
       // Determine items that fit from the most important down to least important
       const fittingIds = new Set();
@@ -395,7 +424,7 @@ export class CatWebOverflowManager {
 
         let html = `
           <div class="cw-context-menu-inner cw-context-subview">
-            <div class="cw-context-back-header" data-action="back-to-main" title="Zurück">
+            <div class="cw-context-back-header" data-action="back-to-main" title="Back">
               <span class="cw-context-back-arrow">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="15 18 9 12 15 6"></polyline>

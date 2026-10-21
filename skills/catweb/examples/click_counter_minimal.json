@@ -1,0 +1,82 @@
+{
+  "favicon": "16944769468",
+  "title": "Click Counter",
+  "background": "#0f0f11",
+  "webcontent": [
+    {
+      "class": "Frame",
+      "globalid": "rt",
+      "alias": "root",
+      "size": "{1,0},{1,0}",
+      "position": "{0,0},{0,0}",
+      "background_color": "#0f0f11",
+      "children": [
+        {
+          "class": "TextLabel",
+          "globalid": "lb",
+          "alias": "count_label",
+          "size": "{0,300},{0,40}",
+          "position": "{0.5,0},{0.4,0}",
+          "anchor": "0.5,0.5",
+          "text": "Clicks: 0",
+          "font": "GothamBold",
+          "font_size": "24",
+          "font_color": "#ffffff",
+          "background_transparency": "1"
+        },
+        {
+          "class": "TextButton",
+          "globalid": "bt",
+          "alias": "click_btn",
+          "size": "{0,200},{0,44}",
+          "position": "{0.5,0},{0.55,0}",
+          "anchor": "0.5,0.5",
+          "text": "Click me",
+          "font": "GothamBold",
+          "font_size": "16",
+          "font_color": "#ffffff",
+          "background_color": "#2563eb",
+          "children": [
+            { "class": "UICorner", "globalid": "bc", "radius": "0,8" }
+          ]
+        },
+        {
+          "class": "script",
+          "globalid": "sc",
+          "alias": "counter_logic",
+          "enabled": "true",
+          "content": [
+            {
+              "id": "0",
+              "globalid": "e0",
+              "x": "4600",
+              "y": "4800",
+              "width": "350",
+              "text": ["When website loaded..."],
+              "actions": [
+                { "id": "11", "globalid": "a0", "text": ["Set", { "value": "1", "t": "string", "l": "variable" }, "to", { "value": "0", "t": "string", "l": "any" }] }
+              ]
+            },
+            {
+              "id": "1",
+              "globalid": "e1",
+              "x": "5000",
+              "y": "4800",
+              "width": "350",
+              "text": ["When", { "value": "bt", "t": "object", "l": "button" }, "pressed..."],
+              "actions": [
+                { "id": "12", "globalid": "a1", "text": ["Increase", { "value": "1", "t": "string", "l": "variable" }, "by", { "value": "1", "t": "number" }] },
+                { "id": "10", "globalid": "a2", "text": ["Set", { "value": "lb", "t": "object" }, "text to", { "value": "Clicks: {1}", "t": "string" }] },
+                { "id": "18", "globalid": "a3", "text": ["If", { "value": "{1}", "t": "string", "l": "any" }, "is equal to", { "value": "10", "t": "string", "l": "any" }] },
+                { "id": "10", "globalid": "a4", "text": ["Set", { "value": "lb", "t": "object" }, "text to", { "value": "Goal reached!", "t": "string" }] },
+                { "id": "112", "globalid": "a5", "text": ["else"] },
+                { "id": "0", "globalid": "a6", "text": ["Log", { "value": "Clicked {1} times", "t": "any" }] },
+                { "id": "25", "globalid": "a7", "text": ["end"] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

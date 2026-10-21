@@ -1,4 +1,4 @@
-# CatDocs - CatWeb Complete Reference (v2.18.2.3)
+# CatDocs - CatWeb Complete Reference (v2.18.3.1)
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@
 
 **CatWeb** is a Roblox game where players can create 2D websites using JSON-based UI and a visual block-based scripting system. The user interface visually represents a web browser environment.
 
-**Current Version:** v2.18.2.3 
+**Current Version:** v2.18.3.1 (with Unlimited Update rollouts)  
 **TLD:** `.rbx` (CatWeb-specific, not real internet)
 
 ### Cross-References
@@ -30,16 +30,27 @@
 
 ## CatWeb Basics
 
-### Platform Features
+### Platform Features & Limits
+
+**Runtime Object Limit:**
+- **2,000 objects** (increased from 1,000 in v2.18.3.0) created dynamically by scripts during execution.
+
+**Element & Cost Limits:**
+- **Legacy Object Limit:** 100 elements (Free) / 400 elements (Premium).
+- **Cost Limit Transition (Unlimited Update):** The fixed object limits (100 / 400) are being replaced by a unified **Cost Limit** based on total elements, styling elements, script events, and script actions.
+  - Effectively allows **unlimited elements (∞)** within a balanced site cost budget.
+  - **Exceeding Cost Limit:** You can still freely edit and collaborate on your website, but publishing is blocked until brought back within cost limits. The editor only halts if exceeded by a massive margin.
+  - **Tripled Script Limits:** Individual event limit per script tripled from 30 → **90 events**, and action limit per event tripled from 120 → **360 actions** (up to 32,400 total script actions).
+  - **Rollout:** Premium members receive immediate access at launch, with full rollout to all players over subsequent weeks.
 
 **Free Tier:**
-- 100 element limit
+- Standard Cost Limit budget (previously 100 elements)
 - 1 free site
 - 3 subdomains
 - 15 pages per site
 
 **Premium ($3.74 USD / 299 Robux):**
-- 400 element limit
+- Early access to new Cost Limit (previously 400 element limit)
 - 3 free sites
 - 5 subdomains
 - 30 pages per site
@@ -71,53 +82,63 @@
 - Landscape mode only
 - No portrait support planned
 
-### Sharing Elements/pages
+### Sharing Elements / Pages
+
+**Export via Upload (Default):**
+- Uploads are now the **default option** when exporting or importing elements in the editor.
+- Generates a unique 6-character code that can be shared and imported without moderation tagging issues.
+- You can assign a custom name to your upload (max 50 characters).
+- Track usage statistics showing how many times your upload code was imported.
 
 **Export via JSON:**
-- You will get a JSON which you can share
-- Stuff can tag when importing
+- Exports raw JSON snippet or site object.
+- Trailing and leading whitespace is stripped automatically upon import.
+- Useful for external backup and direct code generation.
 
-**Export via Upload:**
-- You will get a unique 6 character code which you can share
-- Nothing will tag when importing
-- You can assign a name to your upload (max. 50 characters)
-- You can see how many times your upload code has been used
+### Ads Portal
+
+- **Campaign Management:** Previously created campaigns can now be renamed directly inside Ads Portal.
+- **Custom Starter Bids:** Choose initial bids when creating an ad campaign.
+- **Metrics:** Click-Through Rate (CTR) is rounded to the nearest decimal.
+- **Discover Ads:** Fully released for community promotion.
 
 ---
 
 ## UI Elements
 
-### Element Types (10 total)
+### Element Types (12 total)
 
 **Visual Elements:**
-1. **Frame** - Basic container
-2. **Text** - Display text (20k char render limit, 200k total for every object displaying text)
-3. **Image** - Display images
-4. **Link** - Clickable URL button (also has a text property - 20k char render limit, 200k total for every object displaying text)
-5. **Button** - Interactive button (also has a text property - 20k char render limit, 200k total for every object displaying text)
-6. **Donation** - Prompt transfer button (also has a text property - 20k char render limit, 200k total for every object displaying text), this button does not support passes or developer products, only a amount of robux
-7. **Avatar Item** - Prompt purchase button (also has a text property - 20k char render limit, 200k total for every object displaying text), this button will only support avatar items, no passes or developer products
-8. **Input** - Text input field (also has a text property - 20k char render limit, 200k total for every object displaying text)
-9. **Scroller** - Scrollable container
+1. **Frame** - Basic container (`Frame`)
+2. **Text** - Display text (`TextLabel`, 20k char render limit, 200k total for every object displaying text)
+3. **Image** - Display static images (`ImageLabel`)
+4. **Link** - Clickable text URL button (`TextButton?link`)
+5. **Button** - Interactive text button (`TextButton`)
+6. **Donation** - Prompt Robux transfer button (`TextButton?transfer`; the class is never `TextButton?donation`, "Donation" is only its default label)
+7. **Avatar Item** - Prompt avatar item purchase button (`TextButton?avataritem`)
+8. **Input** - Text input field (`TextBox`)
+9. **Scroller** - Scrollable container (`ScrollingFrame`)
+10. **Image Button** - Interactive clickable image button (`ImageButton`)
+11. **Image Link** - Clickable image URL link button (`ImageButton?link`)
 
 **Non-Visual Elements:**
-10. **Script** - Contains scripting logic
-11. **Folder** - Organizational container (not rendered)
+12. **Script** - Contains scripting logic (`script`)
+13. **Folder** - Organizational container (not rendered, `Folder`)
 
 ### Styling Elements (9 total)
 
 Applied to visual elements only:
-1. **Outline** - Border/stroke
-2. **Corner** - Rounded corners
-3. **List** - Vertical/horizontal list layout
-4. **Grid** - Grid layout
-5. **Aspect Ratio** - Maintain aspect ratio
-6. **Constraint** - Size limits
-7. **Gradient** - Color gradients
-8. **Padding** - Internal spacing
-9. **Text Size Constraint** - Size limits for text
+1. **Outline** - Border/stroke (`UIStroke`)
+2. **Corner** - Rounded corners (`UICorner`)
+3. **List** - Vertical/horizontal list layout (`UIListLayout`)
+4. **Grid** - Grid layout (`UIGridLayout`)
+5. **Aspect Ratio** - Maintain aspect ratio (`UIAspectRatioConstraint`)
+6. **Constraint** - Size limits (`UISizeConstraint`)
+7. **Gradient** - Color gradients (`UIGradient`)
+8. **Padding** - Internal spacing (`UIPadding`)
+9. **Text Size Constraint** - Size limits for text (`UITextSizeConstraint`)
 
-**Note:** Each element (including styling and Non-Visual Elements) counts as 1 toward the limit.
+**Note:** In the new Cost Limit system, each element (visual, styling, and non-visual) contributes toward the site's overall cost budget.
 
 ### Element Properties
 
@@ -131,14 +152,15 @@ All visual elements share:
 - Layer (z-index)
 - Visibility
 - Order (if parented with a list)
-- Tooltip
+- Tooltip (supported on interactive/content elements; throws script error if accessed on unsupported elements)
 - Clips Descendants
+- Mouse Icon (custom cursor asset ID or preset displayed when hovering over the element)
 
 **Specific Properties:**
 
 **Text/Button/Link/Input:**
 - Text content
-- Font (Gotham, GothamBold, SourceSans, Roboto, etc.. The fonts available are the ones that Roblox provides on this site "https://create.roblox.com/store/fonts". When using fonts from their site you have to use the asset id not the name of the font.)
+- Font (Gotham, GothamBold, SourceSans, Roboto, etc. When using fonts from Roblox, use the asset ID: `https://create.roblox.com/store/fonts`)
 - Font Size ("scaled" or number)
 - Font Weight (Thin, ExtraLight, Regular, Medium, SemiBold, Bold, ExtraBold, Heavy)
 - Font Style (Normal, Italic)
@@ -151,8 +173,19 @@ All visual elements share:
 - Text wrapping
 - Text truncation (AtEnd, None, SplitWord)
 
-**Button (additional):**
-- Automatic Color
+**Button & Image Button (additional):**
+- Automatic Color (boolean, supported on Button, Image Button, Link, Image Link)
+
+**Image / Image Button / Image Link:**
+- Image ID (Roblox asset ID)
+- Image Transparency
+- Tint / Image Color
+- Scale Type (Crop, Fit, Slice, Stretch, Tile)
+  - When "Slice" - Slice Center, Slice Scale
+  - When "Tile" - Tile Size (UDim2)
+- Resample Mode (Default, Pixelated)
+- Rect Offset, Rect Size
+- Is Loaded (Get property: boolean indicating whether the asset has finished loading)
 
 **Input (additional):**
 - Placeholder
@@ -160,18 +193,19 @@ All visual elements share:
 - Editable (true/false)
 - Multi-Line (true/false)
 
-**Link (additional):**
-- Reference (URL)
+**Link & Image Link (additional):**
+- Reference (URL string - can be set or reset using `Set property`)
 - Open in new tab (true/false)
 - Automatic Color
 
 **Donation (additional):**
-- Robux Amount (any amount of robux)
+- Robux Amount (default: `50`, scriptable amount of Robux to transfer)
+- Identifier (tracking string identifier for purchase callback)
 - Transfer ID (post-purchase to identify what got bought)
 - Automatic Color
 
 **Avatar Item (additional):**
-- Item ID (Roblox asset, only from avatar items)
+- Item ID (Roblox asset ID, only for avatar items)
 - Automatic Color
 
 **Scroller (additional):**
@@ -180,15 +214,6 @@ All visual elements share:
 - Scrollbar Transparency
 - Scrollbar Thickness
 
-**Image:**
-- Image ID (Roblox asset)
-- Image Transparency
-- Tint
-- Scale Type (Crop, Fit, Slice, Stretch, Tile)
-  - When "Slice" - Slice Center, Slice Scale
-  - When "Tile" - Tile Size (UDim2)
-- Resample Mode (Default, Pixelated)
-
 ---
 
 ## Scripting System
@@ -196,22 +221,24 @@ All visual elements share:
 ### Core Concepts
 
 **Scripts:**
-- Element type that contains events and actions
+- Element type that contains events and actions (`"class": "script"`)
 - Can be placed anywhere in UI hierarchy
 - Multiple scripts per page allowed
 - Share global variables and functions
+- Runtime object creation limit: **2,000 objects**
 
 **Events (Triggers):**
 - Start execution when conditions met
-- Run in parallel with priority (closer to center = executes first)
+- Run in parallel with priority (closer to center `5000, 5000` = executes first)
 - Canvas: 9992×9992 pixels (centered by default)
-- Max 30 events per script
-- Each event holds max 120 actions
+- Limit: **90 events per script** (tripled from 30 in Unlimited Update)
+- Each event holds max **360 actions** (tripled from 120 in Unlimited Update)
 
 **Actions (Blocks):**
 - Execute sequentially within an event
-- Total capacity: 3,600 per script (30 events × 120 actions)
+- Total capacity: up to **32,400 actions per script** (90 events × 360 actions)
 - 16 action types (categories)
+- New Script Editor features include updated suggestions menu and empty `<any>` field support in `Set property`
 
 **Variables:**
 - Dynamic typing (type changes with usage)
@@ -856,31 +883,40 @@ Actions formatted with emojis (see Script Formatting section).
 
 ### Functions
 
-**⚡ Run function in background `<function>` `<tuple>`**
-- Executes function without waiting
-- No return value
-- Continues immediately
-
 **⚡ Run function `<function>` `<tuple>` → `<variable?>`**
-- Executes function and waits
+- Executes function and yields until return
 - Optional return value
+- **Strict Mode (v2.18.3.0+):** Throws a fatal script error if the target function is not found.
+- **Compatibility Mode (Deprecated variant):** Emits a console warning if the function is not found, allowing execution to continue.
+
+**⚡ Run function in background `<function>` `<tuple>`**
+- Executes function asynchronously without yielding
+- No return value; continues immediately
+- **Strict Mode (v2.18.3.0+):** Errors if the function is not found.
+- **Compatibility Mode (Deprecated variant):** Warns if the function is not found.
 
 **⚡ Run function protected `<function>` `<tuple>` → `<success_variable>` `<variable?>`**
-- Executes function and waits
-- If the function fails (errors), it will set `<success_variable>` to false and `<variable?>` to the error message. If the function succeeds, it will set `<success_variable>` to true and `<variable?>` to the return value of the function, if there is one.
+- Executes function and yields safely
+- If the function errors or fails: sets `<success_variable>` to `false` and `<variable?>` to the error message.
+- If the function succeeds: sets `<success_variable>` to `true` and `<variable?>` to the function's return value (if any).
+- **Strict Mode (v2.18.3.0+):** Errors if the function is not defined.
+- **Compatibility Mode (Deprecated variant):** Warns if the function is not defined.
 
 **⚡ Return `<any>`**
 - Returns value from function
-- Stops execution (like Error but no output)
-- Can also be used outside of functions
+- Stops execution (like Error but without logging an error message)
+- Can also be used outside functions to terminate event execution early
 
-**Note:** Major overhead when calling functions repeatedly. Normal scripts: ~10k+ actions/sec. Function loops: ~75-95% of normal scripts. Loops INSIDE functions are fine.
+**Note:** Functions are compiled into native representations under Script Compilation. Functions called in rapid succession have minimal overhead compared to legacy interpreters, but loops inside functions remain the most efficient pattern.
 
 ---
 
 ## Properties Reference
 
 Properties for Get/Set/Tween actions. Not all properties work with all actions.
+- **Set Property Value Slot:** The `Set property` action accepts an empty `<any>` field (as of v2.18.3.1).
+- **Page Properties:** Using `Set property`, `Get property`, or `Tween property` on the Page (`Title`, `Icon`) strictly throws an error if the property does not exist on the Page.
+- **Tooltip Property:** Restricted to supported elements; accessing `Tooltip` via script on an unsupported element throws a script error.
 
 ### Legend
 - **(Get)** - Read-only, Get action only
@@ -896,7 +932,7 @@ Properties for Get/Set/Tween actions. Not all properties work with all actions.
 | Absolute Size | (Get) | Returns "X, Y" string - use Split string |
 | Alias | (Get, Set) | Element name |
 | Anchor Point | (Get, Set, Tween) | UDim2 format |
-| Automatic Color | (Get, Set) | Boolean - TextButton only |
+| Automatic Color | (Get, Set) | Boolean - TextButton, ImageButton, Link, ImageLink, Donation, Avatar Item |
 | Background Color | (Get, Set, Tween) | Hex string |
 | Background Transparency | (Get, Set, Tween) | 0-1 |
 | Bottom Padding | (Get, Set, Tween) | UDim format |
@@ -909,17 +945,18 @@ Properties for Get/Set/Tween actions. Not all properties work with all actions.
 | Cursor Position | (Get) | Integer - TextBox only |
 | Direction | (Get, Set) | UIListLayout only |
 | Editable | (Get, Set) | Boolean - TextBox only |
-| Font | (Get, Set) | Font name |
+| Font | (Get, Set) | Font name or font asset ID |
 | Font Style | (Get, Set) | Normal, Italic |
 | Font Weight | (Get, Set) | Regular, Medium, Bold |
 | Horizontal Alignment | (Get, Set) | Left, Center, Right |
-| Icon | (Get, Set) | String |
+| Icon | (Get, Set) | String (Page favicon or element icon) |
+| Identifier | (Get, Set) | String - Donation element tracking identifier |
 | Image ID | (Get, Set) | Roblox asset ID |
 | Image Rect Offset | (Get, Set, Tween) | Vector2 string |
 | Image Rect Size | (Get, Set, Tween) | Vector2 string |
-| Image Transparency | (Get, Set, Tween) | 0-1 - ImageLabel only |
-| Is Loaded | (Get) | Read-only boolean - ImageLabel only |
-| Item ID | (Get, Set) | Donation element only |
+| Image Transparency | (Get, Set, Tween) | 0-1 - ImageLabel, ImageButton, ImageLink |
+| Is Loaded | (Get) | Read-only boolean - ImageLabel, ImageButton, ImageLink |
+| Item ID | (Get, Set) | Roblox asset ID - Avatar Item element only |
 | Layer | (Get, Set) | Z-index integer |
 | Left Padding | (Get, Set, Tween) | UDim format |
 | Line Height | (Get, Set, Tween) | Number |
@@ -929,6 +966,7 @@ Properties for Get/Set/Tween actions. Not all properties work with all actions.
 | Minimum Size | (Get, Set, Tween) | Vector2 - UISizeConstraint only |
 | Minimum Text Size | (Get, Set) | Integer - UITextSizeConstraint only |
 | Maximum Text Size | (Get, Set) | Integer - UITextSizeConstraint only |
+| Mouse Icon | (Get, Set) | Asset ID string - custom mouse cursor when hovering over element |
 | Name | (Get, Set) | Internal element name |
 | Offset | (Get, Set, Tween) | Vector2 - UIGradient only |
 | Order | (Get, Set) | Layout order integer |
@@ -938,19 +976,20 @@ Properties for Get/Set/Tween actions. Not all properties work with all actions.
 | Placeholder | (Get, Set) | String - TextBox only |
 | Placeholder Color | (Get, Set, Tween) | Hex - TextBox only |
 | Position | (Get, Set, Tween) | UDim2 format |
-| Product Type | (Get, Set) | Donation element only |
+| Product Type | (Get, Set) | Legacy Donation element only |
 | Radius | (Get, Set, Tween) | UDim - UICorner only |
 | Ratio | (Get, Set) | Number - UIAspectRatioConstraint only |
-| Reference | (Get, Set) | URL string - Link/Donation |
-| Resample Mode | (Get, Set) | ImageLabel only |
+| Reference | (Get, Set) | URL string - Link, ImageLink (resettable via Set property) |
+| Resample Mode | (Get, Set) | ImageLabel, ImageButton, ImageLink |
 | Rich | (Get, Set) | Boolean - rich text |
 | Right Padding | (Get, Set, Tween) | UDim format |
+| Robux Amount | (Get, Set) | Integer - Donation element (defaults to 50 Robux) |
 | Rotation | (Get, Set, Tween) | Degrees |
-| Scale Type | (Get, Set) | ImageLabel only |
+| Scale Type | (Get, Set) | ImageLabel, ImageButton, ImageLink |
 | Selection Start | (Get, Set) | Integer - TextBox only |
 | Size | (Get, Set, Tween) | UDim2 format |
-| Slice Center | (Get, Set) | Rect - ImageLabel only |
-| Slice Scale | (Get, Set, Tween) | Number - ImageLabel only |
+| Slice Center | (Get, Set) | Rect - ImageLabel, ImageButton, ImageLink |
+| Slice Scale | (Get, Set, Tween) | Number - ImageLabel, ImageButton, ImageLink |
 | Sort Order | (Get, Set) | Layout elements only |
 | Stroke Mode | (Get, Set) | UIStroke only |
 | Text | (Get, Set) | Text content |
@@ -958,10 +997,10 @@ Properties for Get/Set/Tween actions. Not all properties work with all actions.
 | Text Color | (Get, Set, Tween) | Hex string |
 | Text Size | (Get, Set, Tween) | Number |
 | Text Transparency | (Get, Set, Tween) | 0-1 |
-| Tile Size | (Get, Set, Tween) | UDim2 - ImageLabel only |
-| Tint | (Get, Set, Tween) | Hex - ImageLabel only |
-| Title | (Get, Set) | String |
-| Tooltip | (Get, Set) | String |
+| Tile Size | (Get, Set, Tween) | UDim2 - ImageLabel, ImageButton, ImageLink |
+| Tint | (Get, Set, Tween) | Hex - ImageLabel, ImageButton, ImageLink |
+| Title | (Get, Set) | String (Page title) |
+| Tooltip | (Get, Set) | String (supported interactive elements only) |
 | Top Padding | (Get, Set, Tween) | UDim format |
 | Truncate Text | (Get, Set) | Boolean |
 | Vertical Alignment | (Get, Set) | Top, Center, Bottom |
@@ -1095,6 +1134,27 @@ When generating scripts, use emoji formatting for clarity.
 - Use Split string function to create from delimiter-separated strings
 - More efficient than individual inserts
 
+### Persistent / Cross-User Data (Relay Account)
+
+CatWeb has no server-side storage: variables and tables are per visitor and reset on refresh, and cookies are per visitor. To save data across sessions or share it **between** users, simulate a backend with an **always-online alt account** parked on one fixed page (e.g. `api.<site>.rbx`) that acts as a relay. Only build this when the site really needs shared state (leaderboards, global counters, saves, live presence).
+
+> [!IMPORTANT]
+> **Prerequisite:** the site owner must keep that Roblox account online on that page 24/7. Without it there is no datastore.
+
+- **Store = the alt's cookies** (`34` set, `36` get, `35` increase, `62` delete): persistent, ~10 KB total. Never use variables or tables as the store; they vanish on a crash or update.
+- **Transport = broadcasts.** `Broadcast across page` (`32`) in both directions. The alt listens with `When message received` (`9`), which exposes `{messageContent}`, `{messageSenderName}` and `{messageSenderId}`. Messages are capped at 979 bytes; chunk anything larger.
+- **Protocol:** prefix every message with a one-character op code and use `|` as separator: `<op>|<key>|<value>`, with `G` get, `P` post, `R` reply, `H` heartbeat.
+- **Keep payloads numeric** (`P|7|500`). Broadcast content really does pass through the filter; digits and spaces don't get tagged. Payloads with letters (a username, free text) need the decoder ([Assets.md](Assets.md) §4).
+
+**POST** (client saves): the client broadcasts `P|<key>|<value>`. The alt's `When message received` splits `{messageContent}` by `|` (`57`), reads entry 1 as the op (`56`), and on `If op is equal to "P"` (`18`) reads entries 2 and 3 and sets the cookie `{messageSenderName}_{key}` to the value (`34`), then `end` (`25`).
+
+**GET** (client reads): the client broadcasts `G|<key>`. The alt reads cookie `{messageSenderName}_{key}` (`36`) and replies `R|<key>|<value>` (`32`). The client's own `When message received` filters for the `R` prefix and updates its UI.
+
+**Online check**, either: **pull** (client sends `H`, marks the server offline if no `H` reply arrives within ~5 s) or **push** (the alt broadcasts `H` every ~3 s; clients mark it offline after ~5 s of silence, which costs fewer requests).
+
+> [!CAUTION]
+> **Security is mandatory.** Every visitor on the page sees every broadcast and can forge any request. The alt must key all data by `{messageSenderName}`, **never** trust a username inside the payload, and drop malformed or oversized messages. Concurrent POSTs to one key are last-write-wins, so keep keys per user.
+
 ### Broadcasting
 
 **Broadcast Limits (per page):**
@@ -1192,15 +1252,16 @@ When generating scripts, use emoji formatting for clarity.
 
 | Item | Free | Premium |
 |------|------|---------|
-| Elements | 100 | 200 |
+| Elements | Cost limit (legacy: 100) | Cost limit (legacy: 400) |
+| Recommended elements per page | < 500 | < 500 |
 | Sites | 1 | 3 |
 | Subdomains | 3 | 5 |
 | Pages | 15 | 30 |
 | Variables | 5MB | 5MB |
-| Cookies | N/A* | N/A* |
-| Runtime Objects | 1000 | 1000 |
-| Actions per Event | 120 | 120 |
-| Events per Script | 30 | 30 |
+| Cookies | 10kB per site* | 10kB per site* |
+| Runtime Objects | 2000 | 2000 |
+| Actions per Event | 360 | 360 |
+| Events per Script | 90 | 90 |
 | Actions per Frame | 400 | 400 |
 | Tuple Parameters | 6 | 6 |
 | Playing Sounds | 150 | 150 |
@@ -1210,6 +1271,8 @@ When generating scripts, use emoji formatting for clarity.
 | Cross-site Broadcast Rate | 5/20s (Uncached) 5/2s (Cached) | 5/20s (Uncached) 5/2s (Cached) |
 
 *Requires Cookies gamepass (separate purchase)
+
+The 500-element figure is a guideline, not a CatWeb limit: pages above it still import but can be very slow or fail to load. Every element in `webcontent` counts (modifiers, `Folder`s and `script` elements included); events and actions inside a script don't. See [UIGPT.md](UIGPT.md) §12 for ways to cut the count.
 
 ---
 

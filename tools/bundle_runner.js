@@ -21,6 +21,9 @@ const MODULE_FILES = [
   'inspector.js',
   'api_protocol.js',
   'overflow_menu.js',
+  'block_library.js',
+  'script_workspace.js',
+  'console_panel.js',
   'app.js'
 ];
 

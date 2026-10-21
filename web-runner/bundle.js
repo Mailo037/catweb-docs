@@ -449,7 +449,7 @@ exports.ENUM_CASE_MAP = ENUM_CASE_MAP;
  * CatWeb JSON Semantic Validator Engine (Client & Node compatible)
  * 
  * Enforces all structural, scalar, styling, and script invariants defined
- * in the CatWeb specification (Roblox v2.18.2.3).
+ * in the CatWeb specification (Roblox v2.18.3.1).
  *
  * Direct zero-dependency port and enhancement of tools/validate.js.
  * Runs in both modern web browsers (via ES modules) and Node.js.
@@ -472,7 +472,8 @@ const VALID_CLASSES = exports.VALID_CLASSES = new Set([
   'Folder', 'script',
   // Styling & Layout Modifiers
   'UICorner', 'UIStroke', 'UIGradient', 'UIPadding', 'UIListLayout', 'UIGridLayout',
-  'UIAspectRatioConstraint', 'UISizeConstraint', 'UITextSizeConstraint', 'UIFlexItem'
+  'UIAspectRatioConstraint', 'UISizeConstraint', 'UITextSizeConstraint', 'UIFlexItem',
+  'UIShadow'
 ]);
 
 // All 89 official CatWeb Script Display Names (from editor property pickers)
@@ -490,6 +491,7 @@ const VALID_SCRIPT_PROPERTIES = exports.VALID_SCRIPT_PROPERTIES = new Set([
   'List Horizontal Alignment', 'List Horizontal Flex', 'List Padding',
   'List Vertical Alignment', 'List Vertical Flex',
   'Max Visible Graphemes', 'Maximum Size', 'Maximum Text Size', 'Minimum Size', 'Minimum Text Size',
+  'Mouse Icon',
   'Name', 'Offset', 'Order',
   'Outline Color', 'Outline Thickness', 'Outline Transparency',
   'Placeholder', 'Placeholder Color', 'Position', 'Product Type',
@@ -533,12 +535,12 @@ const VALID_VALUES = exports.VALID_VALUES = {
 
 const COLOR_KEYS = exports.COLOR_KEYS = new Set([
   'background_color', 'font_color', 'placeholder_color',
-  'stroke_color', 'scrollbar_color', 'image_color', 'outline_color'
+  'stroke_color', 'scrollbar_color', 'image_color', 'outline_color', 'shadow_color'
 ]);
 
 const TRANSPARENCY_KEYS = exports.TRANSPARENCY_KEYS = new Set([
   'background_transparency', 'font_transparency', 'image_transparency',
-  'stroke_transparency', 'scrollbar_transparency'
+  'stroke_transparency', 'scrollbar_transparency', 'shadow_transparency'
 ]);
 
 // Authoritative Event IDs (§7.1)
@@ -552,18 +554,30 @@ const ACTION_IDS = exports.ACTION_IDS = new Set([
   '0', '1', '2', '3',
   // System & Environment
   '4', '32', '33', '84', '85', '117', '34', '36', '62',
+  // Navigation, Broadcast & User
+  '67', '130', '51', '52', '53',
+  // Cookies
+  '35',
+  // Time & Date
+  '68', '71', '72', '83', '116', '118',
+  // Colour
+  '120', '122', '123',
   // Objects & Display
-  '8', '9', '10', '30', '31', '39', '49', '50', '58', '88', '106',
+  '8', '9', '10', '30', '31', '39', '49', '50', '58', '88', '106', '107', '127', '129', '135',
+  // Attributes
+  '138', '139', '140',
+  // Hierarchy
+  '97', '98', '99', '100', '101', '102',
   // Variables & Math
   '11', '12', '13', '14', '15', '16', '17', '27', '40', '41', '78', '96', '114',
   // Strings & Conversions
   '42', '43', '48', '57', '69', '70', '109', '119', '121',
   // Audio
-  '5', '26', '28',
+  '5', '26', '28', '7', '73', '74', '75', '76', '77', '94', '95',
   // Tables & Arrays
-  '54', '55', '56', '59', '66', '89', '90', '91', '110', '113',
-  // Functions
-  '87', '115',
+  '54', '55', '56', '59', '66', '89', '90', '91', '110', '113', '131',
+  // Functions (87, 63, 128 are the deprecated forms of 132, 133, 134)
+  '132', '133', '134', '87', '63', '128', '115',
   // Conditionals & Loops
   '18', '19', '20', '21', '22', '23', '24', '25', '37', '38', '44', '45', '46', '47',
   '79', '80', '81', '82', '92', '93', '103', '104', '105', '108', '112', '125', '126'
@@ -778,7 +792,7 @@ function validateCatWeb(input, options = {}) {
         errors.push({
           path: `${currentPath}.globalid`,
           code: 'INVALID_GLOBALID_FORMAT',
-          message: `globalid "${gid}" is invalid. It must be 2-3 characters matching ^[A-Za-z0-9_~;.-]{2,3}$.`,
+          message: `globalid "${gid}" is invalid. It must be 2-3 printable ASCII characters (e.g. "bt", "~O"), not a descriptive name.`,
           suggestion: 'Use a compact 2-3 character identifier like "5m", "rt", "b1", "sc".',
           globalid: gid
         });
@@ -1018,7 +1032,7 @@ function validateCatWeb(input, options = {}) {
       warnings.push({
         path: `${scriptPath}.content`,
         code: 'SCRIPT_EVENT_LIMIT_EXCEEDED',
-        message: `Script contains ${scriptEl.content.length} events (CatWeb recommendation/limit is max 30 events per script).`,
+        message: `Script contains ${scriptEl.content.length} events (CatWeb recommendation/limit is max 30 events per script, expanding to 90 in Unlimited Update).`,
         suggestion: 'Split logic across multiple script elements.',
         globalid: scriptEl.globalid
       });
@@ -1059,7 +1073,7 @@ function validateCatWeb(input, options = {}) {
           errors.push({
             path: `${blockPath}.globalid`,
             code: 'INVALID_GLOBALID',
-            message: `Event globalid "${block.globalid}" is invalid. Must match ^[A-Za-z0-9_~;.-]{2,3}$.`,
+            message: `Event globalid "${block.globalid}" is invalid. Use 2-3 printable ASCII characters (e.g. "e1", "a7").`,
             suggestion: 'Use a compact 2-3 character identifier.',
             globalid: block.globalid
           });
@@ -1107,7 +1121,7 @@ function validateCatWeb(input, options = {}) {
             warnings.push({
               path: `${blockPath}.actions`,
               code: 'EVENT_ACTION_LIMIT_EXCEEDED',
-              message: `Event contains ${block.actions.length} actions (CatWeb limit is 120 actions per event).`,
+              message: `Event contains ${block.actions.length} actions (CatWeb limit is 120 actions per event, expanding to 360 in Unlimited Update).`,
               suggestion: 'Decompose long action sequences using functions or broadcasts.',
               globalid: block.globalid
             });
@@ -1149,7 +1163,7 @@ function validateCatWeb(input, options = {}) {
                   errors.push({
                     path: `${actPath}.globalid`,
                     code: 'INVALID_GLOBALID',
-                    message: `Action globalid "${action.globalid}" is invalid. Must match ^[A-Za-z0-9_~;.-]{2,3}$.`,
+                    message: `Action globalid "${action.globalid}" is invalid. Use 2-3 printable ASCII characters (e.g. "e1", "a7").`,
                     suggestion: 'Use a compact 2-3 character identifier.',
                     globalid: action.globalid
                   });
@@ -1257,7 +1271,7 @@ function validateCatWeb(input, options = {}) {
       warnings.push({
         path: scriptPath,
         code: 'SCRIPT_TOTAL_ACTION_LIMIT_EXCEEDED',
-        message: `Script contains ${scriptTotalActions} total actions (CatWeb max recommendation is 3,600).`,
+        message: `Script contains ${scriptTotalActions} total actions (CatWeb max recommendation is 3,600, expanding in Unlimited Update).`,
         suggestion: 'Decompose across multiple scripts.',
         globalid: scriptEl.globalid
       });
@@ -1753,7 +1767,8 @@ const MODIFIER_CLASSES = exports.MODIFIER_CLASSES = new Set([
   'UITextSizeConstraint',
   'UICorner',
   'UIStroke',
-  'UIGradient'
+  'UIGradient',
+  'UIShadow'
 ]);
 
 const NON_VISUAL_CLASSES = exports.NON_VISUAL_CLASSES = new Set([
@@ -3717,26 +3732,146 @@ exports.renderCatWebTree = renderCatWebTree;
 
   './runtime.js': function(module, exports, require) {
 /**
- * CatWeb Interactive Scripting Engine & State Machine
+ * CatWeb Interactive Scripting Engine
  *
- * Implements client-side variable storage, template interpolation ({1}, {2}),
- * event binding (0: loaded, 1: pressed, 2: hover, 3: unhover), and action
- * dispatching (11: Set, 12: Add, 31: Set Property, 18: If, 25: End, 3: Wait,
- * 5: Play Audio, 88: Tween).
+ * Executes CatWeb JSONScript (see game/JSONScript.md) against the rendered DOM:
+ *   - Events: 0 loaded, 1 pressed, 2 key pressed, 3 mouse enters, 5 mouse leaves,
+ *     6 define function, 8 input submitted, 9 message received, 10 object changed,
+ *     11 mouse down, 12 mouse up, 13 right clicked, 16 any key pressed.
+ *   - Flat control flow: every If variant, else (112), Repeat (22), Repeat forever (23),
+ *     Iterate (113), Break (24) and end (25) are matched in a pre-pass, so blocks nest
+ *     correctly without nested `actions` arrays.
+ *   - Variable scopes: global {1}, object {o!1} (per script), local {l!1} (per run),
+ *     plus table access {tbl.key} / {arr.1}.
  *
- * Fully integrated with CatWeb Visual Elements and Web Audio synthesis.
+ * Execution is synchronous until the first Wait, so callers that don't await still see
+ * the result of everything before it. Actions the browser can't simulate (purchases,
+ * cross-site messaging, …) are skipped and reported once through `onLog`.
+ *
  * Zero external dependencies.
  */
 
-const { playSyntheticAudio } = require('./assets.js');
+const { playSyntheticAudio, resolveRobloxAsset } = require('./assets.js');
 const { udim2ToCss } = require('./coordinates.js');
 const { applyBackgroundStyling, applyTextStyling } = require('./styling.js');
+
+/* ============================================================
+ * BLOCK TABLES
+ * ============================================================ */
+
+/** Condition blocks: each opens a body that runs until its matching `end` (25). */
+const IF_IDS = new Set([
+  '18', '19', '20', '21', '125', '126', '37', '38', '92', '93',
+  '44', '45', '46', '47', '79', '80', '81', '82', '108', '103', '104', '105'
+]);
+/** Loop blocks: also closed by `end` (25). */
+const LOOP_IDS = new Set(['22', '23', '113']);
+
+/** Events whose first parameter is the object they listen on. */
+const TARGETED_EVENTS = {
+  '1': 'click',
+  '3': 'mouseenter',
+  '5': 'mouseleave',
+  '8': 'submit',
+  '11': 'mousedown',
+  '12': 'mouseup',
+  '13': 'contextmenu'
+};
+
+/** Human-readable names, used in console messages. */
+const ACTION_NAMES = exports.ACTION_NAMES = {
+  '0': 'Log', '1': 'Warn', '2': 'Error', '3': 'Wait', '4': 'Redirect', '5': 'Play audio',
+  '8': 'Make invisible', '9': 'Make visible', '10': 'Set text', '11': 'Set variable',
+  '12': 'Increase', '13': 'Decrease', '14': 'Multiply', '15': 'Divide', '16': 'Round',
+  '17': 'Floor', '18': 'If equal', '19': 'If not equal', '20': 'If greater than',
+  '21': 'If lower than', '22': 'Repeat', '23': 'Repeat forever', '24': 'Break', '25': 'end',
+  '26': 'Play looped audio', '27': 'Random number', '28': 'Audio', '30': 'Get text from input',
+  '31': 'Set property', '32': 'Broadcast across page', '33': 'Broadcast across site',
+  '34': 'Set cookie', '36': 'Get cookie', '37': 'If contains', '38': "If doesn't contain",
+  '39': 'Get property', '40': 'Raise to power', '41': 'Modulo', '42': 'Substring',
+  '43': 'Replace', '44': 'If AND', '45': 'If OR', '46': 'If NOR', '47': 'If XOR',
+  '48': 'String length', '49': 'Duplicate', '50': 'Delete object', '54': 'Create table',
+  '55': 'Set entry', '56': 'Get entry', '57': 'Split string', '58': 'Parent object',
+  '59': 'Array length', '62': 'Delete cookie', '66': 'Set entry (object)', '69': 'Lowercase',
+  '70': 'Uppercase', '78': 'Ceil', '79': 'If left mouse down', '80': 'If middle mouse down',
+  '81': 'If right mouse down', '82': 'If key down', '84': 'Get viewport size',
+  '85': 'Get cursor position', '87': 'Run function', '88': 'Tween', '89': 'Insert',
+  '90': 'Delete entry', '91': 'Remove at position', '92': 'If exists', '93': "If doesn't exist",
+  '96': 'Delete variable', '103': 'If is ancestor', '104': 'If is child', '105': 'If is descendant',
+  '106': 'Set image', '108': 'If dark theme', '109': 'Concatenate', '110': 'Join',
+  '112': 'else', '113': 'Iterate', '114': 'Run math function', '115': 'Return',
+  '117': 'Get URL', '119': 'Hex to RGB', '121': 'RGB to hex', '125': 'If greater or equal',
+  '126': 'If lower or equal',
+  '7': 'Stop all audio', '35': 'Increase cookie', '51': 'Get username', '52': 'Get user ID',
+  '53': 'Get display name', '63': 'Run function in background', '67': 'Get query parameter',
+  '68': 'Get unix timestamp', '71': 'Format current date', '72': 'Format from unix',
+  '73': 'Set volume', '74': 'Stop audio', '75': 'Pause audio', '76': 'Resume audio',
+  '77': 'Set speed', '83': 'Get tick', '94': 'Set audio property', '95': 'Get audio property',
+  '97': 'Get parent', '98': 'Find ancestor', '99': 'Find child', '100': 'Find descendant',
+  '101': 'Get children', '102': 'Get descendants', '107': 'Set avatar image',
+  '116': 'Get server unix timestamp', '118': 'Get timezone', '120': 'Hex to HSV',
+  '122': 'HSV to hex', '123': 'Lerp color', '127': 'Get objects at position',
+  '128': 'Run function protected', '129': 'Get asset info', '130': 'Broadcast cross-site',
+  '131': 'Set entry (function)', '132': 'Run function', '133': 'Run function in background',
+  '134': 'Run function protected', '135': 'Set mouse icon', '138': 'Set attribute',
+  '139': 'Get attribute', '140': 'Attribute action'
+};
+
+const EVENT_NAMES = exports.EVENT_NAMES = {
+  '0': 'When website loaded', '1': 'When button pressed', '2': 'When key pressed',
+  '3': 'When mouse enters', '5': 'When mouse leaves', '6': 'Define function',
+  '7': 'When avatar item bought', '8': 'When input submitted', '9': 'When message received',
+  '10': 'When object changed', '11': 'When mouse down', '12': 'When mouse up',
+  '13': 'When right clicked', '14': 'When cross-site message received',
+  '15': 'When donation completed', '16': 'When any key pressed'
+};
+
+/** Script property names (Title Case) → JSON keys, for Get/Set/Tween. */
+const PROPERTY_KEYS = {
+  text: 'text', contenttext: 'text', textcolor: 'font_color', textcolor3: 'font_color',
+  fontcolor: 'font_color', backgroundcolor: 'background_color', backgroundcolor3: 'background_color',
+  visible: 'visible', position: 'position', size: 'size', rotation: 'rotation',
+  backgroundtransparency: 'background_transparency', transparency: 'background_transparency',
+  texttransparency: 'font_transparency', fonttransparency: 'font_transparency',
+  order: 'order', layoutorder: 'order', zindex: 'z_index', fontsize: 'font_size', textsize: 'font_size',
+  placeholder: 'placeholder', image: 'image_id', imagecolor: 'image_color',
+  imagetransparency: 'image_transparency', anchor: 'anchor', anchorpoint: 'anchor', tooltip: 'tooltip'
+};
+
+const TWEEN_EASINGS = {
+  linear: 'linear',
+  sine: { In: 'cubic-bezier(0.12, 0, 0.39, 0)', Out: 'cubic-bezier(0.61, 1, 0.88, 1)', InOut: 'cubic-bezier(0.37, 0, 0.63, 1)' },
+  quad: { In: 'cubic-bezier(0.11, 0, 0.5, 0)', Out: 'cubic-bezier(0.5, 1, 0.89, 1)', InOut: 'cubic-bezier(0.45, 0, 0.55, 1)' },
+  cubic: { In: 'cubic-bezier(0.32, 0, 0.67, 0)', Out: 'cubic-bezier(0.33, 1, 0.68, 1)', InOut: 'cubic-bezier(0.65, 0, 0.35, 1)' },
+  back: { In: 'cubic-bezier(0.36, 0, 0.66, -0.56)', Out: 'cubic-bezier(0.34, 1.56, 0.64, 1)', InOut: 'cubic-bezier(0.68, -0.6, 0.32, 1.6)' }
+};
+
+const BREAK = { signal: 'break' };
+const STOP = { signal: 'stop' };
+
+/** Synchronous steps allowed before a Repeat loop must Wait, so a runaway loop can't freeze the tab. */
+const MAX_STEPS_WITHOUT_WAIT = 100000;
+
+class ScriptError extends Error {}
+
+/* ============================================================
+ * RUNTIME
+ * ============================================================ */
 
 class CatWebRuntime {
   /**
    * @param {object|Array} documentTree - CatWeb document (Full Site or Snippet array)
-   * @param {HTMLElement} [domRoot] - Root DOM container where tree is rendered
-   * @param {object} [options={}] - Configuration options
+   * @param {HTMLElement} [domRoot] - Root DOM container where the tree is rendered
+   * @param {object} [options]
+   * @param {boolean} [options.audioEnabled=true]
+   * @param {(entry: {level: string, message: string, time: number, eventGid?: string, actionGid?: string, scriptGid?: string}) => void} [options.onLog]
+   * @param {(name: string, value: any, scope: string) => void} [options.onVariableChange]
+   * @param {(action: object, event: object) => void} [options.onAction]
+   * @param {(assetId: string) => void} [options.onAudio]
+   * @param {(gid: string, prop: string, value: any) => void} [options.onPropertyChange]
+   * @param {(url: string) => void} [options.onRedirect]
+   * @param {Map} [options.cookies] - Cookie jar; pass the same Map to keep cookies across reloads
+   * @param {string} [options.url] - Value returned by "Get URL"
    */
   constructor(documentTree, domRoot = null, options = {}) {
     this.tree = documentTree;
@@ -3744,637 +3879,1316 @@ class CatWebRuntime {
     this.options = {
       audioEnabled: true,
       logActions: false,
+      url: 'catweb://site.rbx',
       ...options
     };
 
-    this.variables = new Map();
+    this.variables = new Map();          // global scope
+    this.objectVariables = new Map();    // script globalid -> Map
+    this.cookies = this.options.cookies instanceof Map ? this.options.cookies : new Map();
     this.elementsByGlobalId = new Map();
+    this.parentByGlobalId = new Map();
     this.scripts = [];
+    this.functions = new Map();          // name -> { script, node }
+    this.scriptOfEvent = new Map();      // event node -> script node
+    this.logs = [];
     this.activeTimeouts = new Set();
     this.domListeners = [];
     this.lastAudioPlayed = null;
     this.isRunning = false;
 
+    this._generation = 0;
+    this._stepsWithoutWait = 0;
+    this._reported = new Set();
+    this._pressedKeys = new Set();
+    this._mouseButtons = new Set();
+    this._cursor = { x: 0, y: 0 };
+    this._changeDepth = 0;
+    this._jumpTables = new WeakMap();
+    this._dupCounter = 0;
+
     this._indexTree(documentTree);
   }
 
-  /**
-   * Deeply indexes all elements and active scripts in the document tree.
-   * @private
-   */
+  /* ---------------- lifecycle ---------------- */
+
+  /** @private */
   _indexTree(root) {
-    const traverse = (node) => {
+    const traverse = (node, parent) => {
       if (!node || typeof node !== 'object') return;
 
       if (node.globalid) {
         this.elementsByGlobalId.set(node.globalid, node);
+        if (parent?.globalid) this.parentByGlobalId.set(node.globalid, parent.globalid);
       }
 
-      if (node.class === 'script') {
-        if (node.enabled !== 'false' && node.enabled !== false) {
-          this.scripts.push(node);
+      if (node.class === 'script' && node.enabled !== 'false' && node.enabled !== false) {
+        this.scripts.push(node);
+        for (const block of (Array.isArray(node.content) ? node.content : [])) {
+          if (!block || typeof block !== 'object') continue;
+          this.scriptOfEvent.set(block, node);
+          if (String(block.id) === '6') {
+            const name = params(block)[0]?.value;
+            if (name !== undefined && !this.functions.has(String(name))) {
+              this.functions.set(String(name), { script: node, node: block });
+            }
+          }
         }
       }
 
-      if (Array.isArray(node.children)) {
-        for (const child of node.children) traverse(child);
-      }
-      if (Array.isArray(node.webcontent)) {
-        for (const child of node.webcontent) traverse(child);
-      }
+      if (Array.isArray(node.children)) for (const child of node.children) traverse(child, node);
+      if (Array.isArray(node.webcontent)) for (const child of node.webcontent) traverse(child, null);
     };
 
     if (Array.isArray(root)) {
-      for (const item of root) traverse(item);
+      for (const item of root) traverse(item, null);
     } else {
-      traverse(root);
+      traverse(root, null);
     }
   }
 
   /**
-   * Starts the runtime engine: attaches DOM event listeners and triggers Event 0 (loaded).
+   * Attaches DOM listeners and fires "When website loaded" (event 0).
    * @returns {Promise<void>}
    */
   start() {
     this.isRunning = true;
     this._bindDomListeners();
-    // Trigger "When website loaded" (Event 0)
     return this.triggerEvent(null, 0);
   }
 
-  /**
-   * Stops the runtime and clears timeouts and active listeners.
-   */
+  /** Stops every running event, pending Wait and DOM listener. */
   stop() {
     this.isRunning = false;
-    for (const tid of this.activeTimeouts) {
-      clearTimeout(tid);
-    }
+    this._generation++;
+    for (const tid of this.activeTimeouts) clearTimeout(tid);
     this.activeTimeouts.clear();
     this._unbindDomListeners();
   }
 
-  /**
-   * Destroys the runtime instance.
-   */
   destroy() {
     this.stop();
     this.variables.clear();
+    this.objectVariables.clear();
     this.elementsByGlobalId.clear();
     this.scripts = [];
+    this.functions.clear();
   }
 
+  /* ---------------- variables ---------------- */
+
   /**
-   * Retrieves a variable value from store (defaults to 0 if not set).
+   * Reads a global variable (unset variables read as 0).
    * @param {string|number} varId
-   * @returns {any}
    */
   getVariable(varId) {
     const key = String(varId);
-    if (this.variables.has(key)) {
-      return this.variables.get(key);
-    }
-    return 0;
+    return this.variables.has(key) ? this.variables.get(key) : 0;
   }
 
   /**
-   * Sets a variable in the store and notifies callbacks.
+   * Writes a global variable.
    * @param {string|number} varId
    * @param {any} val
    */
   setVariable(varId, val) {
     const key = String(varId);
     this.variables.set(key, val);
-    if (typeof this.options.onVariableChange === 'function') {
-      this.options.onVariableChange(key, val);
-    }
+    this.options.onVariableChange?.(key, val, 'global');
   }
 
   /**
-   * Resolves template placeholders in text strings, e.g. "{1}" -> value of variable 1.
-   * @param {string} text
-   * @returns {string}
+   * Lists every variable with its scope, for the Variables panel.
+   * @returns {Array<{name: string, scope: 'global'|'object', script?: string, value: any}>}
    */
-  resolveTemplate(text) {
+  listVariables() {
+    const out = [];
+    for (const [name, value] of this.variables) out.push({ name, scope: 'global', value });
+    for (const [script, store] of this.objectVariables) {
+      for (const [name, value] of store) out.push({ name: `o!${name}`, scope: 'object', script, value });
+    }
+    return out;
+  }
+
+  /** @private Returns [store, key] for a variable name like "1", "o!x" or "l!x". */
+  _scopeOf(name, ctx) {
+    const raw = stripBraces(String(name ?? ''));
+    if (raw.startsWith('o!')) {
+      const sid = ctx?.script?.globalid ?? '';
+      if (!this.objectVariables.has(sid)) this.objectVariables.set(sid, new Map());
+      return [this.objectVariables.get(sid), raw.slice(2), 'object'];
+    }
+    if (raw.startsWith('l!')) {
+      return [ctx?.locals ?? new Map(), raw.slice(2), 'local'];
+    }
+    return [this.variables, raw, 'global'];
+  }
+
+  /** @private Reads a variable (with table paths) → { found, value }. */
+  _lookup(name, ctx) {
+    const raw = stripBraces(String(name ?? ''));
+    const [head, ...path] = splitPath(raw);
+    const [store, key] = this._scopeOf(head, ctx);
+    if (!store.has(key)) return { found: false, value: undefined };
+    let value = store.get(key);
+    for (const seg of path) {
+      if (Array.isArray(value)) {
+        value = value[Number(seg) - 1];
+      } else if (value && typeof value === 'object') {
+        value = value[seg];
+      } else {
+        return { found: false, value: undefined };
+      }
+      if (value === undefined) return { found: false, value: undefined };
+    }
+    return { found: true, value };
+  }
+
+  /** @private */
+  _readVar(name, ctx) {
+    return this._lookup(name, ctx).value;
+  }
+
+  /** @private */
+  _writeVar(name, value, ctx) {
+    if (name === undefined || name === null || String(name).trim() === '') return;
+    const [store, key, scope] = this._scopeOf(name, ctx);
+    store.set(key, value);
+    if (scope === 'global') this.options.onVariableChange?.(key, value, scope);
+    else if (scope === 'object') this.options.onVariableChange?.(`o!${key}`, value, scope);
+  }
+
+  /** @private */
+  _deleteVar(name, ctx) {
+    const [store, key, scope] = this._scopeOf(name, ctx);
+    store.delete(key);
+    if (scope !== 'local') this.options.onVariableChange?.(scope === 'object' ? `o!${key}` : key, undefined, scope);
+  }
+
+  /**
+   * Replaces {var} placeholders in a string. Unset numeric globals read as 0 (like
+   * getVariable); other unknown names stay as written.
+   * @param {string} text
+   * @param {object} [ctx]
+   */
+  resolveTemplate(text, ctx = null) {
     if (typeof text !== 'string') return text;
-    return text.replace(/\{(\d+)\}/g, (match, varId) => {
-      const val = this.getVariable(varId);
-      return val !== undefined && val !== null ? String(val) : '0';
+    return text.replace(/\{([^{}\s,]+)\}/g, (match, name) => {
+      const { found, value } = this._lookup(name, ctx);
+      if (found) return formatValue(value);
+      return /^\d+$/.test(name) ? '0' : match;
     });
   }
 
   /**
-   * Binds interactive DOM listeners for button clicks and hover states.
+   * Compares two values with a comparison phrase ("is equal to", "is greater than", ">=", …).
+   * @param {any} op1
+   * @param {any} op2
+   * @param {string} compStr
+   */
+  _evaluateComparison(op1, op2, compStr) {
+    const op = legacyOperator({ id: '18', text: [String(compStr)] }) || 'eq';
+    return compare(toNumberIfNumeric(String(op1)), toNumberIfNumeric(String(op2)), op);
+  }
+
+  /**
+   * Resolves an <any> value. A field that is exactly one {variable} keeps the variable's
+   * type (so tables and numbers survive); otherwise numeric text becomes a number.
+   * @private
+   */
+  _resolveAny(raw, ctx) {
+    if (typeof raw !== 'string') return raw;
+    const whole = /^\{([^{}\s,]+)\}$/.exec(raw);
+    if (whole) {
+      const { found, value } = this._lookup(whole[1], ctx);
+      if (found) return value;
+    }
+    const str = this.resolveTemplate(raw, ctx);
+    return toNumberIfNumeric(str);
+  }
+
+  /* ---------------- events ---------------- */
+
+  /**
+   * Fires every event block with this ID (and, for targeted events, this object).
+   * Matching events start in canvas order (closest to 5000,5000 first) and run concurrently.
+   *
+   * @param {string|null} targetGlobalId
+   * @param {number|string} eventId
+   * @param {object} [eventData] - { locals?: object } extra local variables for the run
+   * @returns {Promise<void>}
+   */
+  triggerEvent(targetGlobalId, eventId, eventData = null) {
+    const evtIdStr = String(eventId);
+    const matches = [];
+
+    for (const sc of this.scripts) {
+      for (const evt of (sc.content || [])) {
+        if (!evt || String(evt.id) !== evtIdStr) continue;
+        if (TARGETED_EVENTS[evtIdStr] || evtIdStr === '10') {
+          const target = params(evt)[0]?.value;
+          if (target && targetGlobalId && this._resolveObjectId(target, null) !== targetGlobalId) continue;
+        }
+        if (evtIdStr === '2' && eventData?.key !== undefined) {
+          const wanted = params(evt)[0]?.value;
+          if (!keyMatches(wanted, eventData)) continue;
+        }
+        matches.push({ sc, evt });
+      }
+    }
+
+    matches.sort((a, b) => distanceToCenter(a.evt) - distanceToCenter(b.evt));
+    const runs = matches.map(({ sc, evt }) => {
+      const locals = new Map(Object.entries(eventData?.locals || {}));
+      return this._runEvent(evt, { script: sc, event: evt, locals });
+    });
+    return Promise.all(runs).then(() => undefined);
+  }
+
+  /**
+   * Runs one event block on demand (used by the "Run" buttons in the block viewer).
+   * @param {object} eventNode
+   * @returns {Promise<void>}
+   */
+  executeEventNode(eventNode) {
+    if (!eventNode || !Array.isArray(eventNode.actions)) return Promise.resolve();
+    const script = this.scriptOfEvent.get(eventNode) || null;
+    return this._runEvent(eventNode, { script, event: eventNode, locals: new Map() });
+  }
+
+  /** @private */
+  _runEvent(evt, ctx) {
+    const actions = Array.isArray(evt.actions) ? evt.actions : [];
+    return this._drive(this._runRange(actions, 0, actions.length, ctx), ctx).catch((err) => {
+      if (err instanceof ScriptError) {
+        this._log('error', err.message, ctx, err.action);
+      } else {
+        this._log('error', `Runtime error: ${err?.message || err}`, ctx);
+      }
+    });
+  }
+
+  /**
+   * Steps a block generator synchronously, pausing only on yielded promises (Wait).
+   * @private
+   */
+  _drive(gen) {
+    const generation = this._generation;
+    return new Promise((resolve, reject) => {
+      const step = (input, isError) => {
+        try {
+          while (true) {
+            const r = isError ? gen.throw(input) : gen.next(input);
+            isError = false;
+            input = undefined;
+            if (r.done) return resolve(r.value);
+            if (r.value && typeof r.value.then === 'function') {
+              r.value.then(
+                (v) => { if (this._generation === generation) step(v, false); else resolve(STOP); },
+                (e) => step(e, true)
+              );
+              return;
+            }
+          }
+        } catch (err) {
+          reject(err);
+        }
+      };
+      step(undefined, false);
+    });
+  }
+
+  /* ---------------- control flow ---------------- */
+
+  /** @private Matches every opener with its `end` and `else`. */
+  _jumpTable(actions) {
+    let table = this._jumpTables.get(actions);
+    if (table) return table;
+    table = { end: new Map(), else: new Map() };
+    const stack = [];
+    actions.forEach((act, i) => {
+      const id = String(act?.id);
+      if (IF_IDS.has(id) || LOOP_IDS.has(id)) {
+        stack.push({ i, id });
+      } else if (id === '112') {
+        for (let s = stack.length - 1; s >= 0; s--) {
+          if (IF_IDS.has(stack[s].id)) {
+            if (!table.else.has(stack[s].i)) table.else.set(stack[s].i, i);
+            break;
+          }
+          break;
+        }
+      } else if (id === '25') {
+        const open = stack.pop();
+        if (open) table.end.set(open.i, i);
+      }
+    });
+    for (const open of stack) table.end.set(open.i, actions.length);
+    this._jumpTables.set(actions, table);
+    return table;
+  }
+
+  /** @private Runs actions[start, end). Returns BREAK, STOP, {signal:'return'} or undefined. */
+  *_runRange(actions, start, end, ctx) {
+    const jt = this._jumpTable(actions);
+    let i = start;
+    while (i < end) {
+      const act = actions[i];
+      if (!act || typeof act !== 'object') { i++; continue; }
+      const id = String(act.id);
+
+      if (this.options.logActions) console.log(`[CatWebRuntime] Action ${id} (globalid: ${act.globalid})`);
+      this.options.onAction?.(act, ctx.event);
+
+      if (++this._stepsWithoutWait > MAX_STEPS_WITHOUT_WAIT) {
+        throw new ScriptError(`Stopped: ${MAX_STEPS_WITHOUT_WAIT.toLocaleString('en-US')} blocks ran without a Wait. Add a Wait inside Repeat loops.`, act);
+      }
+
+      if (IF_IDS.has(id)) {
+        const blockEnd = Math.min(jt.end.get(i) ?? end, end);
+        const elseAt = jt.else.get(i);
+        const cond = this._evalCondition(act, ctx);
+        let res;
+        if (cond) res = yield* this._runRange(actions, i + 1, elseAt !== undefined && elseAt < blockEnd ? elseAt : blockEnd, ctx);
+        else if (elseAt !== undefined && elseAt < blockEnd) res = yield* this._runRange(actions, elseAt + 1, blockEnd, ctx);
+        if (res) return res;
+        i = blockEnd + 1;
+        continue;
+      }
+
+      if (LOOP_IDS.has(id)) {
+        const blockEnd = Math.min(jt.end.get(i) ?? end, end);
+        const res = yield* this._runLoop(act, id, actions, i + 1, blockEnd, ctx);
+        if (res) return res;
+        i = blockEnd + 1;
+        continue;
+      }
+
+      if (id === '24') return BREAK;
+      if (id === '25' || id === '112') { i++; continue; }
+
+      const res = yield* this._execAction(act, id, ctx);
+      if (res) return res;
+      i++;
+    }
+    return undefined;
+  }
+
+  /** @private */
+  *_runLoop(act, id, actions, bodyStart, bodyEnd, ctx) {
+    const p = params(act);
+    const runBody = function* () {
+      const res = yield* this._runRange(actions, bodyStart, bodyEnd, ctx);
+      if (res === BREAK) return 'break';
+      if (res) return res;
+      return undefined;
+    }.bind(this);
+
+    if (id === '22') {
+      const times = Math.floor(this._num(p[0], ctx));
+      for (let n = 0; n < times; n++) {
+        const res = yield* runBody();
+        if (res === 'break') break;
+        if (res) return res;
+      }
+      return undefined;
+    }
+
+    if (id === '23') {
+      while (true) {
+        const res = yield* runBody();
+        if (res === 'break') break;
+        if (res) return res;
+      }
+      return undefined;
+    }
+
+    // 113: Iterate through <table> ({l!index},{l!value})
+    const table = this._readVar(p[0]?.value, ctx);
+    const entries = Array.isArray(table)
+      ? table.map((v, idx) => [idx + 1, v])
+      : (table && typeof table === 'object' ? Object.entries(table) : []);
+    for (const [key, value] of entries) {
+      ctx.locals.set('index', key);
+      ctx.locals.set('value', value);
+      const res = yield* runBody();
+      if (res === 'break') break;
+      if (res) return res;
+    }
+    return undefined;
+  }
+
+  /** @private */
+  _evalCondition(act, ctx) {
+    const id = String(act.id);
+    const p = params(act);
+    const str = (slot) => String(this._str(slot, ctx));
+
+    switch (id) {
+      case '18': case '19': case '20': case '21': case '125': case '126': {
+        const a = this._resolveAny(p[0]?.value ?? '', ctx);
+        const b = this._resolveAny(p[1]?.value ?? '', ctx);
+        const op = { '18': 'eq', '19': 'ne', '20': 'gt', '21': 'lt', '125': 'ge', '126': 'le' }[id];
+        return compare(a, b, legacyOperator(act) || op);
+      }
+      case '37': return str(p[0]).includes(str(p[1]));
+      case '38': return !str(p[0]).includes(str(p[1]));
+      case '92': return this._lookup(p[0]?.value, ctx).found;
+      case '93': return !this._lookup(p[0]?.value, ctx).found;
+      case '44': case '45': case '46': case '47': {
+        const a = truthy(this._readVar(p[0]?.value, ctx));
+        const b = truthy(this._readVar(p[1]?.value, ctx));
+        if (id === '44') return a && b;
+        if (id === '45') return a || b;
+        if (id === '46') return !(a || b);
+        return a !== b;
+      }
+      case '79': return this._mouseButtons.has(0);
+      case '80': return this._mouseButtons.has(1);
+      case '81': return this._mouseButtons.has(2);
+      case '82': {
+        const wanted = String(p[0]?.value ?? '').toLowerCase();
+        for (const k of this._pressedKeys) if (k === wanted) return true;
+        return false;
+      }
+      case '108': return true; // the runner always shows the dark theme
+      case '103': case '104': case '105': {
+        const a = this._resolveObjectId(p[0]?.value, ctx);
+        const b = this._resolveObjectId(p[1]?.value, ctx);
+        if (id === '104') return this.parentByGlobalId.get(b) === a ? false : this.parentByGlobalId.get(a) === b;
+        if (id === '103') return this._isAncestor(a, b);
+        return this._isAncestor(b, a);
+      }
+      default:
+        return false;
+    }
+  }
+
+  /** @private Is `ancestorGid` an ancestor of `gid`? */
+  _isAncestor(ancestorGid, gid) {
+    let cur = this.parentByGlobalId.get(gid);
+    let guard = 0;
+    while (cur && guard++ < 10000) {
+      if (cur === ancestorGid) return true;
+      cur = this.parentByGlobalId.get(cur);
+    }
+    return false;
+  }
+
+  /* ---------------- actions ---------------- */
+
+  /** @private Executes one non-control action. */
+  *_execAction(act, id, ctx) {
+    const p = params(act);
+    const varSlot = p.find((s) => s.l === 'variable' || s.l === 'var');
+
+    switch (id) {
+      // Console
+      case '0': this._log('log', formatValue(this._resolveAny(p[0]?.value ?? '', ctx)), ctx, act); return;
+      case '1': this._log('warn', formatValue(this._resolveAny(p[0]?.value ?? '', ctx)), ctx, act); return;
+      case '2': this._log('error', formatValue(this._resolveAny(p[0]?.value ?? '', ctx)), ctx, act); return STOP;
+
+      // Wait
+      case '3': {
+        const seconds = Math.max(0, this._num(p[0], ctx));
+        yield this._sleep(seconds > 0 ? seconds : 1 / 60);
+        return;
+      }
+
+      // Navigation
+      case '4': {
+        const url = this._str(p[0], ctx);
+        this._log('info', `Redirect to "${url}" (not followed in the Web Runner)`, ctx, act);
+        this.options.onRedirect?.(url);
+        return;
+      }
+      case '117': this._writeVar(varSlot?.value ?? p[0]?.value, this.options.url, ctx); return;
+
+      // Audio
+      case '5': case '26': {
+        const assetId = String(this._str(p.find((s) => s.l === 'id' || s.assetbrowser === 'audio') ?? p[0], ctx));
+        if (assetId) {
+          this.lastAudioPlayed = assetId;
+          if (this.options.audioEnabled) playSyntheticAudio(assetId);
+          this.options.onAudio?.(assetId);
+          const out = p.find((s) => s.l === 'variable?' || s.l === 'variable');
+          if (out?.value) this._writeVar(out.value, `audio:${assetId}`, ctx);
+          if (id === '26') this._reportOnce('loop-audio', 'Play looped audio plays once in the Web Runner.', ctx, act);
+        }
+        return;
+      }
+
+      // Looks
+      case '8': case '9':
+        this._applyPropertyToElement(this._resolveObjectId(p[0]?.value, ctx), 'Visible', id === '9' ? 'true' : 'false', ctx);
+        return;
+      case '10':
+        this._applyPropertyToElement(this._resolveObjectId(p[0]?.value, ctx), 'Text', this._str(p[1], ctx), ctx);
+        return;
+      case '30': {
+        const gid = this._resolveObjectId(p[0]?.value, ctx);
+        const dom = this._domOf(gid);
+        const text = dom && 'value' in dom ? dom.value : (this.elementsByGlobalId.get(gid)?.text ?? '');
+        this._writeVar(varSlot?.value, toNumberIfNumeric(String(text)), ctx);
+        return;
+      }
+      case '31': case '88': {
+        const prop = p.find((s) => s.l === 'property');
+        const obj = p.find((s) => s.t === 'object' || s.l === 'button' || s.l === 'object' || s.l === 'input');
+        const val = p.find((s) => s !== prop && s !== obj && (s.t === 'any' || s.l === 'any' || s.l === 'value'));
+        if (!prop || !obj) return;
+        const gid = this._resolveObjectId(obj.value, ctx);
+        const value = val ? formatValue(this._resolveAny(val.value, ctx)) : '';
+        if (id === '88') this._prepareTween(gid, p, ctx);
+        this._applyPropertyToElement(gid, String(prop.value), value, ctx);
+        return;
+      }
+      case '39': {
+        const prop = p.find((s) => s.l === 'property');
+        const obj = p.find((s) => s.t === 'object');
+        const node = this.elementsByGlobalId.get(this._resolveObjectId(obj?.value, ctx));
+        const key = propertyKey(prop?.value);
+        const value = node ? (node[key] ?? '') : '';
+        this._writeVar(varSlot?.value, toNumberIfNumeric(String(value)), ctx);
+        return;
+      }
+      case '106': {
+        const gid = this._resolveObjectId(p[0]?.value, ctx);
+        this._applyPropertyToElement(gid, 'Image', this._str(p[1], ctx), ctx);
+        return;
+      }
+      case '49': {
+        const gid = this._resolveObjectId(p[0]?.value, ctx);
+        const newGid = this._duplicate(gid);
+        if (newGid) this._writeVar(varSlot?.value ?? p[1]?.value, newGid, ctx);
+        return;
+      }
+      case '50': {
+        const gid = this._resolveObjectId(p[0]?.value, ctx);
+        this._domOf(gid)?.remove?.();
+        this.elementsByGlobalId.delete(gid);
+        return;
+      }
+      case '58': {
+        const child = this._resolveObjectId(p[0]?.value, ctx);
+        const parent = this._resolveObjectId(p[1]?.value, ctx);
+        const childDom = this._domOf(child);
+        const parentDom = this._domOf(parent);
+        if (childDom && parentDom?.appendChild) parentDom.appendChild(childDom);
+        if (this.elementsByGlobalId.has(child)) this.parentByGlobalId.set(child, parent);
+        return;
+      }
+
+      // Variables & math
+      case '11': this._writeVar(varSlot?.value, this._resolveAny(p.find((s) => s !== varSlot)?.value ?? '', ctx), ctx); return;
+      case '96': this._deleteVar(varSlot?.value ?? p[0]?.value, ctx); return;
+      case '12': case '13': case '14': case '15': case '40': case '41': {
+        const target = varSlot ?? p[0];
+        const operand = p.find((s) => s !== target);
+        const a = Number(this._readVar(target?.value, ctx)) || 0;
+        const b = this._num(operand, ctx);
+        const result = {
+          '12': a + b, '13': a - b, '14': a * b, '15': a / b, '40': a ** b,
+          '41': b === 0 ? NaN : a - Math.floor(a / b) * b
+        }[id];
+        this._writeVar(target?.value, result, ctx);
+        return;
+      }
+      case '16': case '17': case '78': {
+        const target = varSlot ?? p[0];
+        const a = Number(this._readVar(target?.value, ctx)) || 0;
+        const fn = { '16': (x) => Math.sign(x) * Math.round(Math.abs(x)), '17': Math.floor, '78': Math.ceil }[id];
+        this._writeVar(target?.value, fn(a), ctx);
+        return;
+      }
+      case '27': {
+        const lo = Math.ceil(this._num(p[1], ctx));
+        const hi = Math.floor(this._num(p[2], ctx));
+        const [min, max] = lo <= hi ? [lo, hi] : [hi, lo];
+        this._writeVar(p[0]?.value, min + Math.floor(Math.random() * (max - min + 1)), ctx);
+        return;
+      }
+      case '114': {
+        const fnName = String(p[0]?.value ?? '').replace(/^math\./, '');
+        const tuple = p.find((s) => s.t === 'tuple');
+        const args = (Array.isArray(tuple?.value) ? tuple.value : []).map((a) => {
+          const v = this._str(a, ctx);
+          return typeof v === 'string' && v.length === 1 && isNaN(Number(v)) ? v.charCodeAt(0) : Number(v);
+        });
+        const out = p.filter((s) => s !== tuple && s !== p[0]).pop();
+        this._writeVar(out?.value, runMathFunction(fnName, args), ctx);
+        return;
+      }
+
+      // Strings
+      case '42': {
+        const target = varSlot ?? p[0];
+        const s = String(formatValue(this._readVar(target?.value, ctx) ?? ''));
+        const start = Math.max(1, Math.floor(this._num(p[1], ctx)));
+        const endIdx = Math.floor(this._num(p[2], ctx));
+        this._writeVar(target?.value, s.substring(start - 1, endIdx), ctx);
+        return;
+      }
+      case '43': {
+        const target = varSlot ?? p[1];
+        const s = String(formatValue(this._readVar(target?.value, ctx) ?? ''));
+        const find = String(this._str(p[0], ctx));
+        const repl = String(this._str(p[2], ctx));
+        this._writeVar(target?.value, find ? s.split(find).join(repl) : s, ctx);
+        return;
+      }
+      case '48': {
+        const s = String(this._str(p[0], ctx));
+        const bytes = typeof TextEncoder !== 'undefined' ? new TextEncoder().encode(s).length : s.length;
+        this._writeVar(varSlot?.value ?? p[1]?.value, bytes, ctx);
+        return;
+      }
+      case '57': {
+        const s = String(this._str(p[0], ctx));
+        const sep = String(this._str(p[1], ctx));
+        const out = p.find((s2) => s2.l === 'table') ?? p[2];
+        this._writeVar(out?.value, (sep ? s.split(sep) : [...s]).map(toNumberIfNumeric), ctx);
+        return;
+      }
+      case '69': this._writeVar(varSlot?.value, String(this._str(p[0], ctx)).toLowerCase(), ctx); return;
+      case '70': this._writeVar(varSlot?.value, String(this._str(p[0], ctx)).toUpperCase(), ctx); return;
+      case '109': this._writeVar(varSlot?.value, `${this._str(p[0], ctx)}${this._str(p[1], ctx)}`, ctx); return;
+      case '119': {
+        const hex = String(this._str(p[0], ctx)).replace('#', '');
+        const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex.slice(0, 6);
+        const n = parseInt(full, 16);
+        this._writeVar(varSlot?.value, isNaN(n) ? '' : `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`, ctx);
+        return;
+      }
+      case '121': {
+        const [r, g, b] = String(this._str(p[0], ctx)).split(',').map((x) => Math.max(0, Math.min(255, Math.round(Number(x) || 0))));
+        const hex = '#' + [r, g, b].map((x) => (x ?? 0).toString(16).padStart(2, '0')).join('');
+        this._writeVar(varSlot?.value, hex, ctx);
+        return;
+      }
+
+      // Tables
+      case '54': this._writeVar(p[0]?.value, {}, ctx); return;
+      case '55': case '66': {
+        const table = this._table(p[1]?.value, ctx);
+        if (!table) return;
+        const key = String(this._str(p[0], ctx));
+        const value = id === '66' ? this._resolveObjectId(p[2]?.value, ctx) : this._resolveAny(p[2]?.value ?? '', ctx);
+        this._writeVar(p[1].value, setEntry(table, key, value), ctx);
+        return;
+      }
+      case '56': {
+        const table = this._table(p[1]?.value, ctx);
+        const key = String(this._str(p[0], ctx));
+        const value = table ? (Array.isArray(table) ? table[Number(key) - 1] : table[key]) : undefined;
+        if (value === undefined) this._deleteVar(varSlot?.value ?? p[2]?.value, ctx);
+        else this._writeVar(varSlot?.value ?? p[2]?.value, value, ctx);
+        return;
+      }
+      case '90': {
+        const table = this._table(p[1]?.value, ctx);
+        if (!table) return;
+        const key = String(this._str(p[0], ctx));
+        if (Array.isArray(table)) table.splice(Number(key) - 1, 1);
+        else delete table[key];
+        this._writeVar(p[1].value, table, ctx);
+        return;
+      }
+      case '89': {
+        const arrSlot = p.find((s) => s.l === 'array') ?? p[2];
+        const arr = this._array(arrSlot?.value, ctx);
+        if (!arr) return;
+        const value = this._resolveAny(p[0]?.value ?? '', ctx);
+        const posRaw = this._str(p[1], ctx);
+        const pos = posRaw === '' ? arr.length + 1 : Math.floor(Number(posRaw)) || arr.length + 1;
+        arr.splice(Math.max(0, Math.min(arr.length, pos - 1)), 0, value);
+        this._writeVar(arrSlot.value, arr, ctx);
+        return;
+      }
+      case '91': {
+        const arrSlot = p.find((s) => s.l === 'array') ?? p[1];
+        const arr = this._array(arrSlot?.value, ctx);
+        if (!arr) return;
+        const posRaw = this._str(p[0], ctx);
+        const pos = posRaw === '' ? arr.length : Math.floor(Number(posRaw)) || arr.length;
+        arr.splice(pos - 1, 1);
+        this._writeVar(arrSlot.value, arr, ctx);
+        return;
+      }
+      case '59': {
+        const t = this._readVar(p[0]?.value, ctx);
+        this._writeVar(varSlot?.value ?? p[1]?.value, Array.isArray(t) ? t.length : (t && typeof t === 'object' ? Object.keys(t).length : 0), ctx);
+        return;
+      }
+      case '110': {
+        const t = this._readVar(p[0]?.value, ctx);
+        const sep = String(this._str(p[1], ctx));
+        this._writeVar(varSlot?.value ?? p[2]?.value, Array.isArray(t) ? t.map(formatValue).join(sep) : '', ctx);
+        return;
+      }
+
+      // Environment
+      case '84': {
+        const w = this.domRoot?.offsetWidth || this.domRoot?.clientWidth || 1920;
+        const h = this.domRoot?.offsetHeight || this.domRoot?.clientHeight || 1080;
+        this._writeVar(p[0]?.value, w, ctx);
+        this._writeVar(p[1]?.value, h, ctx);
+        return;
+      }
+      case '85':
+        this._writeVar(p[0]?.value, Math.round(this._cursor.x), ctx);
+        this._writeVar(p[1]?.value, Math.round(this._cursor.y), ctx);
+        return;
+      case '32': case '33': {
+        const message = formatValue(this._resolveAny(p[0]?.value ?? '', ctx));
+        this._log('info', `Broadcast "${message}" (delivered to this page only)`, ctx, act);
+        this.triggerEvent(null, 9, { locals: { messageContent: message, messageSenderId: 1, messageSenderName: 'Player' } });
+        return;
+      }
+
+      // Cookies
+      case '34': this.cookies.set(String(this._str(p[0], ctx)), this._resolveAny(p[1]?.value ?? '', ctx)); return;
+      case '36': {
+        const name = String(this._str(p[0], ctx));
+        if (this.cookies.has(name)) this._writeVar(varSlot?.value ?? p[1]?.value, this.cookies.get(name), ctx);
+        else this._deleteVar(varSlot?.value ?? p[1]?.value, ctx);
+        return;
+      }
+      case '62': this.cookies.delete(String(this._str(p[0], ctx))); return;
+
+      // Functions (87 is the deprecated form of 132; both stop the event when the function is missing)
+      case '132':
+      case '87': {
+        const name = String(p.find((s) => s.l === 'function')?.value ?? p[0]?.value ?? '');
+        const fn = this.functions.get(name);
+        if (!fn) throw new ScriptError(`Function "${name}" is not defined (Run function stops the event in strict mode).`, act);
+        const tuple = p.find((s) => s.t === 'tuple');
+        const locals = new Map();
+        const overrides = Array.isArray(fn.node.variable_overrides) ? fn.node.variable_overrides : [];
+        (Array.isArray(tuple?.value) ? tuple.value : []).forEach((arg, idx) => {
+          const name2 = overrides[idx]?.value;
+          if (name2 !== undefined) locals.set(stripBraces(String(name2)).replace(/^l!/, ''), this._resolveAny(arg?.value ?? '', ctx));
+        });
+        const fnActions = Array.isArray(fn.node.actions) ? fn.node.actions : [];
+        const res = yield* this._runRange(fnActions, 0, fnActions.length, { script: fn.script, event: fn.node, locals });
+        if (res === STOP) return STOP;
+        const out = p.find((s) => s.l === 'variable?' || s.l === 'variable');
+        if (out?.value && res?.signal === 'return') this._writeVar(out.value, res.value, ctx);
+        return;
+      }
+      case '115':
+        return { signal: 'return', value: this._resolveAny(p[0]?.value ?? '', ctx) };
+
+      default:
+        this._reportOnce(`action-${id}`, `${ACTION_NAMES[id] || `Action ${id}`} (id ${id}) isn't simulated in the Web Runner and was skipped.`, ctx, act);
+        return;
+    }
+  }
+
+  /* ---------------- helpers ---------------- */
+
+  /** @private Resolves a parameter to a string (templates applied). */
+  _str(slot, ctx) {
+    if (!slot) return '';
+    const v = slot.value;
+    if (typeof v !== 'string') return v ?? '';
+    return this.resolveTemplate(v, ctx);
+  }
+
+  /** @private Resolves a parameter to a number (non-numeric → 0). */
+  _num(slot, ctx) {
+    const n = Number(this._resolveAny(slot?.value ?? '', ctx));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  /** @private */
+  _table(name, ctx) {
+    const t = this._readVar(name, ctx);
+    if (t && typeof t === 'object') return t;
+    if (name !== undefined) this._log('warn', `"${name}" is not a table. Create it with "Create table" first.`, ctx);
+    return null;
+  }
+
+  /** @private */
+  _array(name, ctx) {
+    const t = this._readVar(name, ctx);
+    if (Array.isArray(t)) return t;
+    if (t && typeof t === 'object' && Object.keys(t).length === 0) return [];
+    if (name !== undefined) this._log('warn', `"${name}" is not an array.`, ctx);
+    return null;
+  }
+
+  /**
+   * Turns an <object> value into a globalid: plain IDs, {variables} holding an ID,
+   * or "(parent)" for the script's parent element.
+   * @private
+   */
+  _resolveObjectId(value, ctx) {
+    if (value === undefined || value === null) return '';
+    const raw = String(value);
+    if (raw === '(parent)') return this.parentByGlobalId.get(ctx?.script?.globalid) ?? '';
+    if (raw.startsWith('{') && raw.endsWith('}')) {
+      const { found, value: v } = this._lookup(raw.slice(1, -1), ctx);
+      return found ? String(v) : raw;
+    }
+    if (!this.elementsByGlobalId.has(raw)) {
+      const { found, value: v } = this._lookup(raw, ctx);
+      if (found && this.elementsByGlobalId.has(String(v))) return String(v);
+    }
+    return raw;
+  }
+
+  /** @private */
+  _domOf(gid) {
+    if (!gid || !this.domRoot?.querySelector) return null;
+    try {
+      return this.domRoot.querySelector(`[data-globalid="${cssEscape(gid)}"]`);
+    } catch {
+      return null;
+    }
+  }
+
+  /** @private */
+  _duplicate(gid) {
+    const sourceNode = this.elementsByGlobalId.get(gid);
+    if (!sourceNode) return null;
+    let newGid;
+    do {
+      newGid = `~${(this._dupCounter++).toString(36)}`;
+    } while (this.elementsByGlobalId.has(newGid));
+    const clonedNode = JSON.parse(JSON.stringify(sourceNode));
+    clonedNode.globalid = newGid;
+    this.elementsByGlobalId.set(newGid, clonedNode);
+    const parent = this.parentByGlobalId.get(gid);
+    if (parent) this.parentByGlobalId.set(newGid, parent);
+
+    const dom = this._domOf(gid);
+    if (dom?.cloneNode && dom.parentNode) {
+      const copy = dom.cloneNode(true);
+      copy.setAttribute?.('data-globalid', newGid);
+      dom.parentNode.insertBefore(copy, dom.nextSibling);
+      this._rebindClone(gid, newGid, copy);
+    }
+    return newGid;
+  }
+
+  /** @private Clones keep working with events written for their source object. */
+  _rebindClone(sourceGid, newGid, domEl) {
+    for (const [evtId, domType] of Object.entries(TARGETED_EVENTS)) {
+      if (domType === 'submit') continue;
+      const listens = this.scripts.some((sc) => (sc.content || []).some((evt) =>
+        String(evt?.id) === evtId && params(evt)[0]?.value === sourceGid));
+      if (!listens) continue;
+      this._listen(domEl, domType, (e) => {
+        if (domType === 'contextmenu') e.preventDefault?.();
+        this.triggerEvent(sourceGid, evtId, { locals: { clone: newGid } });
+      });
+    }
+  }
+
+  /** @private */
+  _prepareTween(gid, p, ctx) {
+    const dom = this._domOf(gid);
+    if (!dom?.style) return;
+    const time = this._num(p.find((s) => s.l === 'time') ?? p.find((s) => s.t === 'number'), ctx) || 0.3;
+    const style = String(p.find((s) => s.l === 'style')?.value ?? 'Quad').toLowerCase();
+    const dir = String(p.find((s) => s.l === 'direction')?.value ?? 'Out');
+    const curve = TWEEN_EASINGS[style];
+    const easing = typeof curve === 'string' ? curve : (curve?.[dir] ?? 'ease');
+    dom.style.transition = `all ${time}s ${easing}`;
+  }
+
+  /** @private */
+  _sleep(seconds) {
+    this._stepsWithoutWait = 0;
+    return new Promise((resolve) => {
+      const tid = setTimeout(() => {
+        this.activeTimeouts.delete(tid);
+        this._stepsWithoutWait = 0;
+        resolve();
+      }, seconds * 1000);
+      this.activeTimeouts.add(tid);
+    });
+  }
+
+  /** @private */
+  _log(level, message, ctx = null, act = null) {
+    const entry = {
+      level,
+      message: String(message),
+      time: Date.now(),
+      scriptGid: ctx?.script?.globalid,
+      eventGid: ctx?.event?.globalid,
+      eventName: ctx?.event ? (EVENT_NAMES[String(ctx.event.id)] || `Event ${ctx.event.id}`) : undefined,
+      actionGid: act?.globalid
+    };
+    this.logs.push(entry);
+    if (this.logs.length > 500) this.logs.shift();
+    this.options.onLog?.(entry);
+  }
+
+  /** @private */
+  _reportOnce(key, message, ctx, act) {
+    if (this._reported.has(key)) return;
+    this._reported.add(key);
+    this._log('info', message, ctx, act);
+  }
+
+  /* ---------------- DOM wiring ---------------- */
+
+  /** @private */
+  _listen(el, type, handler) {
+    if (!el?.addEventListener) return;
+    el.addEventListener(type, handler);
+    this.domListeners.push({ el, type, handler });
+  }
+
+  /**
+   * Binds clicks, hovers, mouse buttons, input submits and keys to their events.
    * @private
    */
   _bindDomListeners() {
     if (!this.domRoot) return;
 
-    // Collect target globalids needed for event 1 (click), event 2 (hover), event 3 (unhover)
-    const targetMap = new Map(); // targetGid -> Set of event IDs
-
+    const targets = new Map(); // gid -> Set<eventId>
+    let wantsKeys = false;
     for (const sc of this.scripts) {
       for (const evt of (sc.content || [])) {
-        const evtId = String(evt.id);
-        if (['1', '2', '3', '8'].includes(evtId)) {
-          const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object' || item.l === 'input'));
-          const targetGid = targetSlot?.value;
-          if (targetGid) {
-            if (!targetMap.has(targetGid)) targetMap.set(targetGid, new Set());
-            targetMap.get(targetGid).add(evtId);
-          }
+        const evtId = String(evt?.id);
+        if (TARGETED_EVENTS[evtId]) {
+          const gid = params(evt)[0]?.value;
+          if (!gid) continue;
+          if (!targets.has(gid)) targets.set(gid, new Set());
+          targets.get(gid).add(evtId);
         }
+        if (evtId === '2' || evtId === '16') wantsKeys = true;
       }
     }
 
-    // Attach listeners to DOM elements matching data-globalid or buttons
-    for (const [gid, evtSet] of targetMap.entries()) {
-      const domEl = this.domRoot.querySelector ? this.domRoot.querySelector(`[data-globalid="${gid}"]`) : null;
+    for (const [gid, evtSet] of targets) {
+      const domEl = this._domOf(gid);
       if (!domEl) continue;
-
-      if (evtSet.has('1')) {
-        const clickHandler = (e) => {
+      for (const evtId of evtSet) {
+        const type = TARGETED_EVENTS[evtId];
+        if (type === 'submit') {
+          this._listen(domEl, 'keydown', (e) => {
+            if (!this.isRunning || e.key !== 'Enter') return;
+            this.triggerEvent(gid, 8, e);
+          });
+          continue;
+        }
+        this._listen(domEl, type, (e) => {
           if (!this.isRunning) return;
-          this.triggerEvent(gid, 1, e);
-        };
-        domEl.addEventListener('click', clickHandler);
-        this.domListeners.push({ el: domEl, type: 'click', handler: clickHandler });
+          if (type === 'contextmenu') e.preventDefault?.();
+          this.triggerEvent(gid, evtId, e);
+        });
       }
+    }
 
-      if (evtSet.has('2')) {
-        const enterHandler = (e) => {
-          if (!this.isRunning) return;
-          this.triggerEvent(gid, 2, e);
-        };
-        domEl.addEventListener('mouseenter', enterHandler);
-        this.domListeners.push({ el: domEl, type: 'mouseenter', handler: enterHandler });
-      }
+    // Pointer state for "If mouse button down" and "Get cursor position"
+    this._listen(this.domRoot, 'mousedown', (e) => this._mouseButtons.add(e.button ?? 0));
+    this._listen(this.domRoot, 'mousemove', (e) => {
+      const rect = this.domRoot.getBoundingClientRect?.();
+      if (!rect) return;
+      const scale = this.domRoot.offsetWidth ? rect.width / this.domRoot.offsetWidth : 1;
+      this._cursor = { x: (e.clientX - rect.left) / (scale || 1), y: (e.clientY - rect.top) / (scale || 1) };
+    });
+    const doc = this.domRoot.ownerDocument;
+    const win = doc?.defaultView;
+    if (win) this._listen(win, 'mouseup', (e) => this._mouseButtons.delete(e.button ?? 0));
 
-      if (evtSet.has('3')) {
-        const leaveHandler = (e) => {
-          if (!this.isRunning) return;
-          this.triggerEvent(gid, 3, e);
-        };
-        domEl.addEventListener('mouseleave', leaveHandler);
-        this.domListeners.push({ el: domEl, type: 'mouseleave', handler: leaveHandler });
-      }
-
-      if (evtSet.has('8')) {
-        const submitHandler = (e) => {
-          if (!this.isRunning) return;
-          if (e.type === 'keydown' && e.key !== 'Enter') return;
-          this.triggerEvent(gid, 8, e);
-        };
-        domEl.addEventListener('keydown', submitHandler);
-        domEl.addEventListener('change', submitHandler);
-        this.domListeners.push({ el: domEl, type: 'keydown', handler: submitHandler });
-        this.domListeners.push({ el: domEl, type: 'change', handler: submitHandler });
-      }
+    if (doc) {
+      this._listen(doc, 'keydown', (e) => {
+        if (!this.isRunning || isTypingTarget(e.target)) return;
+        for (const name of keyNames(e)) this._pressedKeys.add(name);
+        if (!wantsKeys || e.repeat) return;
+        this.triggerEvent(null, 2, { key: e.key, code: e.code });
+        this.triggerEvent(null, 16, { locals: { key: robloxKeyName(e) } });
+      });
+      this._listen(doc, 'keyup', (e) => {
+        for (const name of keyNames(e)) this._pressedKeys.delete(name);
+      });
     }
   }
 
   /**
-   * Unbinds all registered DOM listeners.
-   * @private
+   * True when the page has a "When <key> pressed" event for this key, so the app
+   * can leave the key to the site instead of using it as a shortcut.
+   * @param {KeyboardEvent} e
    */
+  listensForKey(e) {
+    return this.scripts.some((sc) => (sc.content || []).some((evt) =>
+      String(evt?.id) === '2' && keyMatches(params(evt)[0]?.value, e)));
+  }
+
+  /** @private */
   _unbindDomListeners() {
     for (const { el, type, handler } of this.domListeners) {
-      if (el && typeof el.removeEventListener === 'function') {
-        el.removeEventListener(type, handler);
-      }
+      el?.removeEventListener?.(type, handler);
     }
     this.domListeners = [];
   }
 
   /**
-   * Directly executes an event block's actions.
-   *
-   * @param {object} eventNode - The event node with an actions array
-   * @returns {Promise<void>}
-   */
-  async executeEventNode(eventNode) {
-    if (!eventNode || !Array.isArray(eventNode.actions)) return;
-    const wasRunning = this.isRunning;
-    this.isRunning = true;
-    try {
-      await this._executeActions(eventNode.actions, eventNode);
-    } finally {
-      this.isRunning = wasRunning;
-    }
-  }
-
-  /**
-   * Triggers an event by ID on an optional target global ID.
-   *
-   * @param {string|null} targetGlobalId
-   * @param {number|string} eventId
-   * @param {object} [eventData]
-   * @returns {Promise<void>}
-   */
-  async triggerEvent(targetGlobalId, eventId, eventData = null) {
-    const evtIdStr = String(eventId);
-
-    for (const sc of this.scripts) {
-      const content = sc.content || [];
-      for (const evt of content) {
-        if (String(evt.id) === evtIdStr) {
-          // If targeted event (1: pressed, 2: hover, 3: unhover, 8: submitted), check target globalid match
-          if (['1', '2', '3', '8'].includes(evtIdStr)) {
-            const targetSlot = evt.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object' || item.l === 'input'));
-            if (targetSlot && targetGlobalId && targetSlot.value !== targetGlobalId) {
-              continue; // Target does not match
-            }
-          }
-
-          await this._executeActions(evt.actions || [], evt);
-        }
-      }
-    }
-  }
-
-  /**
-   * Executes a flat list of script actions.
+   * Applies a script property (Title Case name) to an element's JSON node and DOM.
    * @private
    */
-  async _executeActions(actions, currentEvent) {
-    let i = 0;
-    while (i < actions.length) {
-      if (!this.isRunning && currentEvent?.id !== '0') break;
-
-      const act = actions[i];
-      if (!act) {
-        i++;
-        continue;
-      }
-      const actId = String(act.id);
-
-      if (this.options.logActions) {
-        console.log(`[CatWebRuntime] Action ${actId} (globalid: ${act.globalid})`);
-      }
-
-      if (typeof this.options.onAction === 'function') {
-        this.options.onAction(act, currentEvent);
-      }
-
-      switch (actId) {
-        case '11': {
-          // Set <variable> to <any>
-          // ["Set", {"value":"1","t":"string","l":"variable"}, "to", {"value":"0","t":"string","l":"any"}]
-          const varSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'variable');
-          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any'));
-
-          if (varSlot && valSlot) {
-            const varName = varSlot.value;
-            const rawVal = valSlot.value;
-            const resolvedStr = this.resolveTemplate(rawVal);
-
-            // Store numeric value if string cleanly represents a number
-            const numVal = Number(resolvedStr);
-            const finalVal = (!isNaN(numVal) && resolvedStr.trim() !== '') ? numVal : resolvedStr;
-
-            this.setVariable(varName, finalVal);
-          }
-          break;
-        }
-
-        case '12': {
-          // Add <any> to <variable>
-          // ["Add", {"value":"1","t":"string","l":"any"}, "to", {"value":"1","t":"string","l":"variable"}]
-          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any' || item.t === 'number' || item.l === 'number'));
-          const varSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'variable');
-
-          if (varSlot && valSlot) {
-            const varName = String(varSlot.value).replace(/[{}]/g, '');
-            const deltaStr = this.resolveTemplate(valSlot.value);
-            const delta = Number(deltaStr) || 0;
-            const current = Number(this.getVariable(varName)) || 0;
-            this.setVariable(varName, current + delta);
-          }
-          break;
-        }
-
-        case '31': {
-          // Set <property> of <object> to <any>
-          // ["Set", {"value":"Text","t":"string","l":"property"}, "of", {"value":"cnt","t":"object"}, "to", {"value":"Count: {1}","t":"any"}]
-          const propSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'property');
-          const objSlot = act.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object' || item.l === 'input'));
-          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any' || item.l === 'value'));
-
-          if (propSlot && objSlot && valSlot) {
-            const propName = propSlot.value;
-            const targetGid = objSlot.value;
-            const resolvedVal = this.resolveTemplate(valSlot.value);
-
-            this._applyPropertyToElement(targetGid, propName, resolvedVal);
-          }
-          break;
-        }
-
-        case '18': {
-          // If <any> <comparison> <any>
-          // ["If", {"value":"{1}","t":"string","l":"any"}, "is equal to", {"value":"10","t":"string","l":"any"}]
-          const operands = (act.text || []).filter(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any'));
-          const op1Val = operands[0] ? this.resolveTemplate(operands[0].value) : '';
-          const op2Val = operands[1] ? this.resolveTemplate(operands[1].value) : '';
-
-          // Determine comparison operator string
-          const compStr = act.text?.find(item => typeof item === 'string' && item.trim() !== 'If')?.trim().toLowerCase() || 'is equal to';
-
-          const conditionMet = this._evaluateComparison(op1Val, op2Val, compStr);
-
-          if (!conditionMet) {
-            // Skip forward to matching Action 25 ('end')
-            let depth = 1;
-            while (i + 1 < actions.length && depth > 0) {
-              i++;
-              const nextActId = String(actions[i]?.id);
-              if (nextActId === '18' || nextActId === '22' || nextActId === '23') {
-                depth++;
-              } else if (nextActId === '25') {
-                depth--;
-              }
-            }
-          }
-          break;
-        }
-
-        case '25': {
-          // End of control block: no-op in straight execution
-          break;
-        }
-
-        case '3': {
-          // Wait <number> seconds
-          // ["Wait", {"value":"1","t":"number"}, "seconds"]
-          const secSlot = act.text?.find(item => item && typeof item === 'object' && (item.t === 'number' || item.l === 'any'));
-          const seconds = secSlot ? (parseFloat(this.resolveTemplate(secSlot.value)) || 0) : 0;
-
-          if (seconds > 0) {
-            await new Promise(resolve => {
-              const tid = setTimeout(() => {
-                this.activeTimeouts.delete(tid);
-                resolve();
-              }, seconds * 1000);
-              this.activeTimeouts.add(tid);
-            });
-          }
-          break;
-        }
-
-        case '5': {
-          // Play audio <id>
-          // ["Play audio", {"value":"88442833509532","t":"string","l":"id","assetbrowser":"audio"}, "→", ...]
-          const idSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'id' || item.assetbrowser === 'audio'));
-          const assetId = idSlot ? this.resolveTemplate(idSlot.value) : '';
-
-          if (assetId) {
-            this.lastAudioPlayed = assetId;
-            if (this.options.audioEnabled) {
-              playSyntheticAudio(assetId);
-            }
-            if (typeof this.options.onAudio === 'function') {
-              this.options.onAudio(assetId);
-            }
-          }
-          break;
-        }
-
-        case '88': {
-          // Tween <property> of <object> to <any> in <time> seconds
-          // ["Tween", {"value":"Position","l":"property"}, "of", {"value":"obj","t":"object"}, "to", {"value":"..."}, "in", {"value":"0.5","t":"number"}, "seconds"]
-          const propSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'property');
-          const objSlot = act.text?.find(item => item && typeof item === 'object' && item.t === 'object');
-          const valSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'any' || item.t === 'any'));
-          const timeSlot = act.text?.find(item => item && typeof item === 'object' && item.t === 'number');
-
-          if (propSlot && objSlot && valSlot) {
-            const propName = propSlot.value;
-            const targetGid = objSlot.value;
-            const resolvedVal = this.resolveTemplate(valSlot.value);
-            const duration = timeSlot ? (parseFloat(this.resolveTemplate(timeSlot.value)) || 0.3) : 0.3;
-
-            // Apply transition on DOM element
-            const domEl = this.domRoot?.querySelector ? this.domRoot.querySelector(`[data-globalid="${targetGid}"]`) : null;
-            if (domEl && domEl.style) {
-              domEl.style.transition = `all ${duration}s ease`;
-            }
-
-            this._applyPropertyToElement(targetGid, propName, resolvedVal);
-          }
-          break;
-        }
-
-        case '49': {
-          // Duplicate <object> → <variable>
-          const objSlot = act.text?.find(item => item && typeof item === 'object' && (item.t === 'object' || item.l === 'button' || item.l === 'object'));
-          const varSlot = act.text?.find(item => item && typeof item === 'object' && item.l === 'variable');
-          if (objSlot && varSlot) {
-            let sourceGid = objSlot.value;
-            if (typeof sourceGid === 'string' && sourceGid.startsWith('{') && sourceGid.endsWith('}')) {
-              sourceGid = String(this.resolveTemplate(sourceGid));
-            } else if (typeof sourceGid === 'string' && this.variables.has(sourceGid)) {
-              sourceGid = String(this.variables.get(sourceGid));
-            }
-            const sourceNode = this.elementsByGlobalId.get(sourceGid);
-            if (sourceNode) {
-              const newGid = 'd' + Math.random().toString(36).substring(2, 4);
-              const clonedNode = JSON.parse(JSON.stringify(sourceNode));
-              clonedNode.globalid = newGid;
-              this.elementsByGlobalId.set(newGid, clonedNode);
-              const varName = String(varSlot.value).replace(/[{}]/g, '');
-              this.setVariable(varName, newGid);
-            }
-          }
-          break;
-        }
-
-        case '87': {
-          // Run function <function>
-          const fnSlot = act.text?.find(item => item && typeof item === 'object' && (item.l === 'function' || item.t === 'string'));
-          if (fnSlot) {
-            const fnName = fnSlot.value;
-            for (const sc of this.scripts) {
-              for (const evt of (sc.content || [])) {
-                if (String(evt.id) === '6') {
-                  const nameSlot = evt.text?.find(item => item && typeof item === 'object' && item.l === 'function');
-                  if (nameSlot && nameSlot.value === fnName) {
-                    await this._executeActions(evt.actions || [], evt);
-                  }
-                }
-              }
-            }
-          }
-          break;
-        }
-
-        case '115': {
-          // Return <any>
-          return;
-        }
-
-        default:
-          if (this.options.logActions) {
-            console.warn(`[CatWebRuntime] Unhandled action id: ${actId}`);
-          }
-          break;
-      }
-
-      i++;
-    }
-  }
-
-  /**
-   * Evaluates comparison between two operands based on comparison string.
-   * @private
-   */
-  _evaluateComparison(op1, op2, compStr) {
-    const num1 = Number(op1);
-    const num2 = Number(op2);
-    const isBothNumeric = !isNaN(num1) && !isNaN(num2) && String(op1).trim() !== '' && String(op2).trim() !== '';
-
-    switch (compStr) {
-      case 'is equal to':
-      case '==':
-      case '=':
-        return isBothNumeric ? num1 === num2 : String(op1) === String(op2);
-
-      case 'is not equal to':
-      case '!=':
-      case '~=':
-        return isBothNumeric ? num1 !== num2 : String(op1) !== String(op2);
-
-      case 'is greater than':
-      case '>':
-        return isBothNumeric ? num1 > num2 : String(op1) > String(op2);
-
-      case 'is less than':
-      case '<':
-        return isBothNumeric ? num1 < num2 : String(op1) < String(op2);
-
-      case 'is greater than or equal to':
-      case '>=':
-        return isBothNumeric ? num1 >= num2 : String(op1) >= String(op2);
-
-      case 'is less than or equal to':
-      case '<=':
-        return isBothNumeric ? num1 <= num2 : String(op1) <= String(op2);
-
-      default:
-        return String(op1) === String(op2);
-    }
-  }
-
-  /**
-   * Applies property change to target element in both JSON tree and DOM.
-   * @private
-   */
-  _applyPropertyToElement(targetGid, propName, resolvedVal) {
-    let actualGid = targetGid;
-    if (typeof targetGid === 'string') {
-      if (targetGid.startsWith('{') && targetGid.endsWith('}')) {
-        actualGid = String(this.resolveTemplate(targetGid));
-      } else if (this.variables.has(targetGid)) {
-        actualGid = String(this.variables.get(targetGid));
-      }
-    }
-
+  _applyPropertyToElement(targetGid, propName, resolvedVal, ctx = null) {
+    const actualGid = this._resolveObjectId(targetGid, ctx);
     const targetNode = this.elementsByGlobalId.get(actualGid);
-    const domEl = this.domRoot?.querySelector ? this.domRoot.querySelector(`[data-globalid="${actualGid}"]`) : null;
+    const domEl = this._domOf(actualGid);
+    const normalizedProp = String(propName).replace(/\s+/g, '').toLowerCase();
+    const key = PROPERTY_KEYS[normalizedProp];
 
-    const normalizedProp = propName.replace(/\s+/g, '').toLowerCase();
+    if (!targetNode && !domEl) {
+      this._log('warn', `Set ${propName}: no element with globalid "${actualGid}"`, ctx);
+      return;
+    }
 
-    // 1. Text / Content Text
-    if (normalizedProp === 'text' || normalizedProp === 'contenttext') {
+    if (key === 'text') {
       if (targetNode) targetNode.text = resolvedVal;
       if (domEl) {
-        if (domEl.tagName === 'INPUT' || domEl.tagName === 'TEXTAREA') {
-          domEl.value = resolvedVal;
-        } else {
-          domEl.textContent = resolvedVal;
-        }
+        if (domEl.tagName === 'INPUT' || domEl.tagName === 'TEXTAREA') domEl.value = resolvedVal;
+        else domEl.textContent = resolvedVal;
       }
-    }
-    // 2. Text Color / TextColor3
-    else if (normalizedProp === 'textcolor' || normalizedProp === 'textcolor3' || normalizedProp === 'fontcolor') {
+    } else if (key === 'font_color') {
       if (targetNode) targetNode.font_color = resolvedVal;
-      if (domEl && domEl.style) {
-        const trans = targetNode ? (targetNode.font_transparency ?? targetNode.text_transparency) : undefined;
-        applyTextStyling(domEl, resolvedVal, trans);
-      }
-    }
-    // 3. Background Color / BackgroundColor3
-    else if (normalizedProp === 'backgroundcolor' || normalizedProp === 'backgroundcolor3') {
+      if (domEl?.style) applyTextStyling(domEl, resolvedVal, targetNode ? (targetNode.font_transparency ?? targetNode.text_transparency) : undefined);
+    } else if (key === 'background_color') {
       if (targetNode) targetNode.background_color = resolvedVal;
-      if (domEl && domEl.style) {
-        applyBackgroundStyling(domEl, resolvedVal, targetNode ? targetNode.background_transparency : undefined);
-      }
-    }
-    // 4. Visible
-    else if (normalizedProp === 'visible') {
+      if (domEl?.style) applyBackgroundStyling(domEl, resolvedVal, targetNode ? targetNode.background_transparency : undefined);
+    } else if (key === 'visible') {
       const isVisible = resolvedVal !== 'false' && resolvedVal !== false;
       if (targetNode) targetNode.visible = isVisible ? 'true' : 'false';
-      if (domEl && domEl.style) {
-        domEl.style.display = isVisible ? '' : 'none';
-      }
-    }
-    // 5. Position
-    else if (normalizedProp === 'position') {
-      if (targetNode) targetNode.position = resolvedVal;
-      if (domEl && domEl.style) {
+      if (domEl?.style) domEl.style.display = isVisible ? '' : 'none';
+    } else if (key === 'position' || key === 'size') {
+      if (targetNode) targetNode[key] = resolvedVal;
+      if (domEl?.style) {
         try {
           const css = udim2ToCss(resolvedVal);
-          domEl.style.left = css.left;
-          domEl.style.top = css.top;
+          if (key === 'position') { domEl.style.left = css.left; domEl.style.top = css.top; }
+          else { domEl.style.width = css.width; domEl.style.height = css.height; }
         } catch {
-          // Ignore invalid coordinate
+          this._log('warn', `${propName}: "${resolvedVal}" is not a UDim2 like {0,0},{0,100}`, ctx);
         }
       }
-    }
-    // 6. Size
-    else if (normalizedProp === 'size') {
-      if (targetNode) targetNode.size = resolvedVal;
-      if (domEl && domEl.style) {
-        try {
-          const css = udim2ToCss(resolvedVal);
-          domEl.style.width = css.width;
-          domEl.style.height = css.height;
-        } catch {
-          // Ignore invalid coordinate
-        }
-      }
-    }
-    // 7. Background Transparency
-    else if (normalizedProp === 'backgroundtransparency' || normalizedProp === 'transparency') {
+    } else if (key === 'background_transparency') {
       if (targetNode) targetNode.background_transparency = resolvedVal;
-      if (domEl && domEl.style) {
+      if (domEl?.style) {
         applyBackgroundStyling(domEl, targetNode ? targetNode.background_color : undefined, resolvedVal);
         if (domEl.style.opacity) domEl.style.opacity = '';
       }
-    }
-    // 8. Text Transparency / Font Transparency
-    else if (normalizedProp === 'texttransparency' || normalizedProp === 'fonttransparency') {
+    } else if (key === 'font_transparency') {
       if (targetNode) {
         targetNode.font_transparency = resolvedVal;
         targetNode.text_transparency = resolvedVal;
       }
-      if (domEl && domEl.style) {
-        applyTextStyling(domEl, targetNode ? targetNode.font_color : undefined, resolvedVal);
-      }
-    }
-    // 9. Order / LayoutOrder
-    else if (normalizedProp === 'order' || normalizedProp === 'layoutorder') {
+      if (domEl?.style) applyTextStyling(domEl, targetNode ? targetNode.font_color : undefined, resolvedVal);
+    } else if (key === 'order') {
       if (targetNode) targetNode.order = String(resolvedVal);
-      if (domEl && domEl.style) domEl.style.order = String(resolvedVal);
+      if (domEl?.style) domEl.style.order = String(resolvedVal);
+    } else if (key === 'rotation') {
+      if (targetNode) targetNode.rotation = String(resolvedVal);
+      if (domEl?.style) domEl.style.rotate = `${Number(resolvedVal) || 0}deg`;
+    } else if (key === 'z_index') {
+      if (targetNode) targetNode.z_index = String(resolvedVal);
+      if (domEl?.style) domEl.style.zIndex = String(resolvedVal);
+    } else if (key === 'font_size') {
+      if (targetNode) targetNode.font_size = String(resolvedVal);
+      if (domEl?.style && !isNaN(Number(resolvedVal))) domEl.style.fontSize = `${Number(resolvedVal)}px`;
+    } else if (key === 'image_id') {
+      const id = String(resolvedVal).replace(/^rbxassetid:\/\//, '');
+      if (targetNode) { targetNode.image_id = id; targetNode.image = `rbxassetid://${id}`; }
+      if (domEl) {
+        const resolved = resolveRobloxAsset(id);
+        domEl.setAttribute?.('data-asset-type', resolved.type);
+        if (resolved.type === 'svg' || resolved.type === 'badge') domEl.innerHTML = resolved.content;
+      }
+    } else if (key && targetNode) {
+      targetNode[key] = resolvedVal;
+      if (key === 'placeholder') domEl?.setAttribute?.('placeholder', resolvedVal);
+      if (key === 'tooltip') domEl?.setAttribute?.('title', resolvedVal);
+    } else {
+      this._reportOnce(`prop-${normalizedProp}`, `Property "${propName}" isn't simulated in the Web Runner.`, ctx);
     }
 
-    if (typeof this.options.onPropertyChange === 'function') {
-      this.options.onPropertyChange(targetGid, propName, resolvedVal);
+    this.options.onPropertyChange?.(actualGid, propName, resolvedVal);
+
+    // "When <object> changed" (event 10); depth guard stops change → set → change loops.
+    if (this._changeDepth < 8 && this.scripts.some((sc) => (sc.content || []).some((e) => String(e?.id) === '10'))) {
+      this._changeDepth++;
+      try {
+        this.triggerEvent(actualGid, 10);
+      } finally {
+        this._changeDepth--;
+      }
     }
   }
 }
 
+/* ============================================================
+ * PURE HELPERS
+ * ============================================================ */
+
+/** Parameter objects of a block's `text`, in order. */
+function params(block) {
+  return Array.isArray(block?.text) ? block.text.filter((t) => t && typeof t === 'object') : [];
+}
+
+function stripBraces(s) {
+  return s.startsWith('{') && s.endsWith('}') ? s.slice(1, -1) : s;
+}
+
+/** "tbl.a.1" → ["tbl", "a", "1"], keeping scope prefixes like "l!tbl" intact. */
+function splitPath(name) {
+  return String(name).split('.');
+}
+
+function toNumberIfNumeric(str) {
+  if (typeof str !== 'string') return str;
+  const trimmed = str.trim();
+  if (trimmed === '' || !/^-?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(trimmed)) return str;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : str;
+}
+
+/** Formats a value the way CatWeb prints it in text. */
+function formatValue(v) {
+  if (v === undefined || v === null) return '';
+  if (typeof v === 'number') {
+    if (Number.isNaN(v)) return 'nan';
+    if (!Number.isFinite(v)) return v > 0 ? 'inf' : '-inf';
+    return Number.isInteger(v) ? String(v) : String(Number(v.toPrecision(14)));
+  }
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (Array.isArray(v) || typeof v === 'object') {
+    try { return JSON.stringify(v); } catch { return String(v); }
+  }
+  return String(v);
+}
+
+function truthy(v) {
+  if (v === undefined || v === null || v === false) return false;
+  if (v === 0 || v === '' || v === '0' || v === 'false') return false;
+  return true;
+}
+
+function compare(a, b, op) {
+  const na = Number(a);
+  const nb = Number(b);
+  const numeric = a !== '' && b !== '' && !Number.isNaN(na) && !Number.isNaN(nb);
+  if (op === 'eq') return numeric ? na === nb : formatValue(a) === formatValue(b);
+  if (op === 'ne') return numeric ? na !== nb : formatValue(a) !== formatValue(b);
+  if (!numeric) return false; // CatWeb compares order numerically only
+  if (op === 'gt') return na > nb;
+  if (op === 'lt') return na < nb;
+  if (op === 'ge') return na >= nb;
+  if (op === 'le') return na <= nb;
+  return false;
+}
+
+/** Older exports write every comparison as id 18 with the operator in the text. */
+function legacyOperator(act) {
+  if (String(act.id) !== '18') return null;
+  const words = (act.text || []).filter((t) => typeof t === 'string').map((t) => t.trim().toLowerCase());
+  for (const w of words) {
+    if (w === 'is not equal to' || w === '!=' || w === '~=') return 'ne';
+    if (w === 'is greater than' || w === '>') return 'gt';
+    if (w === 'is lower than' || w === 'is less than' || w === '<') return 'lt';
+    if (w.startsWith('is greater') && w.includes('equal') || w === '>=') return 'ge';
+    if ((w.startsWith('is lower') || w.startsWith('is less')) && w.includes('equal') || w === '<=') return 'le';
+  }
+  return null;
+}
+
+function setEntry(table, key, value) {
+  if (Array.isArray(table)) {
+    const idx = Number(key);
+    if (Number.isInteger(idx) && idx >= 1) {
+      table[idx - 1] = value;
+      return table;
+    }
+    return table; // arrays can't hold keys
+  }
+  // Setting index 1 on an empty table turns it into an array (see CatDocs "Tables").
+  if (key === '1' && Object.keys(table).length === 0) return [value];
+  table[key] = value;
+  return table;
+}
+
+function distanceToCenter(evt) {
+  const x = Number(evt?.x);
+  const y = Number(evt?.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return Infinity;
+  return Math.hypot(x - 5000, y - 5000);
+}
+
+function propertyKey(name) {
+  const norm = String(name ?? '').replace(/\s+/g, '').toLowerCase();
+  return PROPERTY_KEYS[norm] || String(name ?? '').trim().toLowerCase().replace(/\s+/g, '_');
+}
+
+function runMathFunction(name, args) {
+  if (name === 'pi') return Math.PI;
+  if (name === 'huge') return Infinity;
+  const fns = {
+    abs: Math.abs, acos: Math.acos, asin: Math.asin, atan: Math.atan, atan2: Math.atan2,
+    ceil: Math.ceil, cos: Math.cos, cosh: Math.cosh, deg: (x) => x * 180 / Math.PI, exp: Math.exp,
+    floor: Math.floor, log: (x, b) => (b ? Math.log(x) / Math.log(b) : Math.log(x)), log10: Math.log10,
+    max: Math.max, min: Math.min, pow: Math.pow, rad: (x) => x * Math.PI / 180, sin: Math.sin,
+    sinh: Math.sinh, sqrt: Math.sqrt, tan: Math.tan, tanh: Math.tanh, sign: Math.sign,
+    round: (x) => Math.sign(x) * Math.round(Math.abs(x)),
+    clamp: (x, lo, hi) => Math.min(Math.max(x, lo), hi),
+    fmod: (a, b) => a % b,
+    random: (a, b) => (a === undefined ? Math.random() : b === undefined ? 1 + Math.floor(Math.random() * a) : a + Math.floor(Math.random() * (b - a + 1)))
+  };
+  const fn = fns[name];
+  return fn ? fn(...args) : NaN;
+}
+
+function cssEscape(s) {
+  if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(s);
+  return String(s).replace(/["\\]/g, '\\$&');
+}
+
+function isTypingTarget(t) {
+  const tag = t?.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || Boolean(t?.isContentEditable);
+}
+
+const DIGIT_NAMES = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+const SPECIAL_KEYS = {
+  ' ': 'Space', Enter: 'Return', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right',
+  Shift: 'LeftShift', Control: 'LeftControl', Alt: 'LeftAlt', Escape: 'Escape', Backspace: 'Backspace', Tab: 'Tab'
+};
+
+/** Roblox KeyCode name for a browser key event ("a" → "A", "1" → "One", " " → "Space"). */
+function robloxKeyName(e) {
+  const key = e?.key ?? '';
+  if (SPECIAL_KEYS[key]) return SPECIAL_KEYS[key];
+  if (/^[a-z]$/i.test(key)) return key.toUpperCase();
+  if (/^\d$/.test(key)) return DIGIT_NAMES[Number(key)];
+  return key;
+}
+
+/** Every lowercase name a key event can be matched by. */
+function keyNames(e) {
+  const names = new Set([String(e?.key ?? '').toLowerCase(), robloxKeyName(e).toLowerCase()]);
+  if (e?.code) names.add(String(e.code).toLowerCase().replace(/^key/, ''));
+  names.delete('');
+  return names;
+}
+
+function keyMatches(wanted, e) {
+  if (wanted === undefined || wanted === null || wanted === '') return true;
+  return keyNames(e).has(String(wanted).trim().toLowerCase());
+}
+
 /* Module Exports */
+exports.formatValue = formatValue;
 exports.CatWebRuntime = CatWebRuntime;
+exports.ACTION_NAMES = ACTION_NAMES;
+exports.EVENT_NAMES = EVENT_NAMES;
 
   },
 
@@ -5207,7 +6021,7 @@ class CatWebInspector {
 
       row.appendChild(labelWrap);
 
-      // Compact Styling Modifier Badge ("nicht der Länge nach")
+      // Compact Styling Modifier Badge (kept on one line)
       if (modifiers.length > 0) {
         const modBadge = doc.createElement('span');
         modBadge.className = 'cw-tree-mod-badge';
@@ -5218,7 +6032,7 @@ class CatWebInspector {
             <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
             <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
           </svg>
-          <span>${modifiers.length} Styling-${modifiers.length === 1 ? 'Element' : 'Elemente'}</span>
+          <span>${modifiers.length} modifier${modifiers.length === 1 ? '' : 's'}</span>
         `;
 
         modBadge.addEventListener('mouseenter', () => {
@@ -5258,7 +6072,7 @@ class CatWebInspector {
           if (this.tooltip) {
             const w = Math.round(entry.domElement.offsetWidth || 0);
             const h = Math.round(entry.domElement.offsetHeight || 0);
-            const modTxt = modifiers.length ? ` • ${modifiers.length} Styling-Elemente` : '';
+            const modTxt = modifiers.length ? ` • ${modifiers.length} modifier${modifiers.length === 1 ? '' : 's'}` : '';
             this.tooltip.textContent = `<${cls}> ${node.alias ? '#' + node.alias : ''} [${gid}]${modTxt} • ${w}×${h}px`;
           }
         }
@@ -5294,8 +6108,8 @@ class CatWebInspector {
     const summaryBar = doc.createElement('div');
     summaryBar.className = 'cw-tree-summary-bar';
     summaryBar.innerHTML = `
-      <div class="cw-tree-stat"><strong>${totalVisual}</strong> Elemente</div>
-      <div class="cw-tree-stat muted"><strong>${totalStyling}</strong> Styling-Elemente</div>
+      <div class="cw-tree-stat"><strong>${totalVisual}</strong> elements</div>
+      <div class="cw-tree-stat muted"><strong>${totalStyling}</strong> modifiers</div>
       ${totalScripts > 0 ? `<div class="cw-tree-stat muted"><strong>${totalScripts}</strong> Scripts</div>` : ''}
     `;
     this.treeContainer.appendChild(summaryBar);
@@ -5358,7 +6172,7 @@ class CatWebInspector {
     this.kastentippPopup.innerHTML = `
       <div class="cw-kastentipp-header">
         <span class="cw-kt-title">${node.alias ? '#' + node.alias : node.class}</span>
-        <span class="cw-kt-count">${modifiers.length} Styling-${modifiers.length === 1 ? 'Element' : 'Elemente'}</span>
+        <span class="cw-kt-count">${modifiers.length} modifier${modifiers.length === 1 ? '' : 's'}</span>
       </div>
       <div class="cw-kastentipp-list">
         ${listHtml}
@@ -5592,14 +6406,14 @@ class CatWebInspector {
 
     this._positionBox(this.hoverOverlay, elWithGid);
 
-    // Update tooltip with compact styling indicator ("nicht der Länge nach")
+    // Update tooltip with compact styling indicator (kept on one line)
     if (this.tooltip) {
       const cls = entry.jsonNode?.class || elWithGid.tagName.toLowerCase();
       const alias = entry.jsonNode?.alias ? ` #${entry.jsonNode.alias}` : '';
       const w = Math.round(elWithGid.offsetWidth || 0);
       const h = Math.round(elWithGid.offsetHeight || 0);
       const modCount = entry.modifiers?.length || 0;
-      const modText = modCount > 0 ? ` • ${modCount} Styling-Elemente` : '';
+      const modText = modCount > 0 ? ` • ${modCount} modifier${modCount === 1 ? '' : 's'}` : '';
       this.tooltip.textContent = `<${cls}>${alias} [${gid}]${modText} • ${w}×${h}px`;
     }
   }
@@ -6695,7 +7509,7 @@ const OVERFLOW_CONFIG = exports.OVERFLOW_CONFIG = [
     id: 'aiApi',
     priority: 1,
     selector: '#aiApiBtn',
-    label: 'AI / Export Image',
+    label: 'Export Image / AI API',
     icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`,
     action: (app) => {
       const btn = app.root.querySelector('#aiApiBtn');
@@ -6716,7 +7530,7 @@ const OVERFLOW_CONFIG = exports.OVERFLOW_CONFIG = [
     id: 'audio',
     priority: 2,
     selector: '#audioBtn',
-    getLabel: (app) => (app.audioEnabled ? 'Audio: On' : 'Audio: Off'),
+    getLabel: (app) => (app.audioEnabled ? 'Sound: On' : 'Sound: Off'),
     getIcon: (app) =>
       app.audioEnabled
         ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`
@@ -6737,6 +7551,17 @@ const OVERFLOW_CONFIG = exports.OVERFLOW_CONFIG = [
       app.toggleDiagnostics?.();
     },
     isActive: (app) => !app.diagnosticsPanel?.classList?.contains('hidden')
+  },
+  {
+    id: 'console',
+    priority: 3.5,
+    selector: '#consoleBtn',
+    label: 'Console & Variables',
+    icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>`,
+    action: (app) => {
+      app.toggleConsole?.();
+    },
+    isActive: (app) => Boolean(app.consoleDock) && !app.consoleDock.classList?.contains('hidden')
   },
   {
     id: 'inspector',
@@ -6779,6 +7604,17 @@ const OVERFLOW_CONFIG = exports.OVERFLOW_CONFIG = [
       app.toggleEditor?.();
     },
     isActive: (app) => !app.editorPanel?.classList?.contains('hidden')
+  },
+  {
+    id: 'scripts',
+    priority: 6.5,
+    selector: '#scriptsBtn',
+    label: 'Script Editor',
+    icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="5" rx="1.5"></rect><rect x="7" y="10" width="14" height="5" rx="1.5"></rect><rect x="7" y="17" width="10" height="4" rx="1.5"></rect></svg>`,
+    action: (app) => {
+      app.toggleWorkspace?.();
+    },
+    isActive: (app) => Boolean(app.workspace?.isOpen?.())
   },
   {
     id: 'upload',
@@ -6911,6 +7747,11 @@ class CatWebOverflowManager {
     }
   }
 
+  /** @private Config entries whose toolbar element exists. */
+  _presentConfigs() {
+    return OVERFLOW_CONFIG.filter((config) => this.root.querySelector?.(config.selector));
+  }
+
   /**
    * Fallback width estimation if element has not rendered yet or in mock DOM.
    * @private
@@ -6923,8 +7764,10 @@ class CatWebOverflowManager {
       case 'zoom': return 125;
       case 'inspector': return 85;
       case 'diagnostics': return 100;
-      case 'audio': return 95;
-      case 'aiApi': return 130;
+      case 'audio': return 36;
+      case 'aiApi': return 85;
+      case 'console': return 90;
+      case 'scripts': return 90;
       case 'share': return 80;
       default: return 90;
     }
@@ -6954,9 +7797,9 @@ class CatWebOverflowManager {
     // Available width for items if NO overflow button is present
     const maxAvailable = toolbarWidth - brandWidth - 32; // 32px padding
 
-    // Compute total width of all items
+    // Compute total width of all items (only the ones this page actually has)
     let totalItemsWidth = 0;
-    for (const config of OVERFLOW_CONFIG) {
+    for (const config of this._presentConfigs()) {
       const w = this.intrinsicWidths.get(config.id) || this._estimateFallbackWidth(config.id);
       totalItemsWidth += w + gap;
     }
@@ -6978,7 +7821,7 @@ class CatWebOverflowManager {
       let remainingCapacity = availableWithOverflowBtn;
 
       // Items sorted by priority descending (priority 8 stays longest, priority 1 collapses first)
-      const sortedConfigs = [...OVERFLOW_CONFIG].sort((a, b) => b.priority - a.priority);
+      const sortedConfigs = this._presentConfigs().sort((a, b) => b.priority - a.priority);
 
       // Determine items that fit from the most important down to least important
       const fittingIds = new Set();
@@ -7075,7 +7918,7 @@ class CatWebOverflowManager {
 
         let html = `
           <div class="cw-context-menu-inner cw-context-subview">
-            <div class="cw-context-back-header" data-action="back-to-main" title="Zurück">
+            <div class="cw-context-back-header" data-action="back-to-main" title="Back">
               <span class="cw-context-back-arrow">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="15 18 9 12 15 6"></polyline>
@@ -7367,6 +8210,1277 @@ exports.OVERFLOW_CONFIG = OVERFLOW_CONFIG;
 
   },
 
+  './block_library.js': function(module, exports, require) {
+/**
+ * CatWeb block palette: categories, colours and insertable templates.
+ *
+ * Every template `text` is copied from the authoritative tables in game/JSONScript.md §7,
+ * so blocks added in the Script Workspace have the exact slot shapes CatWeb expects.
+ */
+
+const CATEGORIES = exports.CATEGORIES = {
+  event:     { name: 'Events',            color: '#d97706' },
+  console:   { name: 'Console',           color: '#64748b' },
+  logic:     { name: 'Logic',             color: '#ca8a04' },
+  loops:     { name: 'Loops',             color: '#0891b2' },
+  looks:     { name: 'Looks',             color: '#7c3aed' },
+  hierarchy: { name: 'Hierarchy',         color: '#9333ea' },
+  navigation:{ name: 'Navigation',        color: '#0d9488' },
+  variables: { name: 'Math & Variables',  color: '#ea580c' },
+  audio:     { name: 'Audio',             color: '#db2777' },
+  input:     { name: 'Input',             color: '#4f46e5' },
+  network:   { name: 'Network',           color: '#0284c7' },
+  cookies:   { name: 'Cookies',           color: '#a16207' },
+  color:     { name: 'Color',             color: '#be123c' },
+  strings:   { name: 'Strings',           color: '#059669' },
+  tables:    { name: 'Tables',            color: '#b45309' },
+  functions: { name: 'Functions',         color: '#2563eb' },
+  control:   { name: 'Control',           color: '#475569' }
+};
+
+const S = (value, l) => (l ? { value, t: 'string', l } : { value, t: 'string' });
+const N = (value, l) => (l ? { value, t: 'number', l } : { value, t: 'number' });
+const OBJ = (value, l) => (l ? { value, t: 'object', l } : { value, t: 'object' });
+const ANY = (value) => ({ value, t: 'string', l: 'any' });
+const BARE_ANY = (value) => ({ value, t: 'any' });
+const VAR = (value = '1') => S(value, 'variable');
+
+/** Event (hat) blocks, keyed by event id. */
+const EVENT_TEMPLATES = exports.EVENT_TEMPLATES = [
+  { id: '0', cat: 'event', text: ['When website loaded...'] },
+  { id: '1', cat: 'event', text: ['When', OBJ('', 'button'), 'pressed...'] },
+  { id: '13', cat: 'event', text: ['When', OBJ('', 'button'), 'right clicked...'] },
+  { id: '11', cat: 'event', text: ['When mouse down on', OBJ('', 'button'), '...'] },
+  { id: '12', cat: 'event', text: ['When mouse up on', OBJ('', 'button'), '...'] },
+  { id: '3', cat: 'event', text: ['When mouse enters', OBJ(''), '...'] },
+  { id: '5', cat: 'event', text: ['When mouse leaves', OBJ(''), '...'] },
+  { id: '2', cat: 'event', text: ['When', { value: 'E', t: 'key' }, 'pressed...'] },
+  { id: '16', cat: 'event', text: ['When any key pressed...'] },
+  { id: '8', cat: 'event', text: ['When', OBJ('', 'input'), 'submitted...'] },
+  { id: '10', cat: 'event', text: ['When', OBJ(''), 'changed...'] },
+  { id: '9', cat: 'event', text: ['When message received...'] },
+  { id: '14', cat: 'event', text: ['When cross-site message received...'] },
+  { id: '7', cat: 'event', text: ['When', OBJ('', 'avataritem'), 'bought...'] },
+  { id: '15', cat: 'event', text: ['When donation completed...'] },
+  { id: '6', cat: 'functions', text: ['Define function', S('1', 'function')] }
+];
+
+/** Action blocks, in palette order. */
+const ACTION_TEMPLATES = exports.ACTION_TEMPLATES = [
+  // Console
+  { id: '0', cat: 'console', text: ['Log', BARE_ANY('Hello')] },
+  { id: '1', cat: 'console', text: ['Warn', BARE_ANY('Careful')] },
+  { id: '2', cat: 'console', text: ['Error', BARE_ANY('Something broke')] },
+
+  // Logic
+  { id: '3', cat: 'logic', text: ['Wait', N('1'), 'seconds'] },
+  { id: '18', cat: 'logic', text: ['If', ANY('{1}'), 'is equal to', ANY('1')], opens: true },
+  { id: '19', cat: 'logic', text: ['If', ANY('{1}'), 'is not equal to', ANY('1')], opens: true },
+  { id: '20', cat: 'logic', text: ['If', ANY('{1}'), 'is greater than', ANY('1')], opens: true },
+  { id: '125', cat: 'logic', text: ['If', ANY('{1}'), 'is greater or equal to', ANY('1')], opens: true },
+  { id: '21', cat: 'logic', text: ['If', ANY('{1}'), 'is lower than', ANY('1')], opens: true },
+  { id: '126', cat: 'logic', text: ['If', ANY('{1}'), 'is lower or equal to', ANY('1')], opens: true },
+  { id: '37', cat: 'logic', text: ['If', S('{1}'), 'contains', S('text')], opens: true },
+  { id: '38', cat: 'logic', text: ['If', S('{1}'), "doesn't contain", S('text')], opens: true },
+  { id: '92', cat: 'logic', text: ['If', VAR(), 'exists'], opens: true },
+  { id: '93', cat: 'logic', text: ['If', VAR(), "doesn't exist"], opens: true },
+  { id: '44', cat: 'logic', text: ['If', VAR('1'), 'AND', VAR('2')], opens: true },
+  { id: '45', cat: 'logic', text: ['If', VAR('1'), 'OR', VAR('2')], opens: true },
+  { id: '46', cat: 'logic', text: ['If', VAR('1'), 'NOR', VAR('2')], opens: true },
+  { id: '47', cat: 'logic', text: ['If', VAR('1'), 'XOR', VAR('2')], opens: true },
+  { id: '112', cat: 'logic', text: ['else'] },
+
+  // Loops
+  { id: '22', cat: 'loops', text: ['Repeat', N('5'), 'times'], opens: true },
+  { id: '23', cat: 'loops', text: ['Repeat forever'], opens: true },
+  { id: '24', cat: 'loops', text: ['Break'] },
+  { id: '25', cat: 'control', text: ['end'] },
+
+  // Looks
+  { id: '8', cat: 'looks', text: ['Make', OBJ(''), 'invisible'] },
+  { id: '9', cat: 'looks', text: ['Make', OBJ(''), 'visible'] },
+  { id: '10', cat: 'looks', text: ['Set', OBJ(''), 'text to', S('Hello')] },
+  { id: '31', cat: 'looks', text: ['Set', S('Background Color', 'property'), 'of', OBJ(''), 'to', BARE_ANY('#ff0000')] },
+  { id: '39', cat: 'looks', text: ['Get', S('Text', 'property'), 'of', OBJ(''), '→', VAR()] },
+  { id: '88', cat: 'looks', text: ['Tween', S('Position', 'property'), 'of', OBJ(''), 'to', BARE_ANY('{0,0},{0,100}'), '-', N('0.3', 'time'), S('Quad', 'style'), S('Out', 'direction')] },
+  { id: '106', cat: 'looks', text: ['Set', OBJ(''), 'image to', { value: '16944769468', t: 'id', assetbrowser: 'image' }] },
+  { id: '30', cat: 'looks', text: ['Get text from', OBJ('', 'input'), '→', VAR()] },
+  { id: '49', cat: 'looks', text: ['Duplicate', OBJ(''), '→', VAR()] },
+  { id: '50', cat: 'looks', text: ['Delete', OBJ('')] },
+  { id: '108', cat: 'looks', text: ['If dark theme enabled'], opens: true },
+
+  // Hierarchy
+  { id: '58', cat: 'hierarchy', text: ['Parent', OBJ(''), 'under', OBJ('')] },
+  { id: '103', cat: 'hierarchy', text: ['If', OBJ(''), 'is ancestor of', OBJ('')], opens: true },
+  { id: '104', cat: 'hierarchy', text: ['If', OBJ(''), 'is child of', OBJ('')], opens: true },
+  { id: '105', cat: 'hierarchy', text: ['If', OBJ(''), 'is descendant of', OBJ('')], opens: true },
+
+  // Navigation
+  { id: '4', cat: 'navigation', text: ['Redirect to', { value: 'home.rbx', t: 'string', href: 'true' }] },
+  { id: '117', cat: 'navigation', text: ['Get URL', '→', VAR()] },
+
+  // Math & Variables
+  { id: '11', cat: 'variables', text: ['Set', VAR(), 'to', ANY('0')] },
+  { id: '12', cat: 'variables', text: ['Increase', VAR(), 'by', N('1')] },
+  { id: '13', cat: 'variables', text: ['Decrease', VAR(), 'by', N('1')] },
+  { id: '14', cat: 'variables', text: ['Multiply', VAR(), 'by', N('2')] },
+  { id: '15', cat: 'variables', text: ['Divide', VAR(), 'by', N('2')] },
+  { id: '40', cat: 'variables', text: ['Raise', VAR(), 'to the power of', N('2')] },
+  { id: '41', cat: 'variables', text: [VAR(), 'modulo', N('2')] },
+  { id: '16', cat: 'variables', text: ['Round', VAR()] },
+  { id: '17', cat: 'variables', text: ['Floor', VAR()] },
+  { id: '78', cat: 'variables', text: ['Ceil', VAR()] },
+  { id: '27', cat: 'variables', text: ['Set', S('1', 'var'), 'to random', N('1', 'n'), '-', N('10', 'n')] },
+  { id: '114', cat: 'variables', text: ['Run math function', S('sin', 'function'), { value: [], t: 'tuple' }, '→', VAR()] },
+  { id: '96', cat: 'variables', text: ['Delete', VAR()] },
+
+  // Audio
+  { id: '5', cat: 'audio', text: ['Play audio', { value: '88442833509532', t: 'string', l: 'id', assetbrowser: 'audio' }, '→', S('', 'variable?')] },
+  { id: '26', cat: 'audio', text: ['Play looped audio', { value: '88442833509532', t: 'string', l: 'id', assetbrowser: 'audio' }, '→', S('', 'variable?')] },
+
+  // Input
+  { id: '79', cat: 'input', text: ['If left mouse button down'], opens: true },
+  { id: '80', cat: 'input', text: ['If middle mouse button down'], opens: true },
+  { id: '81', cat: 'input', text: ['If right mouse button down'], opens: true },
+  { id: '82', cat: 'input', text: ['If', { value: 'E', t: 'key' }, 'down'], opens: true },
+  { id: '84', cat: 'input', text: ['Get viewport size', '→', S('1', 'x'), S('2', 'y')] },
+  { id: '85', cat: 'input', text: ['Get cursor position', '→', S('1', 'x'), S('2', 'y')] },
+
+  // Network
+  { id: '32', cat: 'network', text: ['Broadcast', S('msg'), 'across page'] },
+  { id: '33', cat: 'network', text: ['Broadcast', S('msg'), 'across site'] },
+
+  // Cookies
+  { id: '34', cat: 'cookies', text: ['Set cookie', S('ck', 'cookie'), 'to', BARE_ANY('value')] },
+  { id: '36', cat: 'cookies', text: ['Get cookie', S('ck', 'cookie'), '→', VAR()] },
+  { id: '62', cat: 'cookies', text: ['Delete cookie', S('ck', 'cookie')] },
+
+  // Color
+  { id: '119', cat: 'color', text: ['Convert', S('#ffffff', 'hex'), 'to RGB', '→', VAR()] },
+  { id: '121', cat: 'color', text: ['Convert RGB', S('255,255,255', 'rgb'), 'to hex', '→', VAR()] },
+
+  // Strings
+  { id: '42', cat: 'strings', text: ['Sub', VAR(), N('1', 'start'), '-', N('5', 'end')] },
+  { id: '43', cat: 'strings', text: ['Replace', S('old'), 'in', VAR(), 'by', S('new')] },
+  { id: '48', cat: 'strings', text: ['Get length of', S('text'), '→', VAR()] },
+  { id: '57', cat: 'strings', text: ['Split', S('a,b'), S(',', 'separator'), '→', S('1', 'table')] },
+  { id: '69', cat: 'strings', text: ['Lower', S('TEXT'), '→', VAR()] },
+  { id: '70', cat: 'strings', text: ['Upper', S('text'), '→', VAR()] },
+  { id: '109', cat: 'strings', text: ['Concatenate', S('a'), 'with', S('b'), '→', VAR()] },
+
+  // Tables
+  { id: '54', cat: 'tables', text: ['Create table', S('1', 'table')] },
+  { id: '55', cat: 'tables', text: ['Set entry', S('key', 'entry'), 'of', S('1', 'table'), 'to', ANY('value')] },
+  { id: '66', cat: 'tables', text: ['Set entry', S('key', 'entry'), 'of', S('1', 'table'), 'to', OBJ('')] },
+  { id: '56', cat: 'tables', text: ['Get entry', S('key', 'entry'), 'of', S('1', 'table'), '→', VAR('2')] },
+  { id: '90', cat: 'tables', text: ['Delete entry', S('key', 'entry'), 'of', S('1', 'table')] },
+  { id: '89', cat: 'tables', text: ['Insert', ANY('value'), 'at position', N('', 'number?'), 'of', S('1', 'array')] },
+  { id: '91', cat: 'tables', text: ['Remove entry at position', N('', 'number?'), 'of', S('1', 'array')] },
+  { id: '59', cat: 'tables', text: ['Get length of', S('1', 'array'), '→', VAR('2')] },
+  { id: '113', cat: 'tables', text: ['Iterate through', S('1', 'table'), '({l!index},{l!value})'], opens: true },
+  { id: '110', cat: 'tables', text: ['Join', S('1', 'array'), 'using', S(',', 'string'), '→', VAR('2')] },
+
+  // Functions
+  { id: '87', cat: 'functions', text: ['Run function', S('1', 'function'), { value: [], t: 'tuple' }, '→', S('', 'variable?')] },
+  { id: '115', cat: 'functions', text: ['Return', ANY('0')] }
+];
+
+const ACTION_BY_ID = new Map(ACTION_TEMPLATES.map((t) => [t.id, t]));
+const EVENT_BY_ID = new Map(EVENT_TEMPLATES.map((t) => [t.id, t]));
+
+/** Opens a C-block body that is closed by `end` (25). */
+const OPENER_IDS = exports.OPENER_IDS = new Set(ACTION_TEMPLATES.filter((t) => t.opens).map((t) => t.id));
+
+/** Category colour/name for an action id (unknown ids fall back to Control). */
+function actionCategory(id) {
+  return CATEGORIES[ACTION_BY_ID.get(String(id))?.cat || 'control'];
+}
+
+/** Category for an event id ("Define function" is shown as a Functions hat). */
+function eventCategory(id) {
+  return CATEGORIES[EVENT_BY_ID.get(String(id))?.cat || 'event'];
+}
+
+/** Deep copy of a template's `text`, ready to insert. */
+function cloneText(template) {
+  return JSON.parse(JSON.stringify(template.text));
+}
+
+/** Short label for palette search ("If … is equal to …"). */
+function templateLabel(template) {
+  return template.text.map((t) => (typeof t === 'string' ? t : '…')).join(' ').replace(/\s+/g, ' ').trim();
+}
+
+/* Module Exports */
+exports.actionCategory = actionCategory;
+exports.eventCategory = eventCategory;
+exports.cloneText = cloneText;
+exports.templateLabel = templateLabel;
+exports.CATEGORIES = CATEGORIES;
+exports.EVENT_TEMPLATES = EVENT_TEMPLATES;
+exports.ACTION_TEMPLATES = ACTION_TEMPLATES;
+exports.OPENER_IDS = OPENER_IDS;
+
+  },
+
+  './script_workspace.js': function(module, exports, require) {
+/**
+ * CatWeb Script Workspace — a full-screen block editor.
+ *
+ * Mirrors the in-game script editor: every event stack sits at its own `x`/`y` on the
+ * 9992×9992 canvas (centre 5000,5000). You can pan and zoom, drag a stack by its hat
+ * block (writes `x`/`y` back to the JSON), edit any slot value inline, and add, move or
+ * delete blocks. Every edit goes through `onChange(document)` so the JSON editor,
+ * validator and live preview stay in sync.
+ *
+ * Browser-only (needs a real DOM); the app only creates it when the container exists.
+ */
+
+const {
+  CATEGORIES, EVENT_TEMPLATES, ACTION_TEMPLATES, OPENER_IDS,
+  actionCategory, eventCategory, cloneText, templateLabel
+} = require('./block_library.js');
+
+const CANVAS_SIZE = 9992;
+const CANVAS_CENTER = 5000;
+const INDENT_PX = 16;
+const MIN_SCALE = 0.15;
+const MAX_SCALE = 2;
+const GID_CHARS = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+const ICONS = {
+  grip: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+  play: '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>',
+  plus: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  up: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>',
+  down: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+  trash: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>',
+  fit: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
+  minus: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  restart: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+  close: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  script: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
+};
+
+class ScriptWorkspace {
+  /**
+   * @param {HTMLElement} container - Empty element that becomes the workspace
+   * @param {object} options
+   * @param {(doc: object|Array) => void} options.onChange - Called after every edit
+   * @param {(script: object, event: object) => void} [options.onRunEvent]
+   * @param {(gid: string) => void} [options.onSelectObject]
+   * @param {() => void} [options.onRestart]
+   * @param {() => void} [options.onClose]
+   * @param {string[]} [options.properties] - Script property names for autocomplete
+   */
+  constructor(container, options = {}) {
+    this.root = container;
+    this.options = options;
+    this.doc = null;
+    this.scripts = [];
+    this.activeScriptGid = null;
+    this.view = { x: 0, y: 0, scale: 0.8 };
+    this._fittedFor = null;
+    this._flashTimers = new Map();
+    this._errors = new Map();
+    this._invalid = new Set();
+    this._palette = null;
+
+    this._build();
+  }
+
+  /* ---------------- public API ---------------- */
+
+  isOpen() {
+    return !this.root.classList.contains('hidden');
+  }
+
+  open() {
+    this.root.classList.remove('hidden');
+    this.render();
+    if (this._fittedFor !== this.activeScriptGid) this.fit();
+  }
+
+  close() {
+    this._closePalette();
+    this.root.classList.add('hidden');
+    this.options.onClose?.();
+  }
+
+  /**
+   * Shows a (new) document. Keeps the open script tab and the camera when possible.
+   * @param {object|Array} doc
+   */
+  setDocument(doc) {
+    this.doc = doc;
+    this.scripts = collectScripts(doc);
+    if (!this.scripts.some((s) => s.globalid === this.activeScriptGid)) {
+      this.activeScriptGid = this.scripts[0]?.globalid ?? null;
+      this._fittedFor = null;
+    }
+    this._errors.clear();
+    if (this.isOpen()) {
+      this.render();
+      if (this._fittedFor !== this.activeScriptGid) this.fit();
+    } else {
+      this._renderTabs();
+    }
+  }
+
+  /** Marks blocks named in validator errors (by globalid). */
+  setDiagnostics(errors = []) {
+    this._invalid = new Set(errors.map((e) => e.globalid).filter(Boolean));
+    if (this.isOpen()) this._applyMarkers();
+  }
+
+  /** Briefly highlights a block while the runtime executes it. */
+  flash(gid) {
+    if (!gid || !this.isOpen()) return;
+    const el = this.world.querySelector(`[data-gid="${cssEscape(gid)}"]`);
+    if (!el) return;
+    el.classList.add('is-running');
+    clearTimeout(this._flashTimers.get(gid));
+    this._flashTimers.set(gid, setTimeout(() => el.classList.remove('is-running'), 350));
+  }
+
+  /** Attaches a runtime error to a block and shows it on the canvas. */
+  markError(gid, message) {
+    if (!gid) return;
+    this._errors.set(gid, message);
+    if (this.isOpen()) this._applyMarkers();
+  }
+
+  /**
+   * Opens the workspace on the script that contains this event/action and centres it.
+   * @param {string} gid
+   */
+  reveal(gid) {
+    for (const sc of this.scripts) {
+      const hit = (sc.content || []).some((evt) => evt?.globalid === gid || (evt?.actions || []).some((a) => a?.globalid === gid));
+      if (hit) {
+        this.activeScriptGid = sc.globalid;
+        this._fittedFor = sc.globalid;
+        break;
+      }
+    }
+    this.open();
+    const el = this.world.querySelector(`[data-gid="${cssEscape(gid)}"]`);
+    if (!el) return;
+    const vr = this.viewport.getBoundingClientRect();
+    const er = el.getBoundingClientRect();
+    this.view.x += vr.left + vr.width / 2 - (er.left + er.width / 2);
+    this.view.y += vr.top + vr.height / 3 - (er.top + er.height / 2);
+    this._applyView();
+    el.classList.add('is-revealed');
+    setTimeout(() => el.classList.remove('is-revealed'), 1600);
+  }
+
+  /** Zooms and pans so every stack of the open script is visible. */
+  fit() {
+    this._fittedFor = this.activeScriptGid;
+    const stacks = [...this.world.querySelectorAll('.cw-ws-stack')];
+    const vw = this.viewport.clientWidth || 1000;
+    const vh = this.viewport.clientHeight || 600;
+    if (!stacks.length) {
+      this.view = { scale: 0.8, x: vw / 2 - CANVAS_CENTER * 0.8, y: vh / 2 - CANVAS_CENTER * 0.8 };
+      this._applyView();
+      return;
+    }
+    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+    for (const s of stacks) {
+      const x = parseFloat(s.style.left); const y = parseFloat(s.style.top);
+      minX = Math.min(minX, x); minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + s.offsetWidth); maxY = Math.max(maxY, y + s.offsetHeight);
+    }
+    const pad = 48;
+    const scale = clamp(Math.min((vw - pad * 2) / (maxX - minX || 1), (vh - pad * 2) / (maxY - minY || 1), 1), MIN_SCALE, MAX_SCALE);
+    this.view = {
+      scale,
+      x: (vw - (maxX - minX) * scale) / 2 - minX * scale,
+      y: Math.max(pad, (vh - (maxY - minY) * scale) / 2) - minY * scale
+    };
+    this._applyView();
+  }
+
+  /* ---------------- building ---------------- */
+
+  /** @private */
+  _build() {
+    this.root.classList.add('cw-ws');
+    this.root.innerHTML = `
+      <div class="cw-ws-bar">
+        <div class="cw-ws-tabs" role="tablist" aria-label="Scripts"></div>
+        <button type="button" class="cw-ws-btn" data-ws="add-event" title="Add an event block">${ICONS.plus}<span>Event</span></button>
+        <div class="cw-ws-spacer"></div>
+        <div class="cw-ws-zoom">
+          <button type="button" class="cw-ws-icon-btn" data-ws="zoom-out" title="Zoom out (−)">${ICONS.minus}</button>
+          <button type="button" class="cw-ws-zoom-label" data-ws="zoom-reset" title="Reset to 100%">100%</button>
+          <button type="button" class="cw-ws-icon-btn" data-ws="zoom-in" title="Zoom in (+)">${ICONS.plus}</button>
+          <button type="button" class="cw-ws-icon-btn" data-ws="fit" title="Show all blocks (0)">${ICONS.fit}</button>
+        </div>
+        <button type="button" class="cw-ws-btn" data-ws="restart" title="Reload the page and run all scripts again (R)">${ICONS.restart}<span>Restart page</span></button>
+        <button type="button" class="cw-ws-icon-btn" data-ws="close" title="Back to preview (Esc)">${ICONS.close}</button>
+      </div>
+      <div class="cw-ws-viewport" tabindex="0" aria-label="Script canvas">
+        <div class="cw-ws-world"></div>
+        <div class="cw-ws-empty hidden"></div>
+        <div class="cw-ws-hint">Drag the background to pan · Ctrl + wheel to zoom · drag a hat block to move it · click any value to edit</div>
+      </div>
+      <datalist id="cwWsObjects"></datalist>
+      <datalist id="cwWsProps"></datalist>
+    `;
+    this.tabs = this.root.querySelector('.cw-ws-tabs');
+    this.viewport = this.root.querySelector('.cw-ws-viewport');
+    this.world = this.root.querySelector('.cw-ws-world');
+    this.empty = this.root.querySelector('.cw-ws-empty');
+    this.zoomLabel = this.root.querySelector('.cw-ws-zoom-label');
+    this.objectList = this.root.querySelector('#cwWsObjects');
+    this.propList = this.root.querySelector('#cwWsProps');
+    this.propList.innerHTML = (this.options.properties || []).map((p) => `<option value="${escapeHtml(p)}"></option>`).join('');
+
+    this.root.querySelector('.cw-ws-bar').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-ws]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-ws');
+      if (action === 'close') this.close();
+      else if (action === 'fit') this.fit();
+      else if (action === 'zoom-in') this._zoomBy(1.2);
+      else if (action === 'zoom-out') this._zoomBy(1 / 1.2);
+      else if (action === 'zoom-reset') this._zoomTo(1);
+      else if (action === 'restart') this.options.onRestart?.();
+      else if (action === 'add-event') this._openPalette(btn, 'event');
+    });
+
+    this.tabs.addEventListener('click', (e) => {
+      const tab = e.target.closest('[data-script]');
+      if (tab) {
+        this.activeScriptGid = tab.getAttribute('data-script');
+        this.render();
+        this.fit();
+      } else if (e.target.closest('[data-ws-add-script]')) {
+        this._addScript();
+      }
+    });
+
+    this._bindCanvas();
+  }
+
+  /** @private Pan, zoom, stack dragging and inline editing. */
+  _bindCanvas() {
+    const vp = this.viewport;
+
+    vp.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) {
+        const rect = vp.getBoundingClientRect();
+        this._zoomBy(Math.exp(-e.deltaY * 0.0025), e.clientX - rect.left, e.clientY - rect.top);
+      } else {
+        this.view.x -= e.shiftKey ? e.deltaY : e.deltaX;
+        this.view.y -= e.shiftKey ? 0 : e.deltaY;
+        this._applyView();
+      }
+    }, { passive: false });
+
+    vp.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 && e.button !== 1) return;
+      const interactive = e.target.closest('input, button, select, .cw-ws-palette');
+      if (interactive) return;
+      const hat = e.target.closest('.cw-ws-hat');
+      this._closePalette();
+      if (hat && e.button === 0) this._startStackDrag(e, hat.closest('.cw-ws-stack'));
+      else if (!e.target.closest('.cw-ws-block')) this._startPan(e);
+    });
+
+    vp.addEventListener('keydown', (e) => {
+      if (e.target.closest('input')) return;
+      if (e.key === '+' || e.key === '=') this._zoomBy(1.2);
+      else if (e.key === '-') this._zoomBy(1 / 1.2);
+      else if (e.key === '0') this.fit();
+      else return;
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    // Inline slot editing
+    this.world.addEventListener('input', (e) => {
+      const input = e.target.closest('.cw-ws-input');
+      if (input) fitInput(input);
+    });
+    this.world.addEventListener('change', (e) => {
+      const input = e.target.closest('.cw-ws-input');
+      if (input) this._commitSlot(input);
+    });
+    this.world.addEventListener('keydown', (e) => {
+      const input = e.target.closest('.cw-ws-input');
+      if (!input) return;
+      e.stopPropagation(); // keep app shortcuts out of the inputs
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') {
+        input.value = input.getAttribute('data-original') ?? input.value;
+        input.blur();
+      }
+    });
+
+    this.world.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      e.stopPropagation();
+      const kind = btn.getAttribute('data-act');
+      const stackEl = btn.closest('.cw-ws-stack');
+      const evt = this._eventAt(stackEl);
+      const row = btn.closest('.cw-ws-block');
+      const index = row ? Number(row.getAttribute('data-index')) : -1;
+
+      if (kind === 'run') this.options.onRunEvent?.(this._activeScript(), evt);
+      else if (kind === 'add') this._openPalette(btn, 'action', { evt, index: row ? index + 1 : (evt.actions || []).length });
+      else if (kind === 'up') this._moveAction(evt, index, -1);
+      else if (kind === 'down') this._moveAction(evt, index, 1);
+      else if (kind === 'delete') this._deleteAction(evt, index);
+      else if (kind === 'delete-event') this._deleteEvent(evt);
+      else if (kind === 'object') this.options.onSelectObject?.(btn.getAttribute('data-gid'));
+    });
+  }
+
+  /* ---------------- rendering ---------------- */
+
+  render() {
+    this._renderTabs();
+    this._renderObjectList();
+    this._aliases = new Map();
+    walk(this.doc, (node) => { if (node.globalid && node.alias) this._aliases.set(String(node.globalid), node.alias); });
+    const script = this._activeScript();
+    this.world.innerHTML = '';
+
+    if (!script) {
+      this.empty.classList.remove('hidden');
+      this.empty.innerHTML = `
+        <div class="cw-ws-empty-title">This page has no scripts yet</div>
+        <div class="cw-ws-empty-sub">Scripts are elements with <code>"class": "script"</code>. Add one to start placing blocks.</div>
+        <button type="button" class="cw-ws-btn primary" data-ws-add-script>${ICONS.plus}<span>Add script</span></button>`;
+      this.empty.querySelector('[data-ws-add-script]').addEventListener('click', () => this._addScript());
+      return;
+    }
+    this.empty.classList.add('hidden');
+
+    const content = Array.isArray(script.content) ? script.content : [];
+    if (!content.length) {
+      this.empty.classList.remove('hidden');
+      this.empty.innerHTML = `
+        <div class="cw-ws-empty-title">No blocks in “${escapeHtml(script.alias || script.globalid)}”</div>
+        <div class="cw-ws-empty-sub">Start with an event — for example “When website loaded”.</div>`;
+    }
+
+    content.forEach((evt, i) => {
+      if (!evt || typeof evt !== 'object') return;
+      this.world.appendChild(this._renderStack(evt, i));
+    });
+    for (const input of this.world.querySelectorAll('.cw-ws-input')) fitInput(input);
+    this._applyMarkers();
+    this._applyView();
+  }
+
+  /** @private */
+  _renderTabs() {
+    this.tabs.innerHTML = this.scripts.map((sc) => {
+      const events = (sc.content || []).length;
+      const active = sc.globalid === this.activeScriptGid;
+      const off = sc.enabled === 'false' ? ' <span class="cw-ws-tab-off">off</span>' : '';
+      return `<button type="button" role="tab" aria-selected="${active}" class="cw-ws-tab${active ? ' active' : ''}" data-script="${escapeHtml(sc.globalid)}">
+        ${ICONS.script}<span>${escapeHtml(sc.alias || sc.globalid)}</span><span class="cw-ws-tab-count">${events}</span>${off}</button>`;
+    }).join('') + `<button type="button" class="cw-ws-tab add" data-ws-add-script title="Add a script element">${ICONS.plus}</button>`;
+  }
+
+  /** @private */
+  _renderObjectList() {
+    const opts = [];
+    walk(this.doc, (node) => {
+      if (node.globalid && node.class && node.class !== 'script') {
+        opts.push(`<option value="${escapeHtml(node.globalid)}">${escapeHtml(node.alias ? `${node.alias} · ${node.class}` : node.class)}</option>`);
+      }
+    });
+    opts.push('<option value="(parent)">parent of this script</option>');
+    this.objectList.innerHTML = opts.join('');
+  }
+
+  /** @private */
+  _renderStack(evt, index) {
+    const fallback = fallbackPosition(index);
+    const x = finiteOr(evt.x, fallback.x);
+    const y = finiteOr(evt.y, fallback.y);
+    const width = clamp(finiteOr(evt.width, 350), 220, 900);
+    const cat = eventCategory(evt.id);
+
+    const stack = document.createElement('div');
+    stack.className = 'cw-ws-stack';
+    stack.setAttribute('data-index', String(index));
+    stack.style.left = `${x}px`;
+    stack.style.top = `${y}px`;
+    stack.style.width = `${width}px`;
+
+    const isFunction = String(evt.id) === '6';
+    stack.innerHTML = `
+      <div class="cw-ws-hat${isFunction ? ' is-function' : ''}" data-gid="${escapeHtml(evt.globalid || '')}" style="--c:${cat.color}">
+        <span class="cw-ws-grip" title="Drag to move">${ICONS.grip}</span>
+        <div class="cw-ws-tokens">${this._tokensHtml(evt.text)}</div>
+        <span class="cw-ws-coords">${Math.round(x)}, ${Math.round(y)}</span>
+        ${isFunction ? '' : `<button type="button" class="cw-ws-run" data-act="run" title="Run this event now">${ICONS.play}<span>Run</span></button>`}
+        <button type="button" class="cw-ws-tool" data-act="delete-event" title="Delete this event and its blocks">${ICONS.trash}</button>
+      </div>
+      <div class="cw-ws-body">${this._actionsHtml(evt.actions || [])}</div>
+      <button type="button" class="cw-ws-add" data-act="add">${ICONS.plus}<span>Add block</span></button>
+    `;
+    return stack;
+  }
+
+  /** @private */
+  _actionsHtml(actions) {
+    const rails = []; // colours of the open C-blocks
+    return actions.map((act, i) => {
+      if (!act || typeof act !== 'object') return '';
+      const id = String(act.id);
+      const cat = actionCategory(id);
+      if (id === '25' && rails.length) rails.pop();
+      const depth = id === '112' && rails.length ? rails.length - 1 : rails.length;
+      const guides = rails.slice(0, depth).map((c, k) => `<span class="cw-ws-rail" style="left:${k * INDENT_PX + 5}px;--c:${c}"></span>`).join('');
+      const kind = id === '25' ? ' is-end' : id === '112' ? ' is-else' : OPENER_IDS.has(id) ? ' is-opener' : '';
+      const html = `
+        <div class="cw-ws-row" style="padding-left:${depth * INDENT_PX}px">
+          ${guides}
+          <div class="cw-ws-block${kind}" data-index="${i}" data-gid="${escapeHtml(act.globalid || '')}" style="--c:${cat.color}" title="${escapeHtml(cat.name)} · id ${escapeHtml(id)}">
+            <div class="cw-ws-tokens">${this._tokensHtml(act.text)}</div>
+            <span class="cw-ws-gid">${escapeHtml(act.globalid || '')}</span>
+            <span class="cw-ws-tools">
+              <button type="button" class="cw-ws-tool" data-act="add" title="Insert a block below">${ICONS.plus}</button>
+              <button type="button" class="cw-ws-tool" data-act="up" title="Move up">${ICONS.up}</button>
+              <button type="button" class="cw-ws-tool" data-act="down" title="Move down">${ICONS.down}</button>
+              <button type="button" class="cw-ws-tool" data-act="delete" title="Delete block">${ICONS.trash}</button>
+            </span>
+          </div>
+        </div>`;
+      if (OPENER_IDS.has(id)) rails.push(cat.color);
+      return html;
+    }).join('') || '<div class="cw-ws-empty-body">No blocks yet</div>';
+  }
+
+  /** @private Renders a block's `text` with editable inputs for every slot. */
+  _tokensHtml(text) {
+    if (!Array.isArray(text)) return '';
+    return text.map((tok, i) => {
+      if (typeof tok === 'string') return `<span class="cw-ws-word">${escapeHtml(tok)}</span>`;
+      if (!tok || typeof tok !== 'object') return '';
+      if (tok.t === 'tuple') {
+        const n = Array.isArray(tok.value) ? tok.value.length : 0;
+        return `<span class="cw-ws-chip tuple" title="Tuple arguments (edit in the JSON editor)">( ${n ? `${n} arg${n === 1 ? '' : 's'}` : 'no args'} )</span>`;
+      }
+      const value = typeof tok.value === 'string' || typeof tok.value === 'number' ? String(tok.value) : JSON.stringify(tok.value ?? '');
+      const kind = slotKind(tok);
+      const list = kind === 'object' ? ' list="cwWsObjects"' : kind === 'property' ? ' list="cwWsProps"' : '';
+      const role = tok.l || tok.t || 'value';
+      const input = `<input class="cw-ws-input ${kind}" data-slot="${i}" value="${escapeHtml(value)}" data-original="${escapeHtml(value)}" placeholder="${escapeHtml(role)}" spellcheck="false" autocomplete="off" title="${escapeHtml(`<${role}>`)}"${list}>`;
+      if (kind === 'variable') return `<span class="cw-ws-chip variable">{${input}}</span>`;
+      if (kind === 'object') {
+        const alias = this._aliases?.get(value);
+        const aliasHtml = alias ? `<span class="cw-ws-alias">${escapeHtml(alias)}</span>` : '';
+        return `<span class="cw-ws-chip object">${input}${aliasHtml}<button type="button" class="cw-ws-chip-go" data-act="object" data-gid="${escapeHtml(value)}" title="Select this element in the preview">↗</button></span>`;
+      }
+      return `<span class="cw-ws-chip ${kind}">${input}</span>`;
+    }).join('');
+  }
+
+  /** @private */
+  _applyMarkers() {
+    for (const el of this.world.querySelectorAll('[data-gid]')) {
+      const gid = el.getAttribute('data-gid');
+      const err = this._errors.get(gid);
+      el.classList.toggle('has-error', Boolean(err) || this._invalid.has(gid));
+      if (err) el.setAttribute('data-error', err);
+      else el.removeAttribute('data-error');
+    }
+  }
+
+  /** @private */
+  _applyView() {
+    const { x, y, scale } = this.view;
+    this.world.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    this.viewport.style.backgroundPosition = `${x}px ${y}px`;
+    this.viewport.style.backgroundSize = `${24 * scale}px ${24 * scale}px`;
+    if (this.zoomLabel) this.zoomLabel.textContent = `${Math.round(scale * 100)}%`;
+  }
+
+  /* ---------------- camera ---------------- */
+
+  /** @private */
+  _zoomTo(scale, cx = null, cy = null) {
+    const next = clamp(scale, MIN_SCALE, MAX_SCALE);
+    const px = cx ?? this.viewport.clientWidth / 2;
+    const py = cy ?? this.viewport.clientHeight / 2;
+    const wx = (px - this.view.x) / this.view.scale;
+    const wy = (py - this.view.y) / this.view.scale;
+    this.view = { scale: next, x: px - wx * next, y: py - wy * next };
+    this._applyView();
+  }
+
+  /** @private */
+  _zoomBy(factor, cx, cy) {
+    this._zoomTo(this.view.scale * factor, cx, cy);
+  }
+
+  /** @private */
+  _startPan(e) {
+    const start = { x: e.clientX, y: e.clientY, vx: this.view.x, vy: this.view.y };
+    this.viewport.classList.add('is-panning');
+    const move = (ev) => {
+      this.view.x = start.vx + ev.clientX - start.x;
+      this.view.y = start.vy + ev.clientY - start.y;
+      this._applyView();
+    };
+    const up = () => {
+      this.viewport.classList.remove('is-panning');
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  /** @private Drags a stack; on drop writes the new x/y into the event JSON. */
+  _startStackDrag(e, stack) {
+    if (!stack) return;
+    e.preventDefault();
+    const evt = this._eventAt(stack);
+    const coords = stack.querySelector('.cw-ws-coords');
+    const startLeft = parseFloat(stack.style.left);
+    const startTop = parseFloat(stack.style.top);
+    const start = { x: e.clientX, y: e.clientY };
+    let moved = false;
+    stack.classList.add('is-dragging');
+
+    const move = (ev) => {
+      const dx = (ev.clientX - start.x) / this.view.scale;
+      const dy = (ev.clientY - start.y) / this.view.scale;
+      if (!moved && Math.hypot(dx, dy) * this.view.scale < 3) return;
+      moved = true;
+      const nx = clamp(Math.round(startLeft + dx), 0, CANVAS_SIZE);
+      const ny = clamp(Math.round(startTop + dy), 0, CANVAS_SIZE);
+      stack.style.left = `${nx}px`;
+      stack.style.top = `${ny}px`;
+      if (coords) coords.textContent = `${nx}, ${ny}`;
+    };
+    const up = () => {
+      stack.classList.remove('is-dragging');
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      if (!moved || !evt) return;
+      evt.x = String(Math.round(parseFloat(stack.style.left)));
+      evt.y = String(Math.round(parseFloat(stack.style.top)));
+      if (evt.width === undefined) evt.width = '350';
+      this._fittedFor = this.activeScriptGid;
+      this._emit();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  /* ---------------- editing ---------------- */
+
+  /** @private */
+  _activeScript() {
+    return this.scripts.find((s) => s.globalid === this.activeScriptGid) || null;
+  }
+
+  /** @private */
+  _eventAt(stackEl) {
+    const script = this._activeScript();
+    const idx = Number(stackEl?.getAttribute('data-index'));
+    return script && Number.isInteger(idx) ? script.content[idx] : null;
+  }
+
+  /** @private */
+  _commitSlot(input) {
+    const stack = input.closest('.cw-ws-stack');
+    const evt = this._eventAt(stack);
+    if (!evt) return;
+    const row = input.closest('.cw-ws-block');
+    const owner = row ? evt.actions?.[Number(row.getAttribute('data-index'))] : evt;
+    const slot = owner?.text?.[Number(input.getAttribute('data-slot'))];
+    if (!slot || typeof slot !== 'object') return;
+    if (String(slot.value) === input.value) return;
+    slot.value = input.value;
+    this._emit();
+  }
+
+  /** @private */
+  _moveAction(evt, index, dir) {
+    const list = evt?.actions;
+    const to = index + dir;
+    if (!Array.isArray(list) || to < 0 || to >= list.length) return;
+    [list[index], list[to]] = [list[to], list[index]];
+    this._emit();
+  }
+
+  /** @private Deleting an If/Repeat also removes its matching `end`, keeping the body. */
+  _deleteAction(evt, index) {
+    const list = evt?.actions;
+    if (!Array.isArray(list) || !list[index]) return;
+    const id = String(list[index].id);
+    if (OPENER_IDS.has(id)) {
+      let depth = 0;
+      for (let j = index + 1; j < list.length; j++) {
+        const jid = String(list[j]?.id);
+        if (OPENER_IDS.has(jid)) depth++;
+        else if (jid === '25') {
+          if (depth === 0) { list.splice(j, 1); break; }
+          depth--;
+        }
+      }
+    }
+    list.splice(index, 1);
+    this._emit();
+  }
+
+  /** @private */
+  _deleteEvent(evt) {
+    const script = this._activeScript();
+    if (!script || !evt) return;
+    const n = (evt.actions || []).length;
+    if (n > 0 && typeof confirm === 'function' && !confirm(`Delete this event and its ${n} block${n === 1 ? '' : 's'}?`)) return;
+    script.content = script.content.filter((e) => e !== evt);
+    this._emit();
+  }
+
+  /** @private */
+  _insertAction(evt, index, template) {
+    if (!evt) return;
+    if (!Array.isArray(evt.actions)) evt.actions = [];
+    const used = collectGlobalIds(this.doc);
+    const blocks = [{ id: template.id, globalid: newGlobalId(used), text: cloneText(template) }];
+    if (template.opens) blocks.push({ id: '25', globalid: newGlobalId(used), text: ['end'] });
+    evt.actions.splice(clamp(index, 0, evt.actions.length), 0, ...blocks);
+    this._emit();
+  }
+
+  /** @private New events land in the middle of what you're looking at. */
+  _insertEvent(template) {
+    const script = this._activeScript();
+    if (!script) return;
+    if (!Array.isArray(script.content)) script.content = [];
+    const used = collectGlobalIds(this.doc);
+    const cx = (this.viewport.clientWidth / 2 - this.view.x) / this.view.scale;
+    const cy = (this.viewport.clientHeight / 3 - this.view.y) / this.view.scale;
+    script.content.push({
+      id: template.id,
+      text: cloneText(template),
+      globalid: newGlobalId(used),
+      x: String(clamp(Math.round(cx - 175), 0, CANVAS_SIZE)),
+      y: String(clamp(Math.round(cy), 0, CANVAS_SIZE)),
+      width: '350',
+      actions: []
+    });
+    this._fittedFor = this.activeScriptGid;
+    this._emit();
+  }
+
+  /** @private */
+  _addScript() {
+    if (!this.doc) return;
+    const used = collectGlobalIds(this.doc);
+    const script = { class: 'script', globalid: newGlobalId(used), alias: `script_${this.scripts.length + 1}`, enabled: 'true', content: [] };
+    const list = Array.isArray(this.doc) ? this.doc : (Array.isArray(this.doc.webcontent) ? this.doc.webcontent : (this.doc.webcontent = []));
+    list.push(script);
+    this.activeScriptGid = script.globalid;
+    this._fittedFor = null;
+    this._emit();
+  }
+
+  /** @private */
+  _emit() {
+    this.options.onChange?.(this.doc);
+  }
+
+  /* ---------------- block palette ---------------- */
+
+  /** @private */
+  _openPalette(anchor, mode, target = null) {
+    this._closePalette();
+    const templates = mode === 'event' ? EVENT_TEMPLATES : ACTION_TEMPLATES;
+    const pal = document.createElement('div');
+    pal.className = 'cw-ws-palette';
+    pal.innerHTML = `
+      <input class="cw-ws-palette-search" placeholder="${mode === 'event' ? 'Search events…' : 'Search blocks… (e.g. if, wait, tween)'}" spellcheck="false" autocomplete="off">
+      <div class="cw-ws-palette-list" role="listbox"></div>`;
+    this.root.appendChild(pal);
+
+    const list = pal.querySelector('.cw-ws-palette-list');
+    const search = pal.querySelector('.cw-ws-palette-search');
+    const draw = () => {
+      const q = search.value.trim().toLowerCase();
+      let html = '';
+      let lastCat = null;
+      templates.forEach((t, i) => {
+        const label = templateLabel(t);
+        const cat = CATEGORIES[t.cat];
+        if (q && !`${label} ${cat.name} ${t.id}`.toLowerCase().includes(q)) return;
+        if (t.cat !== lastCat) {
+          html += `<div class="cw-ws-palette-cat">${escapeHtml(cat.name)}</div>`;
+          lastCat = t.cat;
+        }
+        html += `<button type="button" class="cw-ws-palette-item" data-i="${i}" style="--c:${cat.color}"><span class="cw-ws-palette-dot"></span><span>${escapeHtml(label)}</span><span class="cw-ws-palette-id">${t.id}</span></button>`;
+      });
+      list.innerHTML = html || '<div class="cw-ws-palette-none">No matching blocks</div>';
+    };
+    draw();
+
+    const pick = (i) => {
+      const t = templates[i];
+      this._closePalette();
+      if (mode === 'event') this._insertEvent(t);
+      else this._insertAction(target.evt, target.index, t);
+    };
+    search.addEventListener('input', draw);
+    search.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') this._closePalette();
+      if (e.key === 'Enter') {
+        const first = list.querySelector('.cw-ws-palette-item');
+        if (first) pick(Number(first.getAttribute('data-i')));
+      }
+    });
+    list.addEventListener('click', (e) => {
+      const item = e.target.closest('.cw-ws-palette-item');
+      if (item) pick(Number(item.getAttribute('data-i')));
+    });
+
+    // Position next to the anchor, kept inside the workspace
+    const rr = this.root.getBoundingClientRect();
+    const ar = anchor.getBoundingClientRect();
+    const w = 320; const h = Math.min(420, rr.height - 24);
+    pal.style.left = `${clamp(ar.left - rr.left, 8, rr.width - w - 8)}px`;
+    pal.style.top = `${clamp(ar.bottom - rr.top + 6, 8, rr.height - h - 8)}px`;
+    pal.style.maxHeight = `${h}px`;
+    search.focus();
+
+    this._palette = pal;
+    this._paletteOutside = (e) => {
+      if (!pal.contains(e.target) && e.target !== anchor && !anchor.contains(e.target)) this._closePalette();
+    };
+    setTimeout(() => document.addEventListener('pointerdown', this._paletteOutside), 0);
+  }
+
+  /** @private */
+  _closePalette() {
+    if (!this._palette) return;
+    this._palette.remove();
+    this._palette = null;
+    document.removeEventListener('pointerdown', this._paletteOutside);
+  }
+
+  destroy() {
+    this._closePalette();
+    for (const t of this._flashTimers.values()) clearTimeout(t);
+    this.root.innerHTML = '';
+  }
+}
+
+/* ============================================================
+ * HELPERS
+ * ============================================================ */
+
+function walk(node, fn) {
+  if (!node || typeof node !== 'object') return;
+  if (Array.isArray(node)) { node.forEach((n) => walk(n, fn)); return; }
+  fn(node);
+  if (Array.isArray(node.webcontent)) node.webcontent.forEach((n) => walk(n, fn));
+  if (Array.isArray(node.children)) node.children.forEach((n) => walk(n, fn));
+}
+
+function collectScripts(doc) {
+  const out = [];
+  walk(doc, (n) => { if (n.class === 'script') out.push(n); });
+  return out;
+}
+
+/** Every globalid in the file — elements, events and actions share one namespace. */
+function collectGlobalIds(doc) {
+  const ids = new Set();
+  walk(doc, (n) => {
+    if (n.globalid) ids.add(String(n.globalid));
+    if (n.class === 'script') {
+      for (const evt of (n.content || [])) {
+        if (evt?.globalid) ids.add(String(evt.globalid));
+        for (const a of (evt?.actions || [])) if (a?.globalid) ids.add(String(a.globalid));
+      }
+    }
+  });
+  return ids;
+}
+
+/** A fresh 2-character globalid (3 when 2-character IDs run out). */
+function newGlobalId(used) {
+  for (const len of [2, 3]) {
+    for (let tries = 0; tries < 400; tries++) {
+      let id = '';
+      for (let i = 0; i < len; i++) id += GID_CHARS[Math.floor(Math.random() * GID_CHARS.length)];
+      if (!used.has(id)) { used.add(id); return id; }
+    }
+  }
+  throw new Error('No free globalid left');
+}
+
+function slotKind(tok) {
+  if (tok.t === 'object' || tok.l === 'button' || tok.l === 'input' || tok.l === 'avataritem') return 'object';
+  if (tok.l === 'variable' || tok.l === 'variable?' || tok.l === 'var' || tok.l === 'x' || tok.l === 'y') return 'variable';
+  if (tok.l === 'property') return 'property';
+  if (tok.t === 'number' || tok.l === 'time') return 'number';
+  if (tok.t === 'key') return 'key';
+  if (tok.assetbrowser || tok.l === 'id' || tok.t === 'id') return 'asset';
+  if (tok.l === 'table' || tok.l === 'array' || tok.l === 'function' || tok.l === 'cookie' || tok.l === 'entry') return 'name';
+  return 'text';
+}
+
+/** Sizes an input to its text (or placeholder) so values are never cut off. */
+function fitInput(input) {
+  const cs = getComputedStyle(input);
+  const probe = document.createElement('span');
+  probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre;font:${cs.font};letter-spacing:${cs.letterSpacing}`;
+  probe.textContent = input.value || input.placeholder || '';
+  input.parentNode.appendChild(probe);
+  const text = probe.offsetWidth;
+  probe.remove();
+  const pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  input.style.width = `${Math.min(420, Math.ceil(text + pad + 4))}px`;
+}
+
+function fallbackPosition(i) {
+  return { x: 4300 + (i % 3) * 420, y: 4600 + Math.floor(i / 3) * 360 };
+}
+
+function finiteOr(v, fallback) {
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function clamp(v, lo, hi) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+function cssEscape(s) {
+  if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(s);
+  return String(s).replace(/["\\]/g, '\\$&');
+}
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* Module Exports */
+exports.collectGlobalIds = collectGlobalIds;
+exports.newGlobalId = newGlobalId;
+exports.ScriptWorkspace = ScriptWorkspace;
+
+  },
+
+  './console_panel.js': function(module, exports, require) {
+/**
+ * Bottom console dock: script output (Log / Warn / Error, runtime errors, skipped
+ * blocks) and a live view of every global and object variable.
+ */
+
+const { formatValue } = require('./runtime.js');
+
+const MAX_ENTRIES = 400;
+
+class ConsolePanel {
+  /**
+   * @param {HTMLElement} root - The dock element (#consoleDock)
+   * @param {object} [options]
+   * @param {(gid: string) => void} [options.onReveal] - Clicking a block reference
+   * @param {(counts: {error: number, warn: number}) => void} [options.onCountsChange]
+   * @param {() => void} [options.onClose]
+   */
+  constructor(root, options = {}) {
+    this.root = root;
+    this.options = options;
+    this.entries = [];
+    this.counts = { error: 0, warn: 0 };
+    this.tab = 'console';
+    this._getVariables = () => [];
+    this._varFrame = null;
+
+    this.list = root.querySelector('#consoleList');
+    this.varsView = root.querySelector('#consoleVars');
+    this.countEl = root.querySelector('#consoleCount');
+
+    root.querySelector('#consoleClearBtn')?.addEventListener('click', () => this.clear());
+    root.querySelector('#consoleCloseBtn')?.addEventListener('click', () => this.options.onClose?.());
+    for (const btn of root.querySelectorAll('[data-console-tab]')) {
+      btn.addEventListener('click', () => this.switchTab(btn.getAttribute('data-console-tab')));
+    }
+    this.list?.addEventListener('click', (e) => {
+      const ref = e.target.closest('[data-reveal]');
+      if (ref) this.options.onReveal?.(ref.getAttribute('data-reveal'));
+    });
+    this._bindResize(root.querySelector('.cw-console-resize'));
+    this.render();
+  }
+
+  isOpen() {
+    return !this.root.classList.contains('hidden');
+  }
+
+  /** Removes all entries (e.g. when a new document is loaded). */
+  clear() {
+    this.entries = [];
+    this.counts = { error: 0, warn: 0 };
+    this.options.onCountsChange?.(this.counts);
+    this.render();
+  }
+
+  /**
+   * Adds one runtime log entry.
+   * @param {{level: string, message: string, time: number, eventGid?: string, actionGid?: string, eventName?: string}} entry
+   */
+  add(entry) {
+    const last = this.entries[this.entries.length - 1];
+    if (last && last.level === entry.level && last.message === entry.message && last.actionGid === entry.actionGid) {
+      last.repeat = (last.repeat || 1) + 1;
+      last.time = entry.time;
+    } else {
+      this.entries.push({ ...entry });
+      if (this.entries.length > MAX_ENTRIES) this.entries.shift();
+    }
+    if (entry.level === 'error') this.counts.error++;
+    if (entry.level === 'warn') this.counts.warn++;
+    this.options.onCountsChange?.(this.counts);
+    this._scheduleRender();
+  }
+
+  /** Supplies the variable source for the Variables tab. */
+  watchVariables(getter) {
+    this._getVariables = getter || (() => []);
+    this.refreshVariables();
+  }
+
+  /** Re-renders the Variables tab on the next frame (cheap to call often). */
+  refreshVariables() {
+    if (this.tab !== 'variables' || !this.isOpen() || this._varFrame) return;
+    const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (fn) => setTimeout(fn, 16);
+    this._varFrame = raf(() => {
+      this._varFrame = null;
+      this._renderVariables();
+    });
+  }
+
+  switchTab(tab) {
+    this.tab = tab === 'variables' ? 'variables' : 'console';
+    for (const btn of this.root.querySelectorAll('[data-console-tab]')) {
+      btn.classList.toggle('active', btn.getAttribute('data-console-tab') === this.tab);
+    }
+    this.list?.classList.toggle('hidden', this.tab !== 'console');
+    this.varsView?.classList.toggle('hidden', this.tab !== 'variables');
+    if (this.tab === 'variables') this._renderVariables();
+  }
+
+  render() {
+    this._renderEntries();
+    if (this.countEl) {
+      const n = this.entries.length;
+      this.countEl.textContent = n ? String(n) : '';
+    }
+  }
+
+  /** @private */
+  _scheduleRender() {
+    if (this._renderPending) return;
+    this._renderPending = true;
+    const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (fn) => setTimeout(fn, 16);
+    raf(() => {
+      this._renderPending = false;
+      this.render();
+    });
+  }
+
+  /** @private */
+  _renderEntries() {
+    if (!this.list) return;
+    if (!this.entries.length) {
+      this.list.innerHTML = `<div class="cw-console-empty">Script output appears here. Use <b>Log</b>, <b>Warn</b> or <b>Error</b> blocks, or click a button in the preview.</div>`;
+      return;
+    }
+    const stick = this.list.scrollTop + this.list.clientHeight >= this.list.scrollHeight - 24;
+    this.list.innerHTML = this.entries.map((e) => {
+      const time = new Date(e.time).toLocaleTimeString('en-GB', { hour12: false });
+      const ref = e.actionGid || e.eventGid;
+      const where = ref
+        ? `<button type="button" class="cw-console-ref" data-reveal="${escapeHtml(ref)}" title="Show this block in the script view">${escapeHtml(e.eventName ? `${e.eventName} · ` : '')}${escapeHtml(ref)}</button>`
+        : '';
+      const repeat = e.repeat > 1 ? `<span class="cw-console-repeat">${e.repeat}</span>` : '';
+      return `<div class="cw-console-row ${escapeHtml(e.level)}">
+        <span class="cw-console-time">${time}</span>
+        <span class="cw-console-level">${levelLabel(e.level)}</span>
+        <span class="cw-console-msg">${escapeHtml(e.message)}</span>${repeat}${where}
+      </div>`;
+    }).join('');
+    if (stick) this.list.scrollTop = this.list.scrollHeight;
+  }
+
+  /** @private */
+  _renderVariables() {
+    if (!this.varsView) return;
+    const vars = this._getVariables() || [];
+    if (!vars.length) {
+      this.varsView.innerHTML = '<div class="cw-console-empty">No variables yet. They appear here as soon as a script sets one.</div>';
+      return;
+    }
+    vars.sort((a, b) => a.scope.localeCompare(b.scope) || a.name.localeCompare(b.name, undefined, { numeric: true }));
+    this.varsView.innerHTML = `<table class="cw-vars-table">
+      <thead><tr><th>Variable</th><th>Scope</th><th>Value</th></tr></thead>
+      <tbody>${vars.map((v) => `<tr>
+        <td class="cw-vars-name">{${escapeHtml(v.name)}}</td>
+        <td class="cw-vars-scope">${escapeHtml(v.scope)}${v.script ? ` · ${escapeHtml(v.script)}` : ''}</td>
+        <td class="cw-vars-value ${typeOf(v.value)}">${escapeHtml(formatValue(v.value))}</td>
+      </tr>`).join('')}</tbody></table>`;
+  }
+
+  /** @private Drag the top edge to resize the dock. */
+  _bindResize(handle) {
+    if (!handle) return;
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const startY = e.clientY;
+      const startH = this.root.offsetHeight;
+      const move = (ev) => {
+        const h = Math.max(110, Math.min(window.innerHeight * 0.7, startH + startY - ev.clientY));
+        this.root.style.height = `${h}px`;
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    });
+  }
+}
+
+function levelLabel(level) {
+  return { log: 'log', warn: 'warn', error: 'error', info: 'runner' }[level] || level;
+}
+
+function typeOf(v) {
+  if (typeof v === 'number') return 'num';
+  if (Array.isArray(v) || (v && typeof v === 'object')) return 'table';
+  return 'str';
+}
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* Module Exports */
+exports.ConsolePanel = ConsolePanel;
+
+  },
+
   './app.js': function(module, exports, require) {
 /**
  * CatWeb Web Runner & Renderer — Main Application Controller
@@ -7379,13 +9493,15 @@ exports.OVERFLOW_CONFIG = OVERFLOW_CONFIG;
  */
 
 const { parseCatWebJson, normalizeCatWeb, detectFormat } = require('./parser.js');
-const { validateCatWeb } = require('./validator.js');
+const { validateCatWeb, VALID_SCRIPT_PROPERTIES } = require('./validator.js');
 const { renderCatWebTree } = require('./elements.js');
 const { CatWebRuntime } = require('./runtime.js');
 const { CatWebInspector } = require('./inspector.js');
 const { playSyntheticAudio } = require('./assets.js');
 const { initAiProtocol, captureCanvasImage, handleAiRenderRequest, hasUrlPayload, encodeShareData } = require('./api_protocol.js');
 const { CatWebOverflowManager } = require('./overflow_menu.js');
+const { ScriptWorkspace } = require('./script_workspace.js');
+const { ConsolePanel } = require('./console_panel.js');
 
 /** localStorage key for the last document rendered from the editor, an upload or a paste. */
 const STORAGE_KEY = 'catweb-runner:last-document';
@@ -7928,6 +10044,9 @@ class CatWebRunnerApp {
     this.statusValidation = null;
 
     this.overflowManager = null;
+    this.workspace = null;
+    this.console = null;
+    this.cookieJar = new Map();
 
     this.shareBtn = null;
     this.editorStatus = null;
@@ -7994,6 +10113,11 @@ class CatWebRunnerApp {
     this.editorStatus = this.root.querySelector('#editorStatus');
     this.liveRenderToggle = this.root.querySelector('#liveRenderToggle');
     this.toastEl = this.root.querySelector('#toast');
+    this.scriptsBtn = this.root.querySelector('#scriptsBtn');
+    this.consoleBtn = this.root.querySelector('#consoleBtn');
+    this.restartBtn = this.root.querySelector('#restartBtn');
+    this.workspaceEl = this.root.querySelector('#scriptWorkspace');
+    this.consoleDock = this.root.querySelector('#consoleDock');
 
     // 2. Bind Toolbar Events
     if (this.sampleSelect) {
@@ -8106,7 +10230,9 @@ class CatWebRunnerApp {
       this.audioBtn.addEventListener('click', () => {
         this.audioEnabled = !this.audioEnabled;
         if (this.runtime) this.runtime.options.audioEnabled = this.audioEnabled;
-        this.audioBtn.innerHTML = `${this.audioEnabled ? audioIconOn : audioIconOff}<span>${this.audioEnabled ? 'Audio: On' : 'Audio: Off'}</span>`;
+        this.audioBtn.innerHTML = this.audioEnabled ? audioIconOn : audioIconOff;
+        this.audioBtn.title = this.audioEnabled ? 'Sound is on — click to mute (M)' : 'Sound is muted — click to unmute (M)';
+        this.audioBtn.setAttribute?.('aria-label', this.audioEnabled ? 'Sound on' : 'Sound muted');
         this.audioBtn.classList.toggle('active', this.audioEnabled);
         this.overflowManager?.renderMenuContent();
       });
@@ -8190,6 +10316,41 @@ class CatWebRunnerApp {
           }
           this._syncSampleSelect(null);
           this._persistDocument(updatedTree, null);
+        }
+      });
+    }
+
+    // 5b. Script workspace (full-screen block editor) and console dock
+    this.scriptsBtn?.addEventListener('click', () => this.toggleWorkspace());
+    this.consoleBtn?.addEventListener('click', () => this.toggleConsole());
+    this.restartBtn?.addEventListener('click', () => this.restart());
+
+    const hasDom = typeof document !== 'undefined' && typeof document.createElement === 'function';
+    if (this.consoleDock && hasDom) {
+      this.console = new ConsolePanel(this.consoleDock, {
+        onReveal: (gid) => this.workspace?.reveal(gid),
+        onClose: () => this.toggleConsole(false),
+        onCountsChange: (counts) => this._updateConsoleBadge(counts)
+      });
+    }
+
+    if (this.workspaceEl && hasDom) {
+      this.workspace = new ScriptWorkspace(this.workspaceEl, {
+        properties: Array.from(VALID_SCRIPT_PROPERTIES || []),
+        onChange: (doc) => this.loadDocument(doc, { fromWorkspace: true }),
+        onRunEvent: (scriptNode, eventNode) => {
+          if (!this.runtime) return;
+          this.toggleConsole(true);
+          this.runtime.executeEventNode(eventNode);
+        },
+        onSelectObject: (gid) => {
+          this.toggleWorkspace(false);
+          this.selectElement(gid);
+        },
+        onRestart: () => this.restart(),
+        onClose: () => {
+          this.scriptsBtn?.classList.remove('active');
+          this.overflowManager?.renderMenuContent();
         }
       });
     }
@@ -8343,6 +10504,7 @@ class CatWebRunnerApp {
 
     this.currentDocument = parsedData;
     this._lastSyntaxErrorPos = null;
+    if (!meta.fromWorkspace && !meta.keepConsole) this.console?.clear();
     this._syncSampleSelect(meta.sampleKey);
     this._persistDocument(parsedData, meta.sampleKey);
 
@@ -8392,10 +10554,27 @@ class CatWebRunnerApp {
     // Initialize & Start Runtime
     if (this.previewCanvas) {
       this.runtime = new CatWebRuntime(renderableData, this.previewCanvas, {
-        audioEnabled: this.audioEnabled
+        audioEnabled: this.audioEnabled,
+        cookies: this.cookieJar,
+        url: this.urlText?.textContent || 'catweb://site.rbx',
+        onLog: (entry) => {
+          this.console?.add(entry);
+          if (entry.level === 'error') this.workspace?.markError(entry.actionGid || entry.eventGid, entry.message);
+        },
+        onAction: (act) => this.workspace?.flash(act?.globalid),
+        onVariableChange: () => this.console?.refreshVariables()
       });
+      const runtime = this.runtime;
+      this.console?.watchVariables(() => runtime.listVariables());
       this.runtime.start();
     }
+
+    // Keep the script editor on the same document
+    if (this.workspace) {
+      this.workspace.setDocument(parsedData);
+      this.workspace.setDiagnostics(validation.errors || []);
+    }
+    this._updateScriptsBadge();
 
     // Update Inspector Registry
     if (this.inspector && this.previewCanvas) {
@@ -8767,6 +10946,86 @@ class CatWebRunnerApp {
   }
 
   /**
+   * Opens or closes the full-screen script editor.
+   * @param {boolean} [show]
+   */
+  toggleWorkspace(show = null) {
+    if (!this.workspace) return;
+    const next = show !== null ? show : !this.workspace.isOpen();
+    if (next) {
+      this.workspace.open();
+      this.scriptsBtn?.classList.add('active');
+    } else if (this.workspace.isOpen()) {
+      this.workspace.close();
+    }
+    this.overflowManager?.renderMenuContent();
+  }
+
+  /**
+   * Shows or hides the console dock.
+   * @param {boolean} [show]
+   */
+  toggleConsole(show = null) {
+    if (!this.consoleDock) return;
+    const next = show !== null ? show : this.consoleDock.classList.contains('hidden');
+    if (next) this.consoleDock.classList.remove('hidden');
+    else this.consoleDock.classList.add('hidden');
+    if (this.consoleBtn) {
+      if (next) this.consoleBtn.classList.add('active');
+      else this.consoleBtn.classList.remove('active');
+    }
+    if (next) this.console?.refreshVariables();
+    this.overflowManager?.renderMenuContent();
+    if (this.currentZoom === 'fit') this.setZoom('fit');
+  }
+
+  /** Re-renders the page and runs every script from the start. */
+  restart() {
+    if (!this.currentDocument) return;
+    const key = this.sampleSelect?.value;
+    this.console?.add({ level: 'info', message: 'Page reloaded', time: Date.now() });
+    this.loadDocument(this.currentDocument, { keepConsole: true, sampleKey: PRELOADED_SAMPLES[key] ? key : null });
+  }
+
+  /** @private */
+  _updateConsoleBadge(counts) {
+    if (!this.consoleBtn?.querySelector || typeof document === 'undefined') return;
+    this.consoleBtn.querySelector('.cw-count-pill')?.remove();
+    if (counts.error) this.consoleBtn.classList.add('error');
+    else this.consoleBtn.classList.remove('error');
+    if (counts.error || counts.warn) {
+      const pill = document.createElement('span');
+      pill.className = `cw-count-pill${counts.error ? '' : ' warning'}`;
+      pill.textContent = String(counts.error || counts.warn);
+      this.consoleBtn.appendChild(pill);
+    }
+  }
+
+  /** @private Shows how many scripts the page has on the Scripts button. */
+  _updateScriptsBadge() {
+    if (!this.scriptsBtn?.querySelector || typeof document === 'undefined') return;
+    let n = 0;
+    const walk = (node) => {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) { node.forEach(walk); return; }
+      if (node.class === 'script') n++;
+      if (Array.isArray(node.webcontent)) node.webcontent.forEach(walk);
+      if (Array.isArray(node.children)) node.children.forEach(walk);
+    };
+    walk(this.currentDocument);
+    let pill = this.scriptsBtn.querySelector('.cw-ws-badge');
+    if (!pill && n) {
+      pill = document.createElement('span');
+      pill.className = 'cw-ws-badge';
+      this.scriptsBtn.appendChild(pill);
+    }
+    if (pill) {
+      pill.textContent = String(n);
+      pill.style.display = n ? '' : 'none';
+    }
+  }
+
+  /**
    * Selects and highlights an element by global ID.
    * @param {string} globalid
    */
@@ -8906,6 +11165,8 @@ class CatWebRunnerApp {
       if (this.aiApiModal && !this.aiApiModal.classList.contains('hidden')) {
         this.aiApiModal.classList.add('hidden');
         this.aiApiBtn?.focus?.();
+      } else if (this.workspace?.isOpen() && !e.target?.closest?.('input, textarea')) {
+        this.toggleWorkspace(false);
       }
       return;
     }
@@ -8915,9 +11176,16 @@ class CatWebRunnerApp {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) return;
     if (this.aiApiModal && !this.aiApiModal.classList.contains('hidden')) return;
+    // A site with "When <key> pressed" gets that key instead of the shortcut.
+    if (!this.workspace?.isOpen() && this.runtime?.listensForKey?.(e)) return;
+    // Zoom keys belong to the script canvas while it is open.
+    if (this.workspace?.isOpen() && ['+', '=', '-', '0'].includes(e.key)) return;
 
     const actions = {
       e: () => this.toggleEditor(),
+      b: () => this.toggleWorkspace(),
+      c: () => this.toggleConsole(),
+      r: () => this.restart(),
       i: () => this.toggleInspector(),
       d: () => this.toggleDiagnostics(),
       m: () => this.audioBtn?.click(),
@@ -8926,7 +11194,7 @@ class CatWebRunnerApp {
       '+': () => this._stepZoom(1),
       '=': () => this._stepZoom(1),
       '-': () => this._stepZoom(-1),
-      '?': () => this.showToast('Shortcuts: E editor · I inspect · D diagnostics · M audio · S share · +/− zoom · 0 fit · Ctrl+Enter render · Ctrl+V paste JSON')
+      '?': () => this.showToast('Shortcuts: B scripts · E JSON · C console · I inspect · D diagnostics · R reload page · M sound · S share · +/− zoom · 0 fit · Ctrl+Enter render · Ctrl+V paste JSON')
     };
     const action = actions[e.key.length === 1 ? e.key.toLowerCase() : e.key];
     if (action) {
@@ -9000,6 +11268,8 @@ class CatWebRunnerApp {
       this.inspector.destroy();
       this.inspector = null;
     }
+    this.workspace?.destroy();
+    this.workspace = null;
   }
 }
 

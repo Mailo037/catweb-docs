@@ -24,7 +24,8 @@ export const MODIFIER_CLASSES = new Set([
   'UITextSizeConstraint',
   'UICorner',
   'UIStroke',
-  'UIGradient'
+  'UIGradient',
+  'UIShadow'
 ]);
 
 export const NON_VISUAL_CLASSES = new Set([

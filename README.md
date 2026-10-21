@@ -2,9 +2,11 @@
 
 Everything you need to know about building in **CatWeb** (Roblox) — the Roblox game where you build 2D websites with JSON-based UI and a visual block-scripting system.
 
-> Targeting CatWeb version **v2.18.2.3**
+> Targeting CatWeb version **v2.18.3.1** (with Unlimited Update rollouts)
 
 ---
+
+> **AI agents:** start with [`AGENTS.md`](AGENTS.md) — the rules that break imports, the shape of a page and a script, and how to validate and test, on one page.
 
 ## Included Documents
 
@@ -67,11 +69,13 @@ Preview and interact with CatWeb JSON sites directly in your web browser without
   - Styling modifiers: `UICorner` (border-radius), `UIStroke` (inset borders/outlines), and `UIGradient`.
   - Visual elements: `Frame`, `ScrollingFrame` (canvas scrolling), `TextLabel`, `TextButton`, `TextBox`, `ImageLabel`, `ImageButton` (including `?link`, `?transfer`, `?avataritem`).
   - Roblox asset fallbacks and audio synthesis (`Play Sound` emulation via Web Audio API).
-- **Interactive Script Runtime & Visual Block Viewer:** Dispatches button clicks, manages variables, displays authentic Scratch/CatWeb-style visual block stacks with C-block indentation, and allows running events on demand.
+- **Script Runtime:** Runs CatWeb block scripts the way the game does: all `If` variants with `else`, `Repeat` / `Repeat forever` / `Break` / `Iterate`, global, object (`o!`) and local (`l!`) variables, tables, strings, math, functions with return values, and click, hover, key, input and change events. Runaway loops are stopped instead of freezing the tab.
+- **Script Editor (`B`):** A full-screen canvas that shows every event stack at its real `x`/`y` position. Pan and zoom, drag stacks to move them (writes `x`/`y` back to the JSON), edit any value inline, and add, reorder or delete blocks from a searchable palette. Blocks light up while they run, and runtime errors are pinned to the block that caused them.
+- **Console (`C`):** `Log` / `Warn` / `Error` output, runtime errors linked to their block, and a live table of every variable.
 - **Live Visual Inspector & Property Editor:** Click any element to inspect its class, `globalid`, parent hierarchy, and live properties with two-way AST synchronization.
 - **Live Editing & Sharing:** The Raw JSON editor re-renders as you type (toggle "Live", or press `Ctrl+Enter`), points to the exact line and column of JSON syntax errors, and remembers your last document across reloads. **Share** copies a `#data=` link that opens the current document for anyone.
-- **Keyboard Shortcuts:** `E` editor · `I` inspector · `D` diagnostics · `M` audio · `S` share link · `+`/`-` zoom · `0` fit · `?` list shortcuts. Paste JSON (`Ctrl+V`) anywhere outside a text field to render it.
-- **Automated Test Suite (693 Tests):**
+- **Keyboard Shortcuts:** `B` scripts · `E` JSON editor · `C` console · `I` inspector · `D` diagnostics · `R` reload page · `M` sound · `S` share link · `+`/`-` zoom · `0` fit · `?` list shortcuts. Paste JSON (`Ctrl+V`) anywhere outside a text field to render it.
+- **Automated Test Suite (712 Tests):**
   ```bash
   npm test                 # runs every suite below + example validation
   npm run build            # regenerate web-runner/bundle.js after editing web-runner/src/

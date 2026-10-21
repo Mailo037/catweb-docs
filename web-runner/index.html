@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="css/catweb-engine.css">
   <!-- Codex / Vercel Application Shell Styles -->
   <link rel="stylesheet" href="css/runner.css">
+  <!-- Script Workspace & Console Dock -->
+  <link rel="stylesheet" href="css/workspace.css">
 </head>
 <body>
   <div id="appContainer">
@@ -54,6 +56,15 @@
           </svg>
           <span>Raw JSON</span>
         </button>
+
+        <button id="scriptsBtn" class="cw-btn cw-toolbar-item" title="Open the full-screen script editor (B)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="8" height="5" rx="1.5"></rect>
+            <rect x="7" y="10" width="14" height="5" rx="1.5"></rect>
+            <rect x="7" y="17" width="10" height="4" rx="1.5"></rect>
+          </svg>
+          <span>Scripts</span>
+        </button>
       </div>
 
       <div class="cw-toolbar-right">
@@ -68,6 +79,14 @@
             <option value="1.5">150%</option>
           </select>
         </div>
+
+        <button id="consoleBtn" class="cw-btn cw-toolbar-item" title="Script console and live variables (C)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+          <span>Console</span>
+        </button>
 
         <button id="inspectorBtn" class="cw-btn cw-toolbar-item" title="Inspect elements and layout properties (I)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -84,12 +103,11 @@
           <span>Diagnostics</span>
         </button>
 
-        <button id="audioBtn" class="cw-btn cw-toolbar-item active" title="Toggle UI sound synthesis (M)">
+        <button id="audioBtn" class="cw-btn cw-toolbar-item cw-btn-icon active" title="Sound is on — click to mute (M)" aria-label="Sound on">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
           </svg>
-          <span>Audio: On</span>
         </button>
 
         <button id="shareBtn" class="cw-btn cw-toolbar-item" title="Copy a link that opens this document (S)">
@@ -100,13 +118,13 @@
           <span>Share</span>
         </button>
 
-        <button id="aiApiBtn" class="cw-btn cw-toolbar-item" title="AI Render Protocol, Image Export &amp; API">
+        <button id="aiApiBtn" class="cw-btn cw-toolbar-item" title="Export a PNG, or render from scripts and AI agents">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
             <circle cx="8.5" cy="8.5" r="1.5"></circle>
             <polyline points="21 15 16 10 5 21"></polyline>
           </svg>
-          <span>AI / Export Image</span>
+          <span>Export</span>
         </button>
 
         <!-- OVERFLOW CONTEXT MENU -->
@@ -188,6 +206,12 @@
                 </span>
                 <span id="urlText" class="cw-url-text cw-fade-x">catweb://interactive-counter.rbx</span>
               </div>
+              <button id="restartBtn" class="cw-titlebar-btn" title="Reload the page and run all scripts again (R)" aria-label="Reload page">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="1 4 1 10 7 10"></polyline>
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                </svg>
+              </button>
               <span id="pageTitle" class="cw-titlebar-title cw-fade-x">
                 Interactive Counter — CatWeb
               </span>
@@ -280,7 +304,32 @@
           </div>
         </div>
       </aside>
+
+      <!-- FULL-SCREEN SCRIPT WORKSPACE (covers the panels, keeps toolbar & console) -->
+      <section id="scriptWorkspace" class="cw-ws hidden" aria-label="Script editor"></section>
     </main>
+
+    <!-- CONSOLE DOCK: script output & live variables -->
+    <section id="consoleDock" class="cw-console hidden" aria-label="Console">
+      <div class="cw-console-resize" title="Drag to resize"></div>
+      <div class="cw-console-header">
+        <div class="cw-tab-switch">
+          <button class="cw-tab-btn active" data-console-tab="console">Console <span id="consoleCount" class="cw-console-count"></span></button>
+          <button class="cw-tab-btn" data-console-tab="variables">Variables</button>
+        </div>
+        <div class="cw-console-actions">
+          <button id="consoleClearBtn" class="cw-btn cw-btn-sm" title="Clear output">Clear</button>
+          <button id="consoleCloseBtn" class="cw-panel-close-btn" title="Close console (C)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="consoleList" class="cw-console-list" role="log" aria-live="polite"></div>
+      <div id="consoleVars" class="cw-console-vars hidden"></div>
+    </section>
 
     <!-- STATUS BAR -->
     <footer class="cw-statusbar">

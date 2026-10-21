@@ -380,7 +380,7 @@ export class CatWebInspector {
 
       row.appendChild(labelWrap);
 
-      // Compact Styling Modifier Badge ("nicht der Länge nach")
+      // Compact Styling Modifier Badge (kept on one line)
       if (modifiers.length > 0) {
         const modBadge = doc.createElement('span');
         modBadge.className = 'cw-tree-mod-badge';
@@ -391,7 +391,7 @@ export class CatWebInspector {
             <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
             <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
           </svg>
-          <span>${modifiers.length} Styling-${modifiers.length === 1 ? 'Element' : 'Elemente'}</span>
+          <span>${modifiers.length} modifier${modifiers.length === 1 ? '' : 's'}</span>
         `;
 
         modBadge.addEventListener('mouseenter', () => {
@@ -431,7 +431,7 @@ export class CatWebInspector {
           if (this.tooltip) {
             const w = Math.round(entry.domElement.offsetWidth || 0);
             const h = Math.round(entry.domElement.offsetHeight || 0);
-            const modTxt = modifiers.length ? ` • ${modifiers.length} Styling-Elemente` : '';
+            const modTxt = modifiers.length ? ` • ${modifiers.length} modifier${modifiers.length === 1 ? '' : 's'}` : '';
             this.tooltip.textContent = `<${cls}> ${node.alias ? '#' + node.alias : ''} [${gid}]${modTxt} • ${w}×${h}px`;
           }
         }
@@ -467,8 +467,8 @@ export class CatWebInspector {
     const summaryBar = doc.createElement('div');
     summaryBar.className = 'cw-tree-summary-bar';
     summaryBar.innerHTML = `
-      <div class="cw-tree-stat"><strong>${totalVisual}</strong> Elemente</div>
-      <div class="cw-tree-stat muted"><strong>${totalStyling}</strong> Styling-Elemente</div>
+      <div class="cw-tree-stat"><strong>${totalVisual}</strong> elements</div>
+      <div class="cw-tree-stat muted"><strong>${totalStyling}</strong> modifiers</div>
       ${totalScripts > 0 ? `<div class="cw-tree-stat muted"><strong>${totalScripts}</strong> Scripts</div>` : ''}
     `;
     this.treeContainer.appendChild(summaryBar);
@@ -531,7 +531,7 @@ export class CatWebInspector {
     this.kastentippPopup.innerHTML = `
       <div class="cw-kastentipp-header">
         <span class="cw-kt-title">${node.alias ? '#' + node.alias : node.class}</span>
-        <span class="cw-kt-count">${modifiers.length} Styling-${modifiers.length === 1 ? 'Element' : 'Elemente'}</span>
+        <span class="cw-kt-count">${modifiers.length} modifier${modifiers.length === 1 ? '' : 's'}</span>
       </div>
       <div class="cw-kastentipp-list">
         ${listHtml}
@@ -765,14 +765,14 @@ export class CatWebInspector {
 
     this._positionBox(this.hoverOverlay, elWithGid);
 
-    // Update tooltip with compact styling indicator ("nicht der Länge nach")
+    // Update tooltip with compact styling indicator (kept on one line)
     if (this.tooltip) {
       const cls = entry.jsonNode?.class || elWithGid.tagName.toLowerCase();
       const alias = entry.jsonNode?.alias ? ` #${entry.jsonNode.alias}` : '';
       const w = Math.round(elWithGid.offsetWidth || 0);
       const h = Math.round(elWithGid.offsetHeight || 0);
       const modCount = entry.modifiers?.length || 0;
-      const modText = modCount > 0 ? ` • ${modCount} Styling-Elemente` : '';
+      const modText = modCount > 0 ? ` • ${modCount} modifier${modCount === 1 ? '' : 's'}` : '';
       this.tooltip.textContent = `<${cls}>${alias} [${gid}]${modText} • ${w}×${h}px`;
     }
   }
